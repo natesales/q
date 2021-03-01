@@ -36,3 +36,6 @@ Protocols:
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
 - DNS over QUIC ([draft-ietf-dprive-dnsoquic-02](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02))
+
+### Installation
+`q` is available as a single binary under [releases](https://github.com/natesales/q/releases) and in my [public code repositories](https://github.com/natesales/repo).
