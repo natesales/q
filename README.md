@@ -1,7 +1,7 @@
 <div align="center">
 <h1>q</h1>
 
-A tiny CLI DNS client library with support for UDP, DoT, DoH, and DoQ.
+A tiny command line DNS client with support for UDP, DoT, DoH, and DoQ.
 
 [![Go Report](https://goreportcard.com/badge/github.com/natesales/q?style=for-the-badge)](https://goreportcard.com/report/github.com/natesales/q)
 [![License](https://img.shields.io/github/license/natesales/q?style=for-the-badge)](https://raw.githubusercontent.com/natesales/q/main/LICENSE)
@@ -12,7 +12,7 @@ A tiny CLI DNS client library with support for UDP, DoT, DoH, and DoQ.
 
 ### Usage
 ```
-q CLI DNS client (https://github.com/natesales/q)
+q command line DNS client (https://github.com/natesales/q)
 
 Usage:
   q @<protocol>://<server>:[port] <rr types> <qname> [OPTIONS]
