@@ -1,12 +1,16 @@
-# q
+<div align="center">
+<h1>q</h1>
+
+A tiny CLI DNS client library with support for UDP, DoT, DoH, and DoQ.
 
 [![Go Report](https://goreportcard.com/badge/github.com/natesales/q?style=for-the-badge)](https://goreportcard.com/report/github.com/natesales/q)
 [![License](https://img.shields.io/github/license/natesales/q?style=for-the-badge)](https://raw.githubusercontent.com/natesales/q/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/natesales/q?style=for-the-badge)](https://github.com/natesales/q/releases)
 
-A tiny CLI DNS client library with support for UDP, DoT, DoH, and DoQ.
+![q screenshot](screenshot.png)
+</div>
 
-## Usage
+### Usage
 ```bash
 q CLI DNS client (https://github.com/natesales/q)
 
@@ -26,3 +30,9 @@ Protocols:
   https  RFC 8484 DNS over HTTPS
   quic   draft-ietf-dprive-dnsoquic-02 DNS over QUIC
 ```
+
+### Protocol Support
+- UDP DNS ([RFC 1034](https://tools.ietf.org/html/rfc1034))
+- DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
+- DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
+- DNS over QUIC ([draft-ietf-dprive-dnsoquic-02](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02))
