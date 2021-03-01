@@ -1,0 +1,6 @@
+# JetBrains
+.idea
+
+# Release
+dist/
+q
