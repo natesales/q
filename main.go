@@ -11,6 +11,8 @@ import (
 	"github.com/miekg/dns"
 )
 
+const defaultDnsServer = "https://dns.cloudflare.com/dns-query"
+
 var version = "dev" // Set by build process
 var versionBanner = "q CLI DNS client (https://github.com/natesales/q) version " + version + "\n"
 var usage = versionBanner + `
