@@ -13,7 +13,7 @@ builds:
       - amd64
       - arm64
 scoop:
-  name: stping
+  name: q
   commit_author:
     name: natesales
     email: nate@natesales.net
@@ -30,7 +30,7 @@ changelog:
       - '^test:'
 nfpms:
   - id: nfpm-default
-    package_name: stping
+    package_name: q
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     vendor: Nate Sales
     homepage: https://natesales.net/
