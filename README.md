@@ -11,7 +11,7 @@ A tiny CLI DNS client library with support for UDP, DoT, DoH, and DoQ.
 </div>
 
 ### Usage
-```bash
+```
 q CLI DNS client (https://github.com/natesales/q)
 
 Usage:
