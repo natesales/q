@@ -30,6 +30,26 @@ Protocols:
   https  RFC 8484 DNS over HTTPS
   quic   draft-ietf-dprive-dnsoquic-02 DNS over QUIC`
 
+// ANSI colors
+var (
+	Black   = color("\033[1;30m%s\033[0m")
+	Red     = color("\033[1;31m%s\033[0m")
+	Green   = color("\033[1;32m%s\033[0m")
+	Yellow  = color("\033[1;33m%s\033[0m")
+	Purple  = color("\033[1;34m%s\033[0m")
+	Magenta = color("\033[1;35m%s\033[0m")
+	Teal    = color("\033[1;36m%s\033[0m")
+	White   = color("\033[1;37m%s\033[0m")
+)
+
+func color(colorString string) func(...interface{}) string {
+	sprint := func(args ...interface{}) string {
+		return fmt.Sprintf(colorString,
+			fmt.Sprint(args...))
+	}
+	return sprint
+}
+
 // cliArgs stores parsed query information
 type cliArgs struct {
 	RRTypes []uint16
@@ -78,9 +98,7 @@ func main() {
 
 	// Validate query info
 	if args.Server == "" {
-		fmt.Println("server is not defined")
-		fmt.Println(usage)
-		os.Exit(1)
+		args.Server = defaultDnsServer
 	}
 	if len(args.RRTypes) < 1 {
 		fmt.Println("no RR types are defined")
@@ -89,7 +107,7 @@ func main() {
 	}
 
 	if args.Verbose {
-		fmt.Printf("%+v\n", args)
+		fmt.Printf(Teal("INFO: ")+"%+v\n", args)
 	}
 
 	// Create the upstream server
@@ -98,11 +116,11 @@ func main() {
 		InsecureSkipVerify: false,
 	})
 	if err != nil {
-		log.Fatalf("Cannot create an upstream: %s", err)
+		log.Fatalf(Teal("INFO: ")+"Cannot create an upstream: %s", err)
 	}
 
 	if args.Verbose {
-		fmt.Printf("using server %s\n", u.Address())
+		fmt.Printf(Teal("INFO: ")+"using server %s\n", u.Address())
 	}
 
 	// Iterate over requested RR types
@@ -125,7 +143,7 @@ func main() {
 		// Send question to server
 		reply, err := u.Exchange(&req)
 		if err != nil {
-			log.Fatalf("cannot make the DNS request: %s", err)
+			log.Fatalf(Red("ERR: ")+"DNS request: %s", err)
 		}
 
 		// Print answers
@@ -135,9 +153,9 @@ func main() {
 			} else {
 				hdr := answer.Header()
 				fmt.Printf("%s %s %s %s\n",
-					hdr.Name,
-					time.Duration(hdr.Ttl)*time.Second,
-					dns.TypeToString[hdr.Rrtype],
+					Purple(hdr.Name),
+					Green(time.Duration(hdr.Ttl)*time.Second),
+					Magenta(dns.TypeToString[hdr.Rrtype]),
 					strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
 				)
 			}
