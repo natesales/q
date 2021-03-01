@@ -66,7 +66,7 @@ func main() {
 	args := cliArgs{}
 
 	// Parse CLI arguments
-	for _, arg := range os.Args {
+	for _, arg := range os.Args[1:] {
 		if strings.HasPrefix(arg, "@") { // DNS server
 			args.Server = strings.TrimPrefix(arg, "@")
 		} else if strings.Contains(arg, "-") { // Flags
