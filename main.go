@@ -60,6 +60,7 @@ type cliArgs struct {
 	DNSSEC  bool
 	Raw     bool
 	Verbose bool
+	Quiet   bool
 }
 
 func main() {
@@ -80,6 +81,8 @@ func main() {
 				os.Exit(0)
 			case "-v", "--verbose":
 				args.Verbose = true
+			case "-q", "--quiet":
+				args.Quiet = true
 			default:
 				fmt.Printf("unknown flag %s\n", arg)
 				fmt.Println(usage)
@@ -150,16 +153,18 @@ func main() {
 
 		// Print answers
 		for _, answer := range reply.Answer {
-			if args.Raw {
-				fmt.Println(answer.String())
-			} else {
-				hdr := answer.Header()
-				fmt.Printf("%s %s %s %s\n",
-					Purple(hdr.Name),
-					Green(time.Duration(hdr.Ttl)*time.Second),
-					Magenta(dns.TypeToString[hdr.Rrtype]),
-					strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
-				)
+			if !args.Quiet {
+				if args.Raw {
+					fmt.Println(answer.String())
+				} else {
+					hdr := answer.Header()
+					fmt.Printf("%s %s %s %s\n",
+						Purple(hdr.Name),
+						Green(time.Duration(hdr.Ttl)*time.Second),
+						Magenta(dns.TypeToString[hdr.Rrtype]),
+						strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
+					)
+				}
 			}
 		}
 	}
