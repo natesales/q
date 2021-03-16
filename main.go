@@ -91,7 +91,7 @@ func main() {
 		} else if strings.Contains(arg, ".") { // QNAME
 			args.Qname = arg
 		} else { // RR types
-			rrType, ok := dns.StringToType[arg]
+			rrType, ok := dns.StringToType[strings.ToUpper(arg)]
 			if ok {
 				args.RRTypes = append(args.RRTypes, rrType)
 			} else {
