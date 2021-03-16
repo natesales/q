@@ -105,10 +105,13 @@ func main() {
 	if args.Server == "" {
 		args.Server = defaultDnsServer
 	}
+
+	// If no RR types are defined, set a list of default ones
 	if len(args.RRTypes) < 1 {
-		fmt.Println("no RR types are defined")
-		fmt.Println(usage)
-		os.Exit(1)
+		for _, defaultRRType := range []string{"A", "AAAA", "NS", "TXT", "CNAME"} {
+			rrType, _ := dns.StringToType[defaultRRType]
+			args.RRTypes = append(args.RRTypes, rrType)
+		}
 	}
 
 	if args.Verbose {
