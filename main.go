@@ -17,7 +17,7 @@ var version = "dev" // Set by build process
 var versionBanner = "q command line DNS client (https://github.com/natesales/q) version " + version + "\n"
 var usage = versionBanner + `
 Usage:
-  q @<protocol>://<server>:[port] <rr types> <qname> [OPTIONS]
+  q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
 
 Options:
   -d, --dnssec  Request DNSSEC
@@ -70,7 +70,7 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		if strings.HasPrefix(arg, "@") { // DNS server
 			args.Server = strings.TrimPrefix(arg, "@")
-		} else if strings.Contains(arg, "-") { // Flags
+		} else if strings.HasPrefix(arg, "-") { // Flags
 			switch arg {
 			case "-d", "--dnssec":
 				args.DNSSEC = true
