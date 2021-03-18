@@ -44,12 +44,11 @@ var (
 	White   = color("\033[1;37m%s\033[0m")
 )
 
+// color returns a colored string
 func color(colorString string) func(...interface{}) string {
-	sprint := func(args ...interface{}) string {
-		return fmt.Sprintf(colorString,
-			fmt.Sprint(args...))
+	return func(args ...interface{}) string {
+		return fmt.Sprintf(colorString, fmt.Sprint(args...))
 	}
-	return sprint
 }
 
 // cliArgs stores parsed query information
@@ -114,6 +113,7 @@ func main() {
 		}
 	}
 
+	// Log args if verbose is set
 	if args.Verbose {
 		fmt.Printf(Teal("INFO: ")+"%+v\n", args)
 	}
@@ -127,6 +127,7 @@ func main() {
 		log.Fatalf(Teal("INFO: ")+"Cannot create an upstream: %s", err)
 	}
 
+	// Log parsed server address
 	if args.Verbose {
 		fmt.Printf(Teal("INFO: ")+"using server %s\n", u.Address())
 	}
