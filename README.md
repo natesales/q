@@ -31,6 +31,10 @@ Protocols:
   quic   draft-ietf-dprive-dnsoquic-02 DNS over QUIC
 ```
 
+### Demo
+
+[![asciicast](https://asciinema.org/a/XdWPPvZgx4hEBFwGnGwL13bsZ.svg)](https://asciinema.org/a/XdWPPvZgx4hEBFwGnGwL13bsZ)
+
 ### Protocol Support
 - UDP DNS ([RFC 1034](https://tools.ietf.org/html/rfc1034))
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
