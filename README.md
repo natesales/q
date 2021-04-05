@@ -15,7 +15,7 @@ A tiny command line DNS client with support for UDP, DoT, DoH, and DoQ.
 q command line DNS client (https://github.com/natesales/q)
 
 Usage:
-  q @<protocol>://<server>:[port] <rr types> <qname> [OPTIONS]
+  q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
 
 Options:
   -d, --dnssec  Request DNSSEC
