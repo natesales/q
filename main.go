@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
 )
 
 const defaultDnsServer = "https://dns.cloudflare.com/dns-query"
@@ -115,7 +115,7 @@ func main() {
 
 	// Log args if verbose is set
 	if args.Verbose {
-		fmt.Printf(Teal("INFO: ")+"%+v\n", args)
+		log.Infof("%+v", args)
 	}
 
 	// Create the upstream server
@@ -124,12 +124,12 @@ func main() {
 		InsecureSkipVerify: false,
 	})
 	if err != nil {
-		log.Fatalf(Teal("INFO: ")+"Cannot create an upstream: %s", err)
+		log.Fatalf("cannot create upstream %v", err)
 	}
 
 	// Log parsed server address
 	if args.Verbose {
-		fmt.Printf(Teal("INFO: ")+"using server %s\n", u.Address())
+		log.Infof("using server %s\n", u.Address())
 	}
 
 	// Iterate over requested RR types
@@ -152,7 +152,7 @@ func main() {
 		// Send question to server
 		reply, err := u.Exchange(&req)
 		if err != nil {
-			log.Fatalf(Red("ERR: ")+"DNS request: %s", err)
+			log.Fatalf("DNS request: %s", err)
 		}
 
 		// Print answers
