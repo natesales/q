@@ -12,17 +12,18 @@ A tiny command line DNS client with support for UDP, DoT, DoH, and DoQ.
 
 ### Usage
 ```
-q command line DNS client (https://github.com/natesales/q)
+q command line DNS client (https://github.com/natesales/q) version dev
 
 Usage:
   q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
 
 Options:
-  -d, --dnssec  Request DNSSEC
-  -r, --raw     Output raw DNS string format
-  -h, --help    Display help menu
-  -v, --verbose Enable verbose logging
-  -q, --quiet   Don't display DNS response
+  -d, --dnssec   Request DNSSEC
+  -r, --raw      Output raw DNS string format
+  -i, --insecure Skip verifying TLS certificate
+  -h, --help     Display help menu
+  -v, --verbose  Enable verbose logging
+  -q, --quiet    Don't display DNS response
 
 Protocols:
   dns    RFC 1034 UDP/TCP DNS

@@ -53,13 +53,14 @@ func color(colorString string) func(...interface{}) string {
 
 // cliArgs stores parsed query information
 type cliArgs struct {
-	RRTypes []uint16
-	Qname   string
-	Server  string
-	DNSSEC  bool
-	Raw     bool
-	Verbose bool
-	Quiet   bool
+	RRTypes  []uint16
+	Qname    string
+	Server   string
+	DNSSEC   bool
+	Raw      bool
+	Verbose  bool
+	Quiet    bool
+	Insecure bool
 }
 
 func main() {
@@ -82,6 +83,8 @@ func main() {
 				args.Verbose = true
 			case "-q", "--quiet":
 				args.Quiet = true
+			case "-i", "--insecure":
+				args.Insecure = true
 			default:
 				fmt.Printf("unknown flag %s\n", arg)
 				fmt.Println(usage)
@@ -121,7 +124,7 @@ func main() {
 	// Create the upstream server
 	u, err := upstream.AddressToUpstream(args.Server, upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: false,
+		InsecureSkipVerify: args.Insecure,
 	})
 	if err != nil {
 		log.Fatalf("cannot create upstream %v", err)
