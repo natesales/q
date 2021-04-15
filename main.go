@@ -155,7 +155,7 @@ func main() {
 		// Send question to server
 		reply, err := u.Exchange(&req)
 		if err != nil {
-			log.Fatalf("DNS request: %s", err)
+			log.Fatalf("upstream query: %s", err)
 		}
 
 		// Print answers
