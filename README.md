@@ -18,6 +18,7 @@ Usage:
   q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
 
 Options:
+  -c, --chaos    Use CHAOS QCLASS
   -d, --dnssec   Request DNSSEC
   -r, --raw      Output raw DNS string format
   -i, --insecure Skip verifying TLS certificate

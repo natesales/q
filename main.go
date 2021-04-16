@@ -20,6 +20,7 @@ Usage:
   q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
 
 Options:
+  -c, --chaos   Use CHAOS QCLASS
   -d, --dnssec  Request DNSSEC
   -r, --raw     Output raw DNS string format
   -h, --help    Display help menu
@@ -56,6 +57,7 @@ type cliArgs struct {
 	RRTypes  []uint16
 	Qname    string
 	Server   string
+	Chaos    bool
 	DNSSEC   bool
 	Raw      bool
 	Verbose  bool
@@ -72,6 +74,8 @@ func main() {
 			args.Server = strings.TrimPrefix(arg, "@")
 		} else if strings.HasPrefix(arg, "-") { // Flags
 			switch arg {
+			case "-c", "--chaos":
+				args.Chaos = true
 			case "-d", "--dnssec":
 				args.DNSSEC = true
 			case "-r", "--raw":
@@ -143,14 +147,20 @@ func main() {
 		if args.DNSSEC {
 			req.SetEdns0(4096, true)
 		}
-		req.RecursionDesired = true
-		req.Question = []dns.Question{
-			{
-				Name:   dns.Fqdn(args.Qname),
-				Qtype:  qType,
-				Qclass: dns.ClassINET,
-			},
+
+		// Set QCLASS
+		var class uint16
+		if args.Chaos {
+			class = dns.ClassCHAOS
+		} else {
+			class = dns.ClassINET
 		}
+		req.RecursionDesired = true
+		req.Question = []dns.Question{{
+			Name:   dns.Fqdn(args.Qname),
+			Qtype:  qType,
+			Qclass: class,
+		}}
 
 		// Send question to server
 		reply, err := u.Exchange(&req)
