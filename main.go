@@ -7,31 +7,25 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 )
 
-const defaultDnsServer = "https://dns.cloudflare.com/dns-query"
+// Flags
+var opts struct {
+	Name      string   `short:"q" long:"qname" description:"Query name"`
+	Server    string   `short:"s" long:"server" description:"DNS server"`
+	Types     []string `short:"t" long:"type" description:"RR type"`
+	DNSSEC    bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
+	Raw       bool     `short:"r" long:"raw" description:"Output raw DNS format"`
+	Chaos     bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	OdohProxy string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
+	Insecure  bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
+	Verbose   bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
+}
 
 var version = "dev" // Set by build process
-var versionBanner = "q command line DNS client (https://github.com/natesales/q) version " + version + "\n"
-var usage = versionBanner + `
-Usage:
-  q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
-
-Options:
-  -c, --chaos   Use CHAOS QCLASS
-  -d, --dnssec  Request DNSSEC
-  -r, --raw     Output raw DNS string format
-  -h, --help    Display help menu
-  -v, --verbose Enable verbose logging
-  -q, --quiet   Don't display DNS response
-
-Protocols:
-  dns    RFC 1034 UDP/TCP DNS
-  tls    RFC 7858 DNS over TLS
-  https  RFC 8484 DNS over HTTPS
-  quic   draft-ietf-dprive-dnsoquic-02 DNS over QUIC`
 
 // ANSI colors
 var (
@@ -52,136 +46,129 @@ func color(colorString string) func(...interface{}) string {
 	}
 }
 
-// cliArgs stores parsed query information
-type cliArgs struct {
-	RRTypes  []uint16
-	Qname    string
-	Server   string
-	Chaos    bool
-	DNSSEC   bool
-	Raw      bool
-	Verbose  bool
-	Quiet    bool
-	Insecure bool
-}
-
 func main() {
-	args := cliArgs{}
+	// Parse cli flags
+	_, err := flags.ParseArgs(&opts, os.Args)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Usage") {
+			log.Fatal(err)
+		}
+		os.Exit(1)
+	}
 
-	// Parse CLI arguments
-	for _, arg := range os.Args[1:] {
-		if strings.HasPrefix(arg, "@") { // DNS server
-			args.Server = strings.TrimPrefix(arg, "@")
-		} else if strings.HasPrefix(arg, "-") { // Flags
-			switch arg {
-			case "-c", "--chaos":
-				args.Chaos = true
-			case "-d", "--dnssec":
-				args.DNSSEC = true
-			case "-r", "--raw":
-				args.Raw = true
-			case "-h", "--help":
-				fmt.Println(usage)
-				os.Exit(0)
-			case "-v", "--verbose":
-				args.Verbose = true
-			case "-q", "--quiet":
-				args.Quiet = true
-			case "-i", "--insecure":
-				args.Insecure = true
-			default:
-				fmt.Printf("unknown flag %s\n", arg)
-				fmt.Println(usage)
-				os.Exit(1)
-			}
-		} else if strings.Contains(arg, ".") { // QNAME
-			args.Qname = arg
-		} else { // RR types
-			rrType, ok := dns.StringToType[strings.ToUpper(arg)]
-			if ok {
-				args.RRTypes = append(args.RRTypes, rrType)
-			} else {
-				fmt.Printf("%s is not a valid RR type\n", arg)
-				os.Exit(1)
+	// Enable debug logging in development releases
+	if //noinspection GoBoolExpressions
+	version == "devel" || opts.Verbose {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	// Find a server by @ symbol if it isn't set by flag
+	if opts.Server == "" {
+		for _, arg := range os.Args {
+			if strings.HasPrefix(arg, "@") {
+				opts.Server = strings.TrimPrefix(arg, "@")
 			}
 		}
 	}
 
-	// Validate query info
-	if args.Server == "" {
-		args.Server = defaultDnsServer
+	// Parse requested RR types
+	var rrTypes []uint16
+	for _, rrType := range opts.Types {
+		typeCode, ok := dns.StringToType[strings.ToUpper(rrType)]
+		if ok {
+			rrTypes = append(rrTypes, typeCode)
+		} else {
+			fmt.Printf("%s is not a valid RR type\n", rrType)
+			os.Exit(1)
+		}
+	}
+
+	// Add non-flag RR types
+	for _, arg := range os.Args {
+		rrType, ok := dns.StringToType[strings.ToUpper(arg)]
+		if ok {
+			rrTypes = append(rrTypes, rrType)
+		}
 	}
 
 	// If no RR types are defined, set a list of default ones
-	if len(args.RRTypes) < 1 {
+	if len(rrTypes) < 1 {
 		for _, defaultRRType := range []string{"A", "AAAA", "NS", "TXT", "CNAME"} {
 			rrType, _ := dns.StringToType[defaultRRType]
-			args.RRTypes = append(args.RRTypes, rrType)
+			rrTypes = append(rrTypes, rrType)
 		}
 	}
 
-	// Log args if verbose is set
-	if args.Verbose {
-		log.Infof("%+v", args)
+	log.Debugf("RR types: %+v", rrTypes)
+
+	// Set qname if not set by flag
+	for _, arg := range os.Args {
+		if strings.Contains(arg, ".") && !strings.Contains(arg, "@") {
+			opts.Name = arg
+		}
 	}
 
+	log.Debugf("qname %s", opts.Name)
+
 	// Create the upstream server
-	u, err := upstream.AddressToUpstream(args.Server, upstream.Options{
+	u, err := upstream.AddressToUpstream(opts.Server, upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: args.Insecure,
+		InsecureSkipVerify: opts.Insecure,
 	})
 	if err != nil {
 		log.Fatalf("cannot create upstream %v", err)
 	}
 
-	// Log parsed server address
-	if args.Verbose {
-		log.Infof("using server %s\n", u.Address())
-	}
+	log.Debugf("using server %s\n", u.Address())
 
 	// Iterate over requested RR types
-	for _, qType := range args.RRTypes {
+	for _, qType := range rrTypes {
 		req := dns.Msg{}
 
 		// Create the DNS question
-		if args.DNSSEC {
+		if opts.DNSSEC {
 			req.SetEdns0(4096, true)
 		}
 
 		// Set QCLASS
 		var class uint16
-		if args.Chaos {
+		if opts.Chaos {
 			class = dns.ClassCHAOS
 		} else {
 			class = dns.ClassINET
 		}
 		req.RecursionDesired = true
 		req.Question = []dns.Question{{
-			Name:   dns.Fqdn(args.Qname),
+			Name:   dns.Fqdn(opts.Name),
 			Qtype:  qType,
 			Qclass: class,
 		}}
 
-		// Send question to server
-		reply, err := u.Exchange(&req)
+		var reply *dns.Msg
+		// Use upstream exchange if no ODoH proxy is configured
+		if opts.OdohProxy == "" {
+			// Send question to server
+			reply, err = u.Exchange(&req)
+		} else {
+			reply, err = odohQuery(req, opts.OdohProxy, opts.Server)
+		}
+
 		if err != nil {
 			log.Fatalf("upstream query: %s", err)
 		}
 
 		// Print answers
 		for _, answer := range reply.Answer {
-			if !args.Quiet {
-				if args.Raw {
-					fmt.Println(answer.String())
-				} else {
-					hdr := answer.Header()
-					fmt.Printf("%s %s %s %s\n",
-						Purple(hdr.Name),
-						Green(time.Duration(hdr.Ttl)*time.Second),
-						Magenta(dns.TypeToString[hdr.Rrtype]),
-						strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
-					)
-				}
+			if opts.Raw {
+				fmt.Println(answer.String())
+			} else {
+				hdr := answer.Header()
+				fmt.Printf("%s %s %s %s\n",
+					Purple(hdr.Name),
+					Green(time.Duration(hdr.Ttl)*time.Second),
+					Magenta(dns.TypeToString[hdr.Rrtype]),
+					strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
+				)
 			}
 		}
 	}

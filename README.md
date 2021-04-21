@@ -1,7 +1,7 @@
 <div align="center">
 <h1>q</h1>
 
-A tiny command line DNS client with support for UDP, DoT, DoH, and DoQ.
+A tiny command line DNS client with support for UDP, DoT, DoH, DoQ, and ODoH.
 
 [![Go Report](https://goreportcard.com/badge/github.com/natesales/q?style=for-the-badge)](https://goreportcard.com/report/github.com/natesales/q)
 [![License](https://img.shields.io/github/license/natesales/q?style=for-the-badge)](https://raw.githubusercontent.com/natesales/q/main/LICENSE)
@@ -12,25 +12,24 @@ A tiny command line DNS client with support for UDP, DoT, DoH, and DoQ.
 
 ### Usage
 ```
-q command line DNS client (https://github.com/natesales/q) version dev
+q command line DNS client (https://github.com/natesales/q)
 
 Usage:
-  q [OPTIONS] @<protocol>://<server>:[port] <rr types> <qname>
+  q [OPTIONS]
 
-Options:
-  -c, --chaos    Use CHAOS QCLASS
-  -d, --dnssec   Request DNSSEC
-  -r, --raw      Output raw DNS string format
-  -i, --insecure Skip verifying TLS certificate
-  -h, --help     Display help menu
-  -v, --verbose  Enable verbose logging
-  -q, --quiet    Don't display DNS response
+Application Options:
+  -q, --qname=      Query name
+  -s, --server=     DNS server
+  -t, --type=       RR type
+  -d, --dnssec      Request DNSSEC
+  -r, --raw         Output raw DNS format
+  -c, --chaos       Use CHAOS query class
+  -p, --odoh-proxy= ODoH proxy
+  -i, --insecure    Disable TLS certificate verification
+  -v, --verbose     Show verbose log messages
 
-Protocols:
-  dns    RFC 1034 UDP/TCP DNS
-  tls    RFC 7858 DNS over TLS
-  https  RFC 8484 DNS over HTTPS
-  quic   draft-ietf-dprive-dnsoquic-02 DNS over QUIC
+Help Options:
+  -h, --help        Show this help message
 ```
 
 ### Demo
@@ -42,6 +41,7 @@ Protocols:
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
 - DNS over QUIC ([draft-ietf-dprive-dnsoquic-02](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02))
+- Oblivious DNS over HTTPS ([draft-pauly-dprive-oblivious-doh-06](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-06))
 
 ### Installation
 `q` is available as a single binary under [releases](https://github.com/natesales/q/releases) and in my [public code repositories](https://github.com/natesales/repo).
