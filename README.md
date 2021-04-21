@@ -21,6 +21,7 @@ Application Options:
   -q, --qname=      Query name
   -s, --server=     DNS server
   -t, --type=       RR type
+  -x, --reverse     Reverse lookup
   -d, --dnssec      Request DNSSEC
   -r, --raw         Output raw DNS format
   -c, --chaos       Use CHAOS query class

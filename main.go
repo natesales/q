@@ -17,6 +17,7 @@ var opts struct {
 	Name      string   `short:"q" long:"qname" description:"Query name"`
 	Server    string   `short:"s" long:"server" description:"DNS server"`
 	Types     []string `short:"t" long:"type" description:"RR type"`
+	Reverse   bool     `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC    bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
 	Raw       bool     `short:"r" long:"raw" description:"Output raw DNS format"`
 	Chaos     bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
@@ -106,6 +107,15 @@ func main() {
 		if strings.Contains(arg, ".") && !strings.Contains(arg, "@") {
 			opts.Name = arg
 		}
+	}
+
+	// Reverse address if required
+	if opts.Reverse {
+		opts.Name, err = dns.ReverseAddr(opts.Name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		rrTypes = append(rrTypes, dns.StringToType["PTR"])
 	}
 
 	log.Debugf("qname %s", opts.Name)
