@@ -29,22 +29,20 @@ var opts struct {
 var version = "dev" // Set by build process
 
 // ANSI colors
-var (
-	Black   = color("\033[1;30m%s\033[0m")
-	Red     = color("\033[1;31m%s\033[0m")
-	Green   = color("\033[1;32m%s\033[0m")
-	Yellow  = color("\033[1;33m%s\033[0m")
-	Purple  = color("\033[1;34m%s\033[0m")
-	Magenta = color("\033[1;35m%s\033[0m")
-	Teal    = color("\033[1;36m%s\033[0m")
-	White   = color("\033[1;37m%s\033[0m")
-)
+var colors = map[string]string{
+	"black":   "\033[1;30m%s\033[0m",
+	"red":     "\033[1;31m%s\033[0m",
+	"green":   "\033[1;32m%s\033[0m",
+	"yellow":  "\033[1;33m%s\033[0m",
+	"purple":  "\033[1;34m%s\033[0m",
+	"magenta": "\033[1;35m%s\033[0m",
+	"teal":    "\033[1;36m%s\033[0m",
+	"white":   "\033[1;37m%s\033[0m",
+}
 
-// color returns a colored string
-func color(colorString string) func(...interface{}) string {
-	return func(args ...interface{}) string {
-		return fmt.Sprintf(colorString, fmt.Sprint(args...))
-	}
+// color returns a color formatted string
+func color(color string, args ...interface{}) string {
+	return fmt.Sprintf(colors[color], fmt.Sprint(args...))
 }
 
 func main() {
@@ -180,9 +178,9 @@ func main() {
 			} else {
 				hdr := answer.Header()
 				fmt.Printf("%s %s %s %s\n",
-					Purple(hdr.Name),
-					Green(time.Duration(hdr.Ttl)*time.Second),
-					Magenta(dns.TypeToString[hdr.Rrtype]),
+					color("purple", hdr.Name),
+					color("green", time.Duration(hdr.Ttl)*time.Second),
+					color("magenta", dns.TypeToString[hdr.Rrtype]),
 					strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
 				)
 			}
