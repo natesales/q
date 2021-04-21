@@ -135,7 +135,10 @@ func main() {
 
 	log.Debugf("using server %s\n", u.Address())
 
-	// Iterate over requested RR types
+	var replies []*dns.Msg
+	queryStartTime := time.Now()
+
+	// Query for each requested RR type
 	for _, qType := range rrTypes {
 		req := dns.Msg{}
 
@@ -171,6 +174,8 @@ func main() {
 			log.Fatalf("upstream query: %s", err)
 		}
 
+		replies = append(replies, reply)
+
 		// Print answers
 		for _, answer := range reply.Answer {
 			if opts.Raw {
@@ -185,5 +190,11 @@ func main() {
 				)
 			}
 		}
+
+	}
+
+	queryTime := time.Now().Sub(queryStartTime)
+	if opts.Raw {
+		fmt.Printf(";; Received %d replies from %s in %s\n", len(replies), u.Address(), queryTime.Round(time.Millisecond))
 	}
 }
