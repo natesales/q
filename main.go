@@ -94,7 +94,7 @@ func main() {
 
 	// If no RR types are defined, set a list of default ones
 	if len(rrTypes) < 1 {
-		for _, defaultRRType := range []string{"A", "AAAA", "NS", "TXT", "CNAME"} {
+		for _, defaultRRType := range []string{"A", "AAAA", "NS", "MX", "TXT", "CNAME"} {
 			rrType, _ := dns.StringToType[defaultRRType]
 			rrTypes = append(rrTypes, rrType)
 		}
