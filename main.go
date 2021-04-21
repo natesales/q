@@ -100,7 +100,13 @@ func main() {
 		}
 	}
 
-	log.Debugf("RR types: %+v", rrTypes)
+	if opts.Verbose {
+		var rrTypeStrings []string
+		for _, rrType := range rrTypes {
+			rrTypeStrings = append(rrTypeStrings, dns.TypeToString[rrType])
+		}
+		log.Debugf("RR types: %+v", rrTypeStrings)
+	}
 
 	// Set qname if not set by flag
 	for _, arg := range os.Args {
