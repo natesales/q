@@ -160,9 +160,9 @@ func main() {
 			// Send question to server
 			reply, err = u.Exchange(&req)
 		} else {
+			log.Debugf("using ODoH proxy %s", opts.OdohProxy)
 			reply, err = odohQuery(req, opts.OdohProxy, opts.Server)
 		}
-
 		if err != nil {
 			log.Fatalf("upstream query: %s", err)
 		}
