@@ -135,7 +135,7 @@ func main() {
 
 	log.Debugf("using server %s\n", u.Address())
 
-	var replies []*dns.Msg
+	var answers []dns.RR
 	queryStartTime := time.Now()
 
 	// Query for each requested RR type
@@ -174,10 +174,9 @@ func main() {
 			log.Fatalf("upstream query: %s", err)
 		}
 
-		replies = append(replies, reply)
-
 		// Print answers
 		for _, answer := range reply.Answer {
+			answers = append(answers, answer)
 			if opts.Raw {
 				fmt.Println(answer.String())
 			} else {
@@ -190,11 +189,10 @@ func main() {
 				)
 			}
 		}
-
 	}
 
 	queryTime := time.Now().Sub(queryStartTime)
 	if opts.Raw {
-		fmt.Printf(";; Received %d replies from %s in %s\n", len(replies), u.Address(), queryTime.Round(time.Millisecond))
+		fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), u.Address(), queryTime.Round(time.Millisecond))
 	}
 }
