@@ -125,6 +125,11 @@ func main() {
 
 	log.Debugf("qname %s", opts.Name)
 
+	// Set default DNS server
+	if opts.Server == "" {
+		opts.Server = "https://cloudflare-dns.com/dns-query"
+	}
+
 	// Create the upstream server
 	u, err := upstream.AddressToUpstream(opts.Server, upstream.Options{
 		Timeout:            10 * time.Second,
