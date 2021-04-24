@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Flags
+// CLI flags
 var opts struct {
 	Name      string   `short:"q" long:"qname" description:"Query name"`
 	Server    string   `short:"s" long:"server" description:"DNS server"`
@@ -98,6 +98,7 @@ func main() {
 		}
 	}
 
+	// Log RR types
 	if opts.Verbose {
 		var rrTypeStrings []string
 		for _, rrType := range rrTypes {
@@ -140,9 +141,9 @@ func main() {
 
 	// Query for each requested RR type
 	for _, qType := range rrTypes {
+		// Create the DNS question
 		req := dns.Msg{}
 
-		// Create the DNS question
 		if opts.DNSSEC {
 			req.SetEdns0(4096, true)
 		}
@@ -191,6 +192,7 @@ func main() {
 		}
 	}
 
+	// Calculate total query time
 	queryTime := time.Now().Sub(queryStartTime)
 	if opts.Raw {
 		fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), u.Address(), queryTime.Round(time.Millisecond))
