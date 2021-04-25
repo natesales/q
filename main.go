@@ -200,6 +200,6 @@ func main() {
 	// Calculate total query time
 	queryTime := time.Now().Sub(queryStartTime)
 	if opts.Raw {
-		fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), u.Address(), queryTime.Round(time.Millisecond))
+		fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), opts.Server, queryTime.Round(time.Millisecond))
 	}
 }
