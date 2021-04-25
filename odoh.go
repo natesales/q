@@ -55,16 +55,6 @@ func buildURL(s, defaultPath string) *url.URL {
 	return u
 }
 
-func createOdohQuestion(dnsMessage []byte, publicKey odoh.ObliviousDoHConfigContents) (odoh.ObliviousDNSMessage, odoh.QueryContext, error) {
-	odohQuery := odoh.CreateObliviousDNSQuery(dnsMessage, 0)
-	odnsMessage, queryContext, err := publicKey.EncryptQuery(odohQuery)
-	if err != nil {
-		return odoh.ObliviousDNSMessage{}, odoh.QueryContext{}, err
-	}
-
-	return odnsMessage, queryContext, nil
-}
-
 func resolveObliviousQuery(query odoh.ObliviousDNSMessage, targetIP string, proxy string, client *http.Client) (response odoh.ObliviousDNSMessage, err error) {
 	serializedQuery := query.Marshal()
 	p := buildURL(proxy, "/proxy")
@@ -144,13 +134,14 @@ func odohQuery(query dns.Msg, proxy string, target string) (*dns.Msg, error) {
 		return nil, err
 	}
 
-	odohQuery, queryContext, err := createOdohQuestion(packedDnsQuery, odohConfig.Contents)
+	odohQuery := odoh.CreateObliviousDNSQuery(packedDnsQuery, 0)
+	odnsMessage, queryContext, err := odohConfig.Contents.EncryptQuery(odohQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	client = http.Client{}
-	odohMessage, err := resolveObliviousQuery(odohQuery, target, proxy, &client)
+	odohMessage, err := resolveObliviousQuery(odnsMessage, target, proxy, &client)
 	if err != nil {
 		return nil, err
 	}
