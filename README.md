@@ -45,4 +45,4 @@ Help Options:
 - Oblivious DNS over HTTPS ([draft-pauly-dprive-oblivious-doh-06](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-06))
 
 ### Installation
-`q` is available as a single binary under [releases](https://github.com/natesales/q/releases) and in my [public code repositories](https://github.com/natesales/repo).
+`q` is available as a deb/rpm for apt/yum in my [public code repositories](https://github.com/natesales/repo), as a binary under [releases](https://github.com/natesales/q/releases), and in the AUR as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/).
