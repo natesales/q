@@ -80,8 +80,7 @@ func driver(args []string) error {
 		if ok {
 			rrTypes = append(rrTypes, typeCode)
 		} else {
-			fmt.Printf("%s is not a valid RR type\n", rrType)
-			os.Exit(1)
+			return errors.New(fmt.Sprintf("%s is not a valid RR type", rrType))
 		}
 	}
 
