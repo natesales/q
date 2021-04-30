@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func Resolve(name string, chaos bool, odohProxy string, upstream upstream.Upstream, rrTypes []uint16) ([]dns.RR, time.Duration, error) {
+func resolve(name string, chaos bool, dnssec bool, odohProxy string, upstream upstream.Upstream, rrTypes []uint16) ([]dns.RR, time.Duration, error) {
 	var answers []dns.RR
 	queryStartTime := time.Now()
 
@@ -15,7 +15,7 @@ func Resolve(name string, chaos bool, odohProxy string, upstream upstream.Upstre
 		// Create the DNS question
 		req := dns.Msg{}
 
-		if opts.DNSSEC {
+		if dnssec {
 			req.SetEdns0(4096, true)
 		}
 
