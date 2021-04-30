@@ -66,7 +66,7 @@ func driver(args []string) error {
 
 	// Find a server by @ symbol if it isn't set by flag
 	if opts.Server == "" {
-		for _, arg := range os.Args {
+		for _, arg := range args {
 			if strings.HasPrefix(arg, "@") {
 				opts.Server = strings.TrimPrefix(arg, "@")
 			}
@@ -85,7 +85,7 @@ func driver(args []string) error {
 	}
 
 	// Add non-flag RR types
-	for _, arg := range os.Args {
+	for _, arg := range args {
 		rrType, ok := dns.StringToType[strings.ToUpper(arg)]
 		if ok {
 			rrTypes = append(rrTypes, rrType)
@@ -111,9 +111,10 @@ func driver(args []string) error {
 
 	// Set qname if not set by flag
 	if opts.Name == "" {
-		for _, arg := range os.Args {
-			if strings.Contains(arg, ".") && !strings.Contains(arg, "@") {
+		for _, arg := range args {
+			if strings.Contains(arg, ".") && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
 				opts.Name = arg
+				break
 			}
 		}
 	}
@@ -146,7 +147,10 @@ func driver(args []string) error {
 	if opts.OdohProxy != "" {
 		log.Debugf("using ODoH proxy %s", opts.OdohProxy)
 		if !strings.HasPrefix(u.Address(), "https") {
-			log.Warnf("upstream %s doesn't have an explicit HTTPS protocol", u.Address())
+			return errors.New(fmt.Sprintf("upstream %s doesn't have an explicit HTTPS protocol", u.Address()))
+		}
+		if !strings.HasPrefix(opts.OdohProxy, "https") {
+			return errors.New(fmt.Sprintf("proxy %s doesn't have an explicit HTTPS protocol", opts.OdohProxy))
 		}
 	}
 
