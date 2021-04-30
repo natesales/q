@@ -140,52 +140,19 @@ func main() {
 		log.Fatalf("cannot create upstream %v", err)
 	}
 
-	log.Debugf("using server %s\n", u.Address())
-
-	var answers []dns.RR
-	queryStartTime := time.Now()
-
-	// Query for each requested RR type
-	for _, qType := range rrTypes {
-		// Create the DNS question
-		req := dns.Msg{}
-
-		if opts.DNSSEC {
-			req.SetEdns0(4096, true)
+	if opts.OdohProxy != "" {
+		log.Debugf("using ODoH proxy %s", opts.OdohProxy)
+		if !strings.HasPrefix(u.Address(), "https") {
+			log.Warnf("upstream %s doesn't have an explicit HTTPS protocol", u.Address())
 		}
-
-		// Set QCLASS
-		var class uint16
-		if opts.Chaos {
-			class = dns.ClassCHAOS
-		} else {
-			class = dns.ClassINET
-		}
-		req.RecursionDesired = true
-		req.Question = []dns.Question{{
-			Name:   dns.Fqdn(opts.Name),
-			Qtype:  qType,
-			Qclass: class,
-		}}
-
-		var reply *dns.Msg
-		// Use upstream exchange if no ODoH proxy is configured
-		if opts.OdohProxy == "" {
-			// Send question to server
-			reply, err = u.Exchange(&req)
-		} else {
-			log.Debugf("using ODoH proxy %s", opts.OdohProxy)
-			reply, err = odohQuery(req, opts.OdohProxy, opts.Server)
-		}
-		if err != nil {
-			log.Fatalf("upstream query: %s", err)
-		}
-
-		answers = append(answers, reply.Answer...)
 	}
 
-	// Calculate total query time
-	queryTime := time.Now().Sub(queryStartTime)
+	log.Debugf("using server %s\n", u.Address())
+
+	answers, queryTime, err := Resolve(opts.Name, opts.Chaos, opts.OdohProxy, u, rrTypes)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Print answers
 	switch opts.Format {
