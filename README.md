@@ -24,10 +24,11 @@ Application Options:
   -t, --type=       RR type
   -x, --reverse     Reverse lookup
   -d, --dnssec      Request DNSSEC
-  -r, --raw         Output raw DNS format
+  -f, --format=     Output format (pretty, json, raw) (default: pretty)
   -c, --chaos       Use CHAOS query class
   -p, --odoh-proxy= ODoH proxy
   -i, --insecure    Disable TLS certificate verification
+      --timeout=    Upstream timeout in seconds (default: 10)
   -v, --verbose     Show verbose log messages
 
 Help Options:
