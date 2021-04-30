@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
+	"strings"
 	"testing"
 	"time"
 )
@@ -79,5 +80,20 @@ func TestResolveODOH(t *testing.T) {
 
 	if queryTime > 5000 {
 		t.Errorf("query took longer than 5 seconds, %d ms", queryTime)
+	}
+}
+
+func TestInvalidUDPResolver(t *testing.T) {
+	u, err := upstream.AddressToUpstream("127.127.127.127:1", upstream.Options{
+		Timeout:            10 * time.Second,
+		InsecureSkipVerify: opts.Insecure,
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, _, err = resolve("example.com", false, false, "", u, []uint16{dns.StringToType["A"]})
+	if !(err != nil && strings.Contains(err.Error(), "connection refused")) {
+		t.Errorf("expected connect error, got %+v", err)
 	}
 }

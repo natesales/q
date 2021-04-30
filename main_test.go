@@ -81,3 +81,15 @@ func TestParseTypes(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestInvalidTypes(t *testing.T) {
+	clearOpts()
+	err := driver([]string{
+		"-v",
+		"-q", "example.com",
+		"-t", "INVALID",
+	})
+	if !(err != nil && strings.Contains(err.Error(), "INVALID is not a valid RR type")) {
+		t.Errorf("expected invalid type error, got %+v", err)
+	}
+}
