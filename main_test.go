@@ -98,3 +98,50 @@ func TestMainInvalidTypes(t *testing.T) {
 		t.Errorf("expected invalid type error, got %+v", err)
 	}
 }
+
+func TestMainInvalidODOHUpstream(t *testing.T) {
+	clearOpts()
+	err := driver([]string{
+		"-v",
+		"-q", "example.com",
+		"-s", "tls://odoh.cloudflare-dns.com",
+		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
+	})
+	if !(err != nil && strings.Contains(err.Error(), "doesn't have an explicit HTTPS protocol")) {
+		t.Errorf("expected invalid upstream error, got %+v", err)
+	}
+}
+
+func TestMainInvalidODOHProxy(t *testing.T) {
+	clearOpts()
+	err := driver([]string{
+		"-v",
+		"-q", "example.com",
+		"-s", "https://odoh.cloudflare-dns.com",
+		"--odoh-proxy", "tls://odoh1.surfdomeinen.nl",
+	})
+	if !(err != nil && strings.Contains(err.Error(), "doesn't have an explicit HTTPS protocol")) {
+		t.Errorf("expected proxy error, got %+v", err)
+	}
+}
+
+func TestMainReverseQuery(t *testing.T) {
+	clearOpts()
+	if err := driver([]string{
+		"-v",
+		"-x",
+		"-q", "1.1.1.1",
+	}); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestMainInferredQname(t *testing.T) {
+	clearOpts()
+	if err := driver([]string{
+		"-v",
+		"example.com",
+	}); err != nil {
+		t.Error(err)
+	}
+}
