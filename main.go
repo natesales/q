@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -47,14 +48,14 @@ func color(color string, args ...interface{}) string {
 	return fmt.Sprintf(colors[color], fmt.Sprint(args...))
 }
 
-func main() {
+// driver is the "main" function for this program that accepts a flag slice for testing
+func driver(args []string) error {
 	// Parse cli flags
-	_, err := flags.ParseArgs(&opts, os.Args)
+	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Usage") {
-			log.Fatal(err)
+			return err
 		}
-		os.Exit(1)
 	}
 
 	// Enable debug logging in development releases
@@ -120,7 +121,7 @@ func main() {
 	if opts.Reverse {
 		opts.Name, err = dns.ReverseAddr(opts.Name)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		rrTypes = append(rrTypes, dns.StringToType["PTR"])
 	}
@@ -138,7 +139,7 @@ func main() {
 		InsecureSkipVerify: opts.Insecure,
 	})
 	if err != nil {
-		log.Fatalf("cannot create upstream %v", err)
+		return errors.New(fmt.Sprintf("cannot create upstream %v", err))
 	}
 
 	if opts.OdohProxy != "" {
@@ -152,7 +153,7 @@ func main() {
 
 	answers, queryTime, err := Resolve(opts.Name, opts.Chaos, opts.OdohProxy, u, rrTypes)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Print answers
@@ -183,10 +184,18 @@ func main() {
 			Answers:   answers,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		fmt.Println(string(marshalled))
 	default:
-		log.Fatal("Invalid output format")
+		return errors.New("invalid output format")
+	}
+
+	return nil // nil error
+}
+
+func main() {
+	if err := driver(os.Args); err != nil {
+		log.Fatal(err)
 	}
 }
