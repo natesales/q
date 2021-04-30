@@ -24,6 +24,7 @@ var opts struct {
 	Chaos     bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	OdohProxy string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Insecure  bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
+	Timeout   uint     `short:"t" long:"timeout" description:"Upstream timeout in seconds" default:"10"`
 	Verbose   bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
 }
 
@@ -133,7 +134,7 @@ func main() {
 
 	// Create the upstream server
 	u, err := upstream.AddressToUpstream(opts.Server, upstream.Options{
-		Timeout:            10 * time.Second,
+		Timeout:            time.Duration(opts.Timeout) * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
 	if err != nil {
