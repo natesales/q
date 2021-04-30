@@ -122,15 +122,12 @@ func odohQuery(query dns.Msg, proxy string, target string) (*dns.Msg, error) {
 	}
 
 	if len(odohConfigs.Configs) == 0 {
-		err := errors.New("target provided no valid odoh configs")
-		fmt.Println(err)
-		return nil, err
+		return nil, errors.New("target provided no valid odoh configs")
 	}
 	odohConfig := odohConfigs.Configs[0]
 
 	packedDnsQuery, err := query.Pack()
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
