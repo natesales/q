@@ -145,3 +145,26 @@ func TestMainInferredQname(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestMainInferredServer(t *testing.T) {
+	clearOpts()
+	if err := driver([]string{
+		"-v",
+		"-q", "example.com",
+		"@dns.quad9.net",
+	}); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestMainInvalidReverseQuery(t *testing.T) {
+	clearOpts()
+	err := driver([]string{
+		"-v",
+		"-x",
+		"example.com",
+	})
+	if !(err != nil && strings.Contains(err.Error(), "unrecognized address: example.com")) {
+		t.Errorf("expected address error, got %+v", err)
+	}
+}
