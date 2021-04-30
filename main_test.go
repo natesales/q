@@ -19,10 +19,11 @@ func clearOpts() {
 	opts.Verbose = false
 }
 
-func TestCLIUDPQuery(t *testing.T) {
+func TestQuery(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
-		"example.com",
+		"-v",
+		"-q", "example.com",
 	}); err != nil {
 		t.Error(err)
 	}
@@ -43,7 +44,8 @@ func TestCLIODOHQuery(t *testing.T) {
 func TestRawFormat(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
-		"example.com",
+		"-v",
+		"-q", "example.com",
 		"--format=raw",
 	}); err != nil {
 		t.Error(err)
@@ -53,7 +55,8 @@ func TestRawFormat(t *testing.T) {
 func TestJSONFormat(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
-		"example.com",
+		"-v",
+		"-q", "example.com",
 		"--format=json",
 	}); err != nil {
 		t.Error(err)
@@ -63,7 +66,8 @@ func TestJSONFormat(t *testing.T) {
 func TestInvalidFormat(t *testing.T) {
 	clearOpts()
 	err := driver([]string{
-		"example.com",
+		"-v",
+		"-q", "example.com",
 		"--format=invalid",
 	})
 	if !(err != nil && strings.Contains(err.Error(), "invalid output format")) {
@@ -74,9 +78,10 @@ func TestInvalidFormat(t *testing.T) {
 func TestParseTypes(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
-		"example.com",
-		"A",
-		"AAAA",
+		"-v",
+		"-q", "example.com",
+		"-t", "A",
+		"-t", "AAAA",
 	}); err != nil {
 		t.Error(err)
 	}
