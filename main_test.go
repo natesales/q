@@ -19,7 +19,7 @@ func clearOpts() {
 	opts.Verbose = false
 }
 
-func TestQuery(t *testing.T) {
+func TestMainQuery(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
 		"-v",
@@ -29,7 +29,7 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func TestCLIODOHQuery(t *testing.T) {
+func TestMainODOHQuery(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
 		"-v",
@@ -41,7 +41,7 @@ func TestCLIODOHQuery(t *testing.T) {
 	}
 }
 
-func TestRawFormat(t *testing.T) {
+func TestMainRawFormat(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
 		"-v",
@@ -52,7 +52,7 @@ func TestRawFormat(t *testing.T) {
 	}
 }
 
-func TestJSONFormat(t *testing.T) {
+func TestMainJSONFormat(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
 		"-v",
@@ -63,7 +63,7 @@ func TestJSONFormat(t *testing.T) {
 	}
 }
 
-func TestInvalidFormat(t *testing.T) {
+func TestMainInvalidOutputFormat(t *testing.T) {
 	clearOpts()
 	err := driver([]string{
 		"-v",
@@ -75,7 +75,7 @@ func TestInvalidFormat(t *testing.T) {
 	}
 }
 
-func TestParseTypes(t *testing.T) {
+func TestMainParseTypes(t *testing.T) {
 	clearOpts()
 	if err := driver([]string{
 		"-v",
@@ -87,7 +87,7 @@ func TestParseTypes(t *testing.T) {
 	}
 }
 
-func TestInvalidTypes(t *testing.T) {
+func TestMainInvalidTypes(t *testing.T) {
 	clearOpts()
 	err := driver([]string{
 		"-v",

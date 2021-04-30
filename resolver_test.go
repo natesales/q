@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestResolveUDP(t *testing.T) {
+func TestResolverUDP(t *testing.T) {
 	u, err := upstream.AddressToUpstream("1.1.1.1:53", upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
@@ -33,7 +33,7 @@ func TestResolveUDP(t *testing.T) {
 	}
 }
 
-func TestDNSSECResolveUDP(t *testing.T) {
+func TestResolverDNSSEC(t *testing.T) {
 	u, err := upstream.AddressToUpstream("1.1.1.1:53", upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
@@ -58,7 +58,7 @@ func TestDNSSECResolveUDP(t *testing.T) {
 	}
 }
 
-func TestResolveODOH(t *testing.T) {
+func TestResolverODOH(t *testing.T) {
 	u, err := upstream.AddressToUpstream("https://odoh.cloudflare-dns.com", upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
@@ -83,7 +83,7 @@ func TestResolveODOH(t *testing.T) {
 	}
 }
 
-func TestInvalidUDPResolver(t *testing.T) {
+func TestResolverInvalidUDPUpstream(t *testing.T) {
 	u, err := upstream.AddressToUpstream("127.127.127.127:1", upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
