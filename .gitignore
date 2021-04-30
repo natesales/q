@@ -1,6 +1,4 @@
-# JetBrains
 .idea
-
-# Release
 dist/
 q
+cover.out
