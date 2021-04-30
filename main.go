@@ -111,9 +111,11 @@ func driver(args []string) error {
 	}
 
 	// Set qname if not set by flag
-	for _, arg := range os.Args {
-		if strings.Contains(arg, ".") && !strings.Contains(arg, "@") {
-			opts.Name = arg
+	if opts.Name == "" {
+		for _, arg := range os.Args {
+			if strings.Contains(arg, ".") && !strings.Contains(arg, "@") {
+				opts.Name = arg
+			}
 		}
 	}
 
@@ -149,9 +151,9 @@ func driver(args []string) error {
 		}
 	}
 
-	log.Debugf("using server %s\n", u.Address())
+	log.Debugf("using server %s", u.Address())
 
-	answers, queryTime, err := Resolve(opts.Name, opts.Chaos, opts.OdohProxy, u, rrTypes)
+	answers, queryTime, err := resolve(opts.Name, opts.Chaos, opts.DNSSEC, opts.OdohProxy, u, rrTypes)
 	if err != nil {
 		return err
 	}
