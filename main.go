@@ -53,7 +53,10 @@ func driver(args []string) error {
 	// Parse cli flags
 	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
-		return err
+		if !strings.Contains(err.Error(), "Usage") {
+			log.Fatal(err)
+		}
+		os.Exit(1)
 	}
 
 	// Enable debug logging in development releases
