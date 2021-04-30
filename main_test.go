@@ -168,3 +168,15 @@ func TestMainInvalidReverseQuery(t *testing.T) {
 		t.Errorf("expected address error, got %+v", err)
 	}
 }
+
+func TestMainInvalidUpstream(t *testing.T) {
+	clearOpts()
+	err := driver([]string{
+		"-v",
+		"-s", "127.127.127.127:1",
+		"example.com",
+	})
+	if !(err != nil && strings.Contains(err.Error(), "connection refused")) {
+		t.Errorf("expected connection error, got %+v", err)
+	}
+}
