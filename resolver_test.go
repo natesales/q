@@ -97,3 +97,28 @@ func TestInvalidUDPResolver(t *testing.T) {
 		t.Errorf("expected connect error, got %+v", err)
 	}
 }
+
+func TestResolverChaosClass(t *testing.T) {
+	u, err := upstream.AddressToUpstream("1.1.1.1:53", upstream.Options{
+		Timeout:            10 * time.Second,
+		InsecureSkipVerify: opts.Insecure,
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	answers, qTime, err := resolve("id.server", true, false, "", u, []uint16{dns.StringToType["TXT"]})
+	if err != nil {
+		t.Error(err)
+	}
+
+	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
+
+	if len(answers) < 1 {
+		t.Errorf("expected more than 1 answer, got %d", len(answers))
+	}
+
+	if queryTime > 5000 {
+		t.Errorf("query took longer than 5 seconds, %d ms", queryTime)
+	}
+}
