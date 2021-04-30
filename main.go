@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -19,7 +20,7 @@ var opts struct {
 	Types     []string `short:"t" long:"type" description:"RR type"`
 	Reverse   bool     `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC    bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
-	Raw       bool     `short:"r" long:"raw" description:"Output raw DNS format"`
+	Format    string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
 	Chaos     bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	OdohProxy string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Insecure  bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
@@ -180,26 +181,44 @@ func main() {
 			log.Fatalf("upstream query: %s", err)
 		}
 
-		// Print answers
-		for _, answer := range reply.Answer {
-			answers = append(answers, answer)
-			if opts.Raw {
-				fmt.Println(answer.String())
-			} else {
-				hdr := answer.Header()
-				fmt.Printf("%s %s %s %s\n",
-					color("purple", hdr.Name),
-					color("green", time.Duration(hdr.Ttl)*time.Second),
-					color("magenta", dns.TypeToString[hdr.Rrtype]),
-					strings.TrimSpace(strings.Join(strings.Split(answer.String(), dns.TypeToString[hdr.Rrtype])[1:], "")),
-				)
-			}
-		}
+		answers = append(answers, reply.Answer...)
 	}
 
 	// Calculate total query time
 	queryTime := time.Now().Sub(queryStartTime)
-	if opts.Raw {
+
+	// Print answers
+	switch opts.Format {
+	case "pretty":
+		for _, a := range answers {
+			fmt.Printf("%s %s %s %s\n",
+				color("purple", a.Header().Name),
+				color("green", time.Duration(a.Header().Ttl)*time.Second),
+				color("magenta", dns.TypeToString[a.Header().Rrtype]),
+				strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
+			)
+		}
+	case "raw":
+		for _, a := range answers {
+			fmt.Println(a.String())
+		}
 		fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), opts.Server, queryTime.Round(time.Millisecond))
+	case "json":
+		// Marshal answers to JSON
+		marshalled, err := json.Marshal(struct {
+			Server    string
+			QueryTime int64
+			Answers   []dns.RR
+		}{
+			Server:    opts.Server,
+			QueryTime: int64(queryTime / time.Millisecond),
+			Answers:   answers,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(string(marshalled))
+	default:
+		log.Fatal("Invalid output format")
 	}
 }
