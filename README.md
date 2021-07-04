@@ -8,7 +8,7 @@ A tiny command line DNS client with support for UDP, DoT, DoH, DoQ, and ODoH.
 [![Go Report](https://goreportcard.com/badge/github.com/natesales/q?style=for-the-badge)](https://goreportcard.com/report/github.com/natesales/q)
 [![License](https://img.shields.io/github/license/natesales/q?style=for-the-badge)](https://raw.githubusercontent.com/natesales/q/main/LICENSE)
 
-![q screenshot](screenshot.png)
+![q screenshot](carbon.svg)
 </div>
 
 ### Usage
