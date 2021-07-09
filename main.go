@@ -81,7 +81,7 @@ func driver(args []string) error {
 		if ok {
 			rrTypes = append(rrTypes, typeCode)
 		} else {
-			return errors.New(fmt.Sprintf("%s is not a valid RR type", rrType))
+			return fmt.Errorf("%s is not a valid RR type", rrType)
 		}
 	}
 
@@ -142,16 +142,16 @@ func driver(args []string) error {
 		InsecureSkipVerify: opts.Insecure,
 	})
 	if err != nil {
-		return errors.New(fmt.Sprintf("cannot create upstream %v", err))
+		return fmt.Errorf("cannot create upstream %v", err)
 	}
 
 	if opts.OdohProxy != "" {
 		log.Debugf("using ODoH proxy %s", opts.OdohProxy)
 		if !strings.HasPrefix(u.Address(), "https") {
-			return errors.New(fmt.Sprintf("upstream %s doesn't have an explicit HTTPS protocol", u.Address()))
+			return fmt.Errorf("upstream %s doesn't have an explicit HTTPS protocol", u.Address())
 		}
 		if !strings.HasPrefix(opts.OdohProxy, "https") {
-			return errors.New(fmt.Sprintf("proxy %s doesn't have an explicit HTTPS protocol", opts.OdohProxy))
+			return fmt.Errorf("proxy %s doesn't have an explicit HTTPS protocol", opts.OdohProxy)
 		}
 	}
 
