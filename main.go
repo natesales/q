@@ -65,32 +65,6 @@ func driver(args []string) error {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	// Find a server by @ symbol if it isn't set by flag
-	if opts.Server == "" {
-		for _, arg := range args {
-			if strings.HasPrefix(arg, "@") {
-				opts.Server = strings.TrimPrefix(arg, "@")
-			}
-		}
-	}
-
-	// Parse boolean options
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "+") {
-			switch arg {
-			case "+dnssec":
-				opts.DNSSEC = true
-			}
-		}
-	}
-
-	// Parse chaos class
-	for _, arg := range args {
-		if strings.ToLower(arg) == "ch" {
-			opts.Chaos = true
-		}
-	}
-
 	// Parse requested RR types
 	var rrTypes = make(map[uint16]bool)
 	for _, rrType := range opts.Types {
@@ -102,11 +76,34 @@ func driver(args []string) error {
 		}
 	}
 
-	// Add non-flag RR types
 	for _, arg := range args {
+		// Find a server by @ symbol if it isn't set by flag
+		if opts.Server == "" && strings.HasPrefix(arg, "@") {
+			opts.Server = strings.TrimPrefix(arg, "@")
+		}
+
+		// Parse boolean options
+		if strings.HasPrefix(arg, "+") {
+			switch arg {
+			case "+dnssec":
+				opts.DNSSEC = true
+			}
+		}
+
+		// Parse chaos class
+		if strings.ToLower(arg) == "ch" {
+			opts.Chaos = true
+		}
+
+		// Add non-flag RR types
 		rrType, ok := dns.StringToType[strings.ToUpper(arg)]
 		if ok {
 			rrTypes[rrType] = true
+		}
+
+		// Set qname if not set by flag
+		if opts.Name == "" && strings.Contains(arg, ".") && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
+			opts.Name = arg
 		}
 	}
 
@@ -115,16 +112,6 @@ func driver(args []string) error {
 		for _, defaultRRType := range []string{"A", "AAAA", "NS", "MX", "TXT", "CNAME"} {
 			rrType, _ := dns.StringToType[defaultRRType]
 			rrTypes[rrType] = true
-		}
-	}
-
-	// Set qname if not set by flag
-	if opts.Name == "" {
-		for _, arg := range args {
-			if strings.Contains(arg, ".") && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
-				opts.Name = arg
-				break
-			}
 		}
 	}
 
