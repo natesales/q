@@ -92,11 +92,11 @@ func driver(args []string) error {
 	}
 
 	// Parse requested RR types
-	var rrTypes []uint16
+	var rrTypes = make(map[uint16]bool)
 	for _, rrType := range opts.Types {
 		typeCode, ok := dns.StringToType[strings.ToUpper(rrType)]
 		if ok {
-			rrTypes = append(rrTypes, typeCode)
+			rrTypes[typeCode] = true
 		} else {
 			return fmt.Errorf("%s is not a valid RR type", rrType)
 		}
@@ -106,7 +106,7 @@ func driver(args []string) error {
 	for _, arg := range args {
 		rrType, ok := dns.StringToType[strings.ToUpper(arg)]
 		if ok {
-			rrTypes = append(rrTypes, rrType)
+			rrTypes[rrType] = true
 		}
 	}
 
@@ -114,17 +114,8 @@ func driver(args []string) error {
 	if len(rrTypes) < 1 {
 		for _, defaultRRType := range []string{"A", "AAAA", "NS", "MX", "TXT", "CNAME"} {
 			rrType, _ := dns.StringToType[defaultRRType]
-			rrTypes = append(rrTypes, rrType)
+			rrTypes[rrType] = true
 		}
-	}
-
-	// Log RR types
-	if opts.Verbose {
-		var rrTypeStrings []string
-		for _, rrType := range rrTypes {
-			rrTypeStrings = append(rrTypeStrings, dns.TypeToString[rrType])
-		}
-		log.Debugf("RR types: %+v", rrTypeStrings)
 	}
 
 	// Set qname if not set by flag
@@ -143,7 +134,16 @@ func driver(args []string) error {
 		if err != nil {
 			return err
 		}
-		rrTypes = append(rrTypes, dns.StringToType["PTR"])
+		rrTypes[dns.StringToType["PTR"]] = true
+	}
+
+	// Log RR types
+	if opts.Verbose {
+		var rrTypeStrings []string
+		for rrType := range rrTypes {
+			rrTypeStrings = append(rrTypeStrings, dns.TypeToString[rrType])
+		}
+		log.Debugf("RR types: %+v", rrTypeStrings)
 	}
 
 	log.Debugf("qname %s", opts.Name)
@@ -174,7 +174,11 @@ func driver(args []string) error {
 
 	log.Debugf("using server %s", u.Address())
 
-	answers, queryTime, err := resolve(opts.Name, opts.Chaos, opts.DNSSEC, opts.OdohProxy, u, rrTypes)
+	var rrTypesSlice []uint16
+	for rrType := range rrTypes {
+		rrTypesSlice = append(rrTypesSlice, rrType)
+	}
+	answers, queryTime, err := resolve(opts.Name, opts.Chaos, opts.DNSSEC, opts.OdohProxy, u, rrTypesSlice)
 	if err != nil {
 		return err
 	}
