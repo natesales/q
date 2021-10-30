@@ -11,7 +11,7 @@ import (
 )
 
 func TestResolverUDP(t *testing.T) {
-	u, err := upstream.AddressToUpstream("1.1.1.1:53", upstream.Options{
+	u, err := upstream.AddressToUpstream("1.1.1.1:53", &upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
@@ -23,11 +23,11 @@ func TestResolverUDP(t *testing.T) {
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
 	assert.Greater(t, len(answers), 0)
-	assert.Less(t, queryTime, 100)
+	assert.Less(t, queryTime, uint16(1000))
 }
 
 func TestResolverDNSSEC(t *testing.T) {
-	u, err := upstream.AddressToUpstream("1.1.1.1:53", upstream.Options{
+	u, err := upstream.AddressToUpstream("1.1.1.1:53", &upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
@@ -39,11 +39,11 @@ func TestResolverDNSSEC(t *testing.T) {
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
 	assert.Greater(t, len(answers), 0)
-	assert.Less(t, queryTime, 100)
+	assert.Less(t, queryTime, uint16(1000))
 }
 
 func TestResolverODOH(t *testing.T) {
-	u, err := upstream.AddressToUpstream("https://odoh.cloudflare-dns.com", upstream.Options{
+	u, err := upstream.AddressToUpstream("https://odoh.cloudflare-dns.com", &upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
@@ -55,11 +55,11 @@ func TestResolverODOH(t *testing.T) {
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
 	assert.Greater(t, len(answers), 0)
-	assert.Less(t, queryTime, 100)
+	assert.Less(t, queryTime, uint16(1000))
 }
 
 func TestResolverInvalidUDPUpstream(t *testing.T) {
-	u, err := upstream.AddressToUpstream("127.127.127.127:1", upstream.Options{
+	u, err := upstream.AddressToUpstream("127.127.127.127:1", &upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
@@ -72,7 +72,7 @@ func TestResolverInvalidUDPUpstream(t *testing.T) {
 }
 
 func TestResolverChaosClass(t *testing.T) {
-	u, err := upstream.AddressToUpstream("1.1.1.1:53", upstream.Options{
+	u, err := upstream.AddressToUpstream("1.1.1.1:53", &upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})

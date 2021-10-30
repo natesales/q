@@ -137,7 +137,7 @@ func driver(args []string) error {
 	}
 
 	// Create the upstream server
-	u, err := upstream.AddressToUpstream(opts.Server, upstream.Options{
+	u, err := upstream.AddressToUpstream(opts.Server, &upstream.Options{
 		Timeout:            time.Duration(opts.Timeout) * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
