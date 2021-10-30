@@ -61,7 +61,7 @@ func driver(args []string) error {
 
 	// Enable debug logging in development releases
 	if //noinspection GoBoolExpressions
-	version == "devel" || opts.Verbose {
+	version == "dev" || opts.Verbose {
 		log.SetLevel(log.DebugLevel)
 	}
 
