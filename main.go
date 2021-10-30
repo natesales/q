@@ -74,6 +74,23 @@ func driver(args []string) error {
 		}
 	}
 
+	// Parse boolean options
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "+") {
+			switch arg {
+			case "+dnssec":
+				opts.DNSSEC = true
+			}
+		}
+	}
+
+	// Parse chaos class
+	for _, arg := range args {
+		if strings.ToLower(arg) == "ch" {
+			opts.Chaos = true
+		}
+	}
+
 	// Parse requested RR types
 	var rrTypes []uint16
 	for _, rrType := range opts.Types {

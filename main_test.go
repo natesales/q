@@ -166,3 +166,24 @@ func TestMainInvalidUpstream(t *testing.T) {
 		t.Errorf("expected connection error, got %+v", err)
 	}
 }
+
+func TestMainDNSSECArg(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"+dnssec",
+		"--format=json",
+	}))
+}
+
+func TestMainChaosClass(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"CH",
+		"TXT",
+		"--format=json",
+	}))
+}
