@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func clearOpts() {
@@ -21,46 +23,38 @@ func clearOpts() {
 
 func TestMainQuery(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainODOHQuery(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
 		"-s", "https://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainRawFormat(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
 		"--format=raw",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainJSONFormat(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
 		"--format=json",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainInvalidOutputFormat(t *testing.T) {
@@ -77,14 +71,12 @@ func TestMainInvalidOutputFormat(t *testing.T) {
 
 func TestMainParseTypes(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
 		"-t", "A",
 		"-t", "AAAA",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainInvalidTypes(t *testing.T) {
@@ -127,34 +119,28 @@ func TestMainInvalidODOHProxy(t *testing.T) {
 
 func TestMainReverseQuery(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-x",
 		"-q", "1.1.1.1",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainInferredQname(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"example.com",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainInferredServer(t *testing.T) {
 	clearOpts()
-	if err := driver([]string{
+	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
 		"@dns.quad9.net",
-	}); err != nil {
-		t.Error(err)
-	}
+	}))
 }
 
 func TestMainInvalidReverseQuery(t *testing.T) {

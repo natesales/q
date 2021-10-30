@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/miekg/dns"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResolverUDP(t *testing.T) {
@@ -13,24 +15,15 @@ func TestResolverUDP(t *testing.T) {
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("example.com", false, false, "", u, []uint16{dns.StringToType["A"]})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
-	if len(answers) < 1 {
-		t.Errorf("expected more than 1 answer, got %d", len(answers))
-	}
-
-	if queryTime > 1000 {
-		t.Errorf("query took longer than 1 second, %d ms", queryTime)
-	}
+	assert.Greater(t, len(answers), 0)
+	assert.Less(t, queryTime, 100)
 }
 
 func TestResolverDNSSEC(t *testing.T) {
@@ -38,24 +31,15 @@ func TestResolverDNSSEC(t *testing.T) {
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("example.com", false, true, "", u, []uint16{dns.StringToType["A"]})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
-	if len(answers) < 1 {
-		t.Errorf("expected more than 1 answer, got %d", len(answers))
-	}
-
-	if queryTime > 1000 {
-		t.Errorf("query took longer than 1 second, %d ms", queryTime)
-	}
+	assert.Greater(t, len(answers), 0)
+	assert.Less(t, queryTime, 100)
 }
 
 func TestResolverODOH(t *testing.T) {
@@ -63,24 +47,15 @@ func TestResolverODOH(t *testing.T) {
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("example.com", false, false, "odoh1.surfdomeinen.nl", u, []uint16{dns.StringToType["A"]})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
-	if len(answers) < 1 {
-		t.Errorf("expected more than 1 answer, got %d", len(answers))
-	}
-
-	if queryTime > 5000 {
-		t.Errorf("query took longer than 5 seconds, %d ms", queryTime)
-	}
+	assert.Greater(t, len(answers), 0)
+	assert.Less(t, queryTime, 100)
 }
 
 func TestResolverInvalidUDPUpstream(t *testing.T) {
@@ -88,9 +63,7 @@ func TestResolverInvalidUDPUpstream(t *testing.T) {
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	_, _, err = resolve("example.com", false, false, "", u, []uint16{dns.StringToType["A"]})
 	if !(err != nil && strings.Contains(err.Error(), "connection refused")) {
@@ -103,22 +76,13 @@ func TestResolverChaosClass(t *testing.T) {
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("id.server", true, false, "", u, []uint16{dns.StringToType["TXT"]})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
 
-	if len(answers) < 1 {
-		t.Errorf("expected more than 1 answer, got %d", len(answers))
-	}
-
-	if queryTime > 5000 {
-		t.Errorf("query took longer than 5 seconds, %d ms", queryTime)
-	}
+	assert.Greater(t, len(answers), 0)
+	assert.Less(t, queryTime, uint16(1000))
 }

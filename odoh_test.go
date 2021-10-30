@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/miekg/dns"
 	"strings"
 	"testing"
+
+	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestODOHQuery(t *testing.T) {
@@ -16,13 +18,8 @@ func TestODOHQuery(t *testing.T) {
 	}}
 
 	reply, err := odohQuery(msg, "odoh1.surfdomeinen.nl", "odoh.cloudflare-dns.com")
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(reply.Answer) < 1 {
-		t.Errorf("expected more than one answer, got %d", len(reply.Answer))
-	}
+	assert.Nil(t, err)
+	assert.Greater(t, len(reply.Answer), 0)
 }
 
 func TestODOHInvalidUpstream(t *testing.T) {
