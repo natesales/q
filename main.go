@@ -16,20 +16,26 @@ import (
 
 // CLI flags
 var opts struct {
-	Name      string   `short:"q" long:"qname" description:"Query name"`
-	Server    string   `short:"s" long:"server" description:"DNS server"`
-	Types     []string `short:"t" long:"type" description:"RR type"`
-	Reverse   bool     `short:"x" long:"reverse" description:"Reverse lookup"`
-	DNSSEC    bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
-	Format    string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
-	Chaos     bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
-	OdohProxy string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	Insecure  bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
-	Timeout   uint     `long:"timeout" description:"Upstream timeout in seconds" default:"10"`
-	Verbose   bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
+	Name        string   `short:"q" long:"qname" description:"Query name"`
+	Server      string   `short:"s" long:"server" description:"DNS server"`
+	Types       []string `short:"t" long:"type" description:"RR type"`
+	Reverse     bool     `short:"x" long:"reverse" description:"Reverse lookup"`
+	DNSSEC      bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
+	Format      string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	Chaos       bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	OdohProxy   string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
+	Insecure    bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
+	Timeout     uint     `long:"timeout" description:"Upstream timeout in seconds" default:"10"`
+	Verbose     bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
+	ShowVersion bool     `short:"V" long:"version" description:"Show version and exit"`
 }
 
-var version = "dev" // Set by build process
+// Build process flags
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
 
 // ANSI colors
 var colors = map[string]string{
@@ -63,6 +69,11 @@ func driver(args []string) error {
 	if //noinspection GoBoolExpressions
 	version == "dev" || opts.Verbose {
 		log.SetLevel(log.DebugLevel)
+	}
+
+	if opts.ShowVersion {
+		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
+		os.Exit(0)
 	}
 
 	// Parse requested RR types
