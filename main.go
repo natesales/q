@@ -124,7 +124,7 @@ func driver(args []string) error {
 	// Set qname if not set by flag
 	if opts.Name == "" {
 		for _, arg := range args {
-			if strings.Contains(arg, ".") && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
+			if (strings.Contains(arg, ".") || strings.Contains(arg, ":")) && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
 				opts.Name = arg
 				break
 			}
