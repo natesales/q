@@ -76,6 +76,7 @@ func driver(args []string) error {
 		}
 	}
 
+	// Add non-flag RR types
 	for _, arg := range args {
 		// Find a server by @ symbol if it isn't set by flag
 		if opts.Server == "" && strings.HasPrefix(arg, "@") {
@@ -102,7 +103,7 @@ func driver(args []string) error {
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" && strings.Contains(arg, ".") && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
+		if opts.Name == "" && (strings.Contains(arg, ".") || strings.Contains(arg, ":")) && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
 			opts.Name = arg
 		}
 	}
@@ -119,7 +120,7 @@ func driver(args []string) error {
 	if opts.Reverse {
 		opts.Name, err = dns.ReverseAddr(opts.Name)
 		if err != nil {
-			return err
+			return fmt.Errorf("dns reverse: %s", err)
 		}
 		rrTypes[dns.StringToType["PTR"]] = true
 	}
