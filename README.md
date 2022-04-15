@@ -1,7 +1,7 @@
 <div align="center">
 <h1>q</h1>
 
-A tiny command line DNS client with support for UDP, DoT, DoH, DoQ, and ODoH.
+A tiny command line DNS client with support for UDP, TCP, DoT, DoH, DoQ, and ODoH.
 
 [![Release](https://img.shields.io/github/v/release/natesales/q?style=for-the-badge)](https://github.com/natesales/q/releases)
 ![Coverage](coverage_badge.png)
@@ -40,7 +40,7 @@ Help Options:
 [![asciicast](https://asciinema.org/a/XdWPPvZgx4hEBFwGnGwL13bsZ.svg)](https://asciinema.org/a/XdWPPvZgx4hEBFwGnGwL13bsZ)
 
 ### Protocol Support
-- UDP DNS ([RFC 1034](https://tools.ietf.org/html/rfc1034))
+- UDP/TCP DNS ([RFC 1034](https://tools.ietf.org/html/rfc1034))
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
 - DNS over QUIC ([draft-ietf-dprive-dnsoquic-02](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02))

@@ -35,7 +35,7 @@ nfpms:
     vendor: Nate Sales
     homepage: https://natesales.net/
     maintainer: Nate Sales <nate@natesales.net>
-    description: A tiny CLI DNS client library with support for UDP, DoT, DoH, and DoQ.
+    description: A tiny CLI DNS client library with support for UDP, TCP, DoT, DoH, and DoQ.
     license: GNU GPL-3.0
     section: utils
     priority: extra
