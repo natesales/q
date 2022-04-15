@@ -24,7 +24,7 @@ jobs:
         run: go build -v ./...
 
       - name: Get gopherbadger
-        run: go get github.com/jpoles1/gopherbadger
+        run: go install github.com/jpoles1/gopherbadger
 
       - name: Run test
         run: gopherbadger -style=for-the-badge -covercmd "go test -v -race -covermode atomic -coverprofile=cover.out ./... && go tool cover -func=cover.out"
