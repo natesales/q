@@ -18,6 +18,7 @@ func clearOpts() {
 	opts.OdohProxy = ""
 	opts.Insecure = false
 	opts.Timeout = 10
+	opts.ShowVersion = false
 	opts.Verbose = false
 }
 
@@ -29,7 +30,14 @@ func TestMainQuery(t *testing.T) {
 	}))
 }
 
-func TestMainODOHQuery(t *testing.T) {
+func TestMainVersion(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-V",
+	}))
+}
+
+func TestMainODoHQuery(t *testing.T) {
 	clearOpts()
 	assert.Nil(t, driver([]string{
 		"-v",
@@ -91,7 +99,7 @@ func TestMainInvalidTypes(t *testing.T) {
 	}
 }
 
-func TestMainInvalidODOHUpstream(t *testing.T) {
+func TestMainInvalidODoHUpstream(t *testing.T) {
 	clearOpts()
 	err := driver([]string{
 		"-v",
@@ -104,7 +112,7 @@ func TestMainInvalidODOHUpstream(t *testing.T) {
 	}
 }
 
-func TestMainInvalidODOHProxy(t *testing.T) {
+func TestMainInvalidODoHProxy(t *testing.T) {
 	clearOpts()
 	err := driver([]string{
 		"-v",

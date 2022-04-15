@@ -22,7 +22,7 @@ func TestBuildURL(t *testing.T) {
 	assert.Equal(t, "http://www.example.com", u.String())
 }
 
-func TestODOHQuery(t *testing.T) {
+func TestODoHQuery(t *testing.T) {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -36,7 +36,7 @@ func TestODOHQuery(t *testing.T) {
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
-func TestODOHInvalidTarget(t *testing.T) {
+func TestODoHInvalidTarget(t *testing.T) {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -48,4 +48,18 @@ func TestODOHInvalidTarget(t *testing.T) {
 	_, err := odohQuery(msg, "example.com", "odoh1.surfdomeinen.nl")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Invalid serialized ObliviousDoHConfig")
+}
+
+func TestODoHInvalidProxy(t *testing.T) {
+	msg := dns.Msg{}
+	msg.RecursionDesired = true
+	msg.Question = []dns.Question{{
+		Name:   "example.com.",
+		Qtype:  dns.StringToType["A"],
+		Qclass: dns.ClassINET,
+	}}
+
+	_, err := odohQuery(msg, "odoh.cloudflare-dns.com", "example.com")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "responded with an invalid Content-Type header")
 }

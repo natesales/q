@@ -73,7 +73,7 @@ func driver(args []string) error {
 
 	if opts.ShowVersion {
 		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
-		os.Exit(0)
+		return nil
 	}
 
 	// Parse requested RR types

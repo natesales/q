@@ -42,7 +42,7 @@ func TestResolverDNSSEC(t *testing.T) {
 	assert.Less(t, queryTime, uint16(1000))
 }
 
-func TestResolverODOH(t *testing.T) {
+func TestResolverODoH(t *testing.T) {
 	u, err := upstream.AddressToUpstream("https://odoh.cloudflare-dns.com", &upstream.Options{
 		Timeout:            10 * time.Second,
 		InsecureSkipVerify: opts.Insecure,
