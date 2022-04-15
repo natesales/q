@@ -13,7 +13,7 @@ import (
 func TestResolverUDP(t *testing.T) {
 	u, err := upstream.AddressToUpstream("1.1.1.1:53", &upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: opts.Insecure,
+		InsecureSkipVerify: !opts.TLSVerify,
 	})
 	assert.Nil(t, err)
 
@@ -30,7 +30,7 @@ func TestResolverUDP(t *testing.T) {
 func TestResolverDNSSEC(t *testing.T) {
 	u, err := upstream.AddressToUpstream("1.1.1.1:53", &upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: opts.Insecure,
+		InsecureSkipVerify: !opts.TLSVerify,
 	})
 	assert.Nil(t, err)
 
@@ -47,7 +47,7 @@ func TestResolverDNSSEC(t *testing.T) {
 func TestResolverODoH(t *testing.T) {
 	u, err := upstream.AddressToUpstream("https://odoh.cloudflare-dns.com", &upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: opts.Insecure,
+		InsecureSkipVerify: !opts.TLSVerify,
 	})
 	assert.Nil(t, err)
 
@@ -64,7 +64,7 @@ func TestResolverODoH(t *testing.T) {
 func TestResolverInvalidUDPUpstream(t *testing.T) {
 	u, err := upstream.AddressToUpstream("127.127.127.127:1", &upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: opts.Insecure,
+		InsecureSkipVerify: !opts.TLSVerify,
 	})
 	assert.Nil(t, err)
 
@@ -78,7 +78,7 @@ func TestResolverInvalidUDPUpstream(t *testing.T) {
 func TestResolverChaosClass(t *testing.T) {
 	u, err := upstream.AddressToUpstream("1.1.1.1:53", &upstream.Options{
 		Timeout:            10 * time.Second,
-		InsecureSkipVerify: opts.Insecure,
+		InsecureSkipVerify: !opts.TLSVerify,
 	})
 	assert.Nil(t, err)
 

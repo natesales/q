@@ -22,12 +22,12 @@ type optsTemplate struct {
 	Types               []string `short:"t" long:"type" description:"RR type"`
 	Reverse             bool     `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC              bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
-	NSID                bool     `short:"n" long:"nsid" description:"TODO"`
+	NSID                bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
 	ClientSubnet        string   `long:"subnet" description:"Set EDNS0 client subnet"`
 	Format              string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
 	Chaos               bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy           string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	Insecure            bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
+	TLSVerify           bool     `short:"i" long:"tls-verify" description:"Enable TLS certificate verification"`
 	Timeout             uint     `long:"timeout" description:"Upstream timeout in seconds" default:"10"`
 	AuthoritativeAnswer bool     `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
 	AuthenticData       bool     `long:"ad" description:"Set AD (Authentic Data) flag in query"`
@@ -70,6 +70,7 @@ func color(color string, args ...interface{}) string {
 func clearOpts() {
 	opts = optsTemplate{}
 	opts.RecursionDesired = true
+	opts.TLSVerify = true
 }
 
 // parsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
@@ -228,7 +229,7 @@ func driver(args []string) error {
 	// Create the upstream server
 	u, err := upstream.AddressToUpstream(opts.Server, &upstream.Options{
 		Timeout:            time.Duration(opts.Timeout) * time.Second,
-		InsecureSkipVerify: opts.Insecure,
+		InsecureSkipVerify: !opts.TLSVerify,
 	})
 	if err != nil {
 		return fmt.Errorf("cannot create upstream %v", err)
