@@ -1,6 +1,6 @@
 module github.com/natesales/q
 
-go 1.17
+go 1.18
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.39.9
@@ -27,7 +27,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/joomcode/errorx v1.0.3 // indirect
 	github.com/lucas-clemente/quic-go v0.26.0 // indirect
-	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
 	github.com/marten-seemann/qtls-go1-17 v0.1.1 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.1 // indirect
