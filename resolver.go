@@ -40,7 +40,7 @@ func resolve(name string, chaos bool, dnssec bool, odohProxy string, upstream up
 			// Send question to server
 			reply, err = upstream.Exchange(&req)
 		} else {
-			reply, err = odohQuery(req, odohProxy, upstream.Address())
+			reply, err = odohQuery(req, upstream.Address(), odohProxy)
 		}
 		if err != nil {
 			return nil, 0, err

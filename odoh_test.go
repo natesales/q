@@ -1,12 +1,26 @@
 package main
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestBuildURL(t *testing.T) {
+	// Test with no query params
+	u := buildURL("https://www.example.com", "")
+	assert.Equal(t, "https://www.example.com", u.String())
+
+	// Test with query params
+	u = buildURL("https://www.example.com", "?foo=bar&baz=qux")
+	assert.Equal(t, "https://www.example.com/%3Ffoo=bar&baz=qux", u.String())
+
+	// Test with HTTP
+	//goland:noinspection HttpUrlsUsage
+	u = buildURL("http://www.example.com", "")
+	assert.Equal(t, "http://www.example.com", u.String())
+}
 
 func TestODOHQuery(t *testing.T) {
 	msg := dns.Msg{}
@@ -17,12 +31,12 @@ func TestODOHQuery(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	reply, err := odohQuery(msg, "odoh1.surfdomeinen.nl", "odoh.cloudflare-dns.com")
+	reply, err := odohQuery(msg, "odoh.cloudflare-dns.com", "odoh1.surfdomeinen.nl")
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
-func TestODOHInvalidUpstream(t *testing.T) {
+func TestODOHInvalidTarget(t *testing.T) {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -31,8 +45,7 @@ func TestODOHInvalidUpstream(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	_, err := odohQuery(msg, "odoh1.surfdomeinen.nl", "example.com")
-	if !(err != nil && strings.Contains(err.Error(), "Invalid serialized ObliviousDoHConfig")) {
-		t.Errorf("expected odoh error, got %+v", err)
-	}
+	_, err := odohQuery(msg, "example.com", "odoh1.surfdomeinen.nl")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "Invalid serialized ObliviousDoHConfig")
 }

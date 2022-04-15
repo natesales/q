@@ -30,16 +30,19 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/cloudflare/odoh-go"
 	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
 )
 
+const ODoHContentType = "application/oblivious-dns-message"
+
+// buildURL adds HTTPS to argument s if it doesn't contain a protocol and appends defaultPath if no path is already specified
 func buildURL(s, defaultPath string) *url.URL {
 	if //goland:noinspection HttpUrlsUsage
 	!strings.HasPrefix(s, "https://") && !strings.HasPrefix(s, "http://") {
@@ -55,51 +58,7 @@ func buildURL(s, defaultPath string) *url.URL {
 	return u
 }
 
-func resolveObliviousQuery(query odoh.ObliviousDNSMessage, targetIP string, proxy string, client *http.Client) (response odoh.ObliviousDNSMessage, err error) {
-	serializedQuery := query.Marshal()
-	p := buildURL(proxy, "/proxy")
-	t := buildURL(targetIP, "/dns-query")
-	qry := p.Query()
-	if qry.Get("targethost") == "" {
-		qry.Set("targethost", t.Host)
-	}
-	if qry.Get("targetpath") == "" {
-		qry.Set("targetpath", t.Path)
-	}
-	p.RawQuery = qry.Encode()
-
-	req, err := http.NewRequest(http.MethodPost, p.String(), bytes.NewBuffer(serializedQuery))
-	if err != nil {
-		return odoh.ObliviousDNSMessage{}, err
-	}
-
-	req.Header.Set("Content-Type", "application/oblivious-dns-message")
-	req.Header.Set("Accept", "application/oblivious-dns-message")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return odoh.ObliviousDNSMessage{}, err
-	}
-
-	responseHeader := resp.Header.Get("Content-Type")
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return odoh.ObliviousDNSMessage{}, err
-	}
-	if responseHeader != "application/oblivious-dns-message" {
-		return odoh.ObliviousDNSMessage{}, fmt.Errorf("did not obtain the correct headers from %v with response %v", targetIP, string(bodyBytes))
-	}
-
-	odohQueryResponse, err := odoh.UnmarshalDNSMessage(bodyBytes)
-	if err != nil {
-		return odoh.ObliviousDNSMessage{}, err
-	}
-
-	return odohQueryResponse, nil
-}
-
-func odohQuery(query dns.Msg, proxy string, target string) (*dns.Msg, error) {
+func odohQuery(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	// Query ODoH configs on target
 	req, err := http.NewRequest(http.MethodGet, buildURL(target, "/.well-known/odohconfigs").String(), nil)
 	if err != nil {
@@ -111,34 +70,69 @@ func odohQuery(query dns.Msg, proxy string, target string) (*dns.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-
 	odohConfigs, err := odoh.UnmarshalObliviousDoHConfigs(bodyBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(odohConfigs.Configs) == 0 {
-		return nil, errors.New("target provided no valid odoh configs")
+		return nil, errors.New("target provided no valid ODoH configs")
 	}
-	odohConfig := odohConfigs.Configs[0]
+	log.Debugf("[odoh] retreived %d ODoH configs", len(odohConfigs.Configs))
 
 	packedDnsQuery, err := query.Pack()
 	if err != nil {
 		return nil, err
 	}
 
-	odohQuery := odoh.CreateObliviousDNSQuery(packedDnsQuery, 0)
-	odnsMessage, queryContext, err := odohConfig.Contents.EncryptQuery(odohQuery)
+	firstODoHConfig := odohConfigs.Configs[0]
+	log.Debugf("[odoh] using first ODoH config: %+v", firstODoHConfig)
+	odnsMessage, queryContext, err := firstODoHConfig.Contents.EncryptQuery(odoh.CreateObliviousDNSQuery(packedDnsQuery, 0))
 	if err != nil {
 		return nil, err
 	}
 
-	client = http.Client{}
-	odohMessage, err := resolveObliviousQuery(odnsMessage, target, proxy, &client)
+	t := buildURL(target, "/dns-query")
+	p := buildURL(proxy, "/proxy")
+	qry := p.Query()
+	if qry.Get("targethost") == "" {
+		qry.Set("targethost", t.Host)
+	}
+	if qry.Get("targetpath") == "" {
+		qry.Set("targetpath", t.Path)
+	}
+	p.RawQuery = qry.Encode()
+
+	req, err = http.NewRequest(http.MethodPost, p.String(), bytes.NewBuffer(odnsMessage.Marshal()))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", ODoHContentType)
+	req.Header.Set("Accept", ODoHContentType)
+
+	resp, err = client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != ODoHContentType {
+		return nil, fmt.Errorf("target %s responded with an invalid Content-Type header %s, expected %s",
+			target, contentType, ODoHContentType,
+		)
+	}
+
+	bodyBytes, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	odohMessage, err := odoh.UnmarshalDNSMessage(bodyBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -150,8 +144,5 @@ func odohQuery(query dns.Msg, proxy string, target string) (*dns.Msg, error) {
 
 	msg := &dns.Msg{}
 	err = msg.Unpack(decryptedResponse)
-	if err != nil {
-		return nil, err
-	}
-	return msg, nil
+	return msg, err
 }

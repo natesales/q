@@ -149,7 +149,14 @@ func driver(args []string) error {
 
 	// Set default DNS server
 	if opts.Server == "" {
-		opts.Server = "https://cloudflare-dns.com/dns-query"
+		conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+		if err != nil {
+			opts.Server = "https://cloudflare-dns.com/dns-query"
+			log.Debugf("no server set, using %s", opts.Server)
+		} else {
+			opts.Server = conf.Servers[0]
+			log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
+		}
 	}
 
 	// Create the upstream server
