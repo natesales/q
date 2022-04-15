@@ -47,22 +47,22 @@ func resolve(
 			}
 
 			if nsid {
-				e := &dns.EDNS0_NSID{
+				opt.Option = append(opt.Option, &dns.EDNS0_NSID{
 					Code: dns.EDNS0NSID,
-				}
-				opt.Option = append(opt.Option, e)
+				})
 			}
 
 			if clientSubnet != "" {
-				e := &dns.EDNS0_SUBNET{
-					Code:          dns.EDNS0SUBNET,
-					Address:       net.ParseIP(clientSubnet),
-					Family:        1, // IP4
-					SourceNetmask: net.IPv4len * 8,
+				addr := net.ParseIP(clientSubnet)
+				if addr == nil {
+					log.Fatalf("parsing IP address %s", clientSubnet)
 				}
 
-				if e.Address == nil {
-					log.Fatalf("parsing IP address %s", clientSubnet)
+				e := &dns.EDNS0_SUBNET{
+					Code:          dns.EDNS0SUBNET,
+					Address:       addr,
+					Family:        1, // IP4
+					SourceNetmask: net.IPv4len * 8,
 				}
 
 				if e.Address.To4() == nil {
