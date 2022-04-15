@@ -15,20 +15,27 @@ import (
 )
 
 // CLI flags
-var opts struct {
-	Name        string   `short:"q" long:"qname" description:"Query name"`
-	Server      string   `short:"s" long:"server" description:"DNS server"`
-	Types       []string `short:"t" long:"type" description:"RR type"`
-	Reverse     bool     `short:"x" long:"reverse" description:"Reverse lookup"`
-	DNSSEC      bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
-	Format      string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
-	Chaos       bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
-	OdohProxy   string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	Insecure    bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
-	Timeout     uint     `long:"timeout" description:"Upstream timeout in seconds" default:"10"`
-	Verbose     bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
-	ShowVersion bool     `short:"V" long:"version" description:"Show version and exit"`
+type optsTemplate struct {
+	Name                string   `short:"q" long:"qname" description:"Query name"`
+	Server              string   `short:"s" long:"server" description:"DNS server"`
+	Types               []string `short:"t" long:"type" description:"RR type"`
+	Reverse             bool     `short:"x" long:"reverse" description:"Reverse lookup"`
+	DNSSEC              bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
+	Format              string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	Chaos               bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	ODoHProxy           string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
+	Insecure            bool     `short:"i" long:"insecure" description:"Disable TLS certificate verification"`
+	Timeout             uint     `long:"timeout" description:"Upstream timeout in seconds" default:"10"`
+	AuthoritativeAnswer bool     `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
+	AuthenticData       bool     `long:"ad" description:"Set AD (Authentic Data) flag in query"`
+	CheckingDisabled    bool     `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
+	RecursionDesired    bool     `long:"rd" description:"Set RD (Recursion Desired) flag in query"`
+	UDPBuffer           uint16   `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
+	Verbose             bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
+	ShowVersion         bool     `short:"V" long:"version" description:"Show version and exit"`
 }
+
+var opts = optsTemplate{}
 
 // Build process flags
 var (
@@ -54,9 +61,16 @@ func color(color string, args ...interface{}) string {
 	return fmt.Sprintf(colors[color], fmt.Sprint(args...))
 }
 
+// clearOpts sets the default values for the CLI options
+func clearOpts() {
+	opts = optsTemplate{}
+	opts.RecursionDesired = true
+}
+
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string) error {
 	// Parse cli flags
+	clearOpts()
 	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Usage") {
@@ -168,13 +182,13 @@ func driver(args []string) error {
 		return fmt.Errorf("cannot create upstream %v", err)
 	}
 
-	if opts.OdohProxy != "" {
-		log.Debugf("using ODoH proxy %s", opts.OdohProxy)
+	if opts.ODoHProxy != "" {
+		log.Debugf("using ODoH proxy %s", opts.ODoHProxy)
 		if !strings.HasPrefix(u.Address(), "https") {
 			return fmt.Errorf("upstream %s doesn't have an explicit HTTPS protocol", u.Address())
 		}
-		if !strings.HasPrefix(opts.OdohProxy, "https") {
-			return fmt.Errorf("proxy %s doesn't have an explicit HTTPS protocol", opts.OdohProxy)
+		if !strings.HasPrefix(opts.ODoHProxy, "https") {
+			return fmt.Errorf("proxy %s doesn't have an explicit HTTPS protocol", opts.ODoHProxy)
 		}
 	}
 
@@ -184,7 +198,19 @@ func driver(args []string) error {
 	for rrType := range rrTypes {
 		rrTypesSlice = append(rrTypesSlice, rrType)
 	}
-	answers, queryTime, err := resolve(opts.Name, opts.Chaos, opts.DNSSEC, opts.OdohProxy, u, rrTypesSlice)
+	answers, queryTime, err := resolve(
+		opts.Name,
+		opts.Chaos,
+		opts.DNSSEC,
+		opts.ODoHProxy,
+		u,
+		rrTypesSlice,
+		opts.AuthoritativeAnswer,
+		opts.AuthenticData,
+		opts.CheckingDisabled,
+		opts.RecursionDesired,
+		opts.UDPBuffer,
+	)
 	if err != nil {
 		return err
 	}

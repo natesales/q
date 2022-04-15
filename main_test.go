@@ -7,21 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func clearOpts() {
-	opts.Name = ""
-	opts.Server = ""
-	opts.Types = []string{}
-	opts.Reverse = false
-	opts.DNSSEC = false
-	opts.Format = "pretty"
-	opts.Chaos = false
-	opts.OdohProxy = ""
-	opts.Insecure = false
-	opts.Timeout = 10
-	opts.ShowVersion = false
-	opts.Verbose = false
-}
-
 func TestMainQuery(t *testing.T) {
 	clearOpts()
 	assert.Nil(t, driver([]string{

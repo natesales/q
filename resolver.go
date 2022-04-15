@@ -1,12 +1,21 @@
 package main
 
 import (
+	"time"
+
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
-	"time"
 )
 
-func resolve(name string, chaos bool, dnssec bool, odohProxy string, upstream upstream.Upstream, rrTypes []uint16) ([]dns.RR, time.Duration, error) {
+func resolve(
+	name string,
+	chaos, dnssec bool,
+	odohProxy string,
+	upstream upstream.Upstream,
+	rrTypes []uint16,
+	aaFlag, adFlag, cdFlag, rdFlag bool,
+	udpBuffer uint16,
+) ([]dns.RR, time.Duration, error) {
 	var answers []dns.RR
 	queryStartTime := time.Now()
 
@@ -15,8 +24,13 @@ func resolve(name string, chaos bool, dnssec bool, odohProxy string, upstream up
 		// Create the DNS question
 		req := dns.Msg{}
 
+		req.Authoritative = aaFlag
+		req.AuthenticatedData = adFlag
+		req.CheckingDisabled = cdFlag
+		req.RecursionDesired = rdFlag
+
 		if dnssec {
-			req.SetEdns0(4096, true)
+			req.SetEdns0(udpBuffer, true)
 		}
 
 		// Set QCLASS
