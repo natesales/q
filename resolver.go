@@ -58,18 +58,19 @@ func resolve(
 					log.Fatalf("parsing IP address %s", clientSubnet)
 				}
 
-				e := &dns.EDNS0_SUBNET{
+				ednsSubnet := &dns.EDNS0_SUBNET{
 					Code:          dns.EDNS0SUBNET,
 					Address:       addr,
-					Family:        1, // IP4
-					SourceNetmask: net.IPv4len * 8,
+					Family:        1, // IPv4
+					SourceNetmask: 32,
 				}
 
-				if e.Address.To4() == nil {
-					e.Family = 2 // IP6
-					e.SourceNetmask = net.IPv6len * 8
+				// Set IPv6 family/mask
+				if ednsSubnet.Address.To4() == nil {
+					ednsSubnet.Family = 2 // IPv6
+					ednsSubnet.SourceNetmask = 128
 				}
-				opt.Option = append(opt.Option, e)
+				opt.Option = append(opt.Option, ednsSubnet)
 			}
 			req.Extra = append(req.Extra, opt)
 		}
