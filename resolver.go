@@ -13,7 +13,7 @@ func resolve(
 	odohProxy string,
 	upstream upstream.Upstream,
 	rrTypes []uint16,
-	aaFlag, adFlag, cdFlag, rdFlag bool,
+	aaFlag, adFlag, cdFlag, rdFlag, raFlag, zFlag bool,
 	udpBuffer uint16,
 ) ([]dns.RR, time.Duration, error) {
 	var answers []dns.RR
@@ -28,6 +28,8 @@ func resolve(
 		req.AuthenticatedData = adFlag
 		req.CheckingDisabled = cdFlag
 		req.RecursionDesired = rdFlag
+		req.RecursionAvailable = raFlag
+		req.Zero = zFlag
 
 		if dnssec {
 			req.SetEdns0(udpBuffer, true)

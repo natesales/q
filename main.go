@@ -20,7 +20,7 @@ type optsTemplate struct {
 	Server              string   `short:"s" long:"server" description:"DNS server"`
 	Types               []string `short:"t" long:"type" description:"RR type"`
 	Reverse             bool     `short:"x" long:"reverse" description:"Reverse lookup"`
-	DNSSEC              bool     `short:"d" long:"dnssec" description:"Request DNSSEC"`
+	DNSSEC              bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
 	Format              string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
 	Chaos               bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy           string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
@@ -30,6 +30,8 @@ type optsTemplate struct {
 	AuthenticData       bool     `long:"ad" description:"Set AD (Authentic Data) flag in query"`
 	CheckingDisabled    bool     `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
 	RecursionDesired    bool     `long:"rd" description:"Set RD (Recursion Desired) flag in query"`
+	RecursionAvailable  bool     `long:"ra" description:"Set RA (Recursion Available) flag in query"`
+	Zero                bool     `short:"z" description:"Set Z (Zero) flag in query"`
 	UDPBuffer           uint16   `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
 	Verbose             bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
 	ShowVersion         bool     `short:"V" long:"version" description:"Show version and exit"`
@@ -209,6 +211,8 @@ func driver(args []string) error {
 		opts.AuthenticData,
 		opts.CheckingDisabled,
 		opts.RecursionDesired,
+		opts.RecursionAvailable,
+		opts.Zero,
 		opts.UDPBuffer,
 	)
 	if err != nil {

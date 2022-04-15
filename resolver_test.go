@@ -18,7 +18,7 @@ func TestResolverUDP(t *testing.T) {
 	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("example.com", false, false, "", u, []uint16{dns.StringToType["A"]},
-		false, false, false, true, 4096)
+		false, false, false, true, false, false, 4096)
 	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
@@ -35,7 +35,7 @@ func TestResolverDNSSEC(t *testing.T) {
 	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("example.com", false, true, "", u, []uint16{dns.StringToType["A"]},
-		false, false, false, true, 4096)
+		false, false, false, true, false, false, 4096)
 	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
@@ -52,7 +52,7 @@ func TestResolverODoH(t *testing.T) {
 	assert.Nil(t, err)
 
 	answers, qTime, err := resolve("example.com", false, false, "odoh1.surfdomeinen.nl", u, []uint16{dns.StringToType["A"]},
-		false, false, false, true, 4096)
+		false, false, false, true, false, false, 4096)
 	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
@@ -69,7 +69,7 @@ func TestResolverInvalidUDPUpstream(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, _, err = resolve("example.com", false, false, "", u, []uint16{dns.StringToType["A"]},
-		false, false, false, true, 4096)
+		false, false, false, true, false, false, 4096)
 	if !(err != nil && strings.Contains(err.Error(), "connection refused")) {
 		t.Errorf("expected connect error, got %+v", err)
 	}
@@ -84,7 +84,7 @@ func TestResolverChaosClass(t *testing.T) {
 
 	answers, qTime, err := resolve(
 		"id.server", true, false, "", u, []uint16{dns.StringToType["TXT"]},
-		false, false, false, true, 4096)
+		false, false, false, true, false, false, 4096)
 	assert.Nil(t, err)
 
 	queryTime := uint16(qTime / time.Millisecond) // Convert to milliseconds
