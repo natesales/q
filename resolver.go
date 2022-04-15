@@ -21,7 +21,6 @@ func resolve(
 
 	// Query for each requested RR type
 	for _, qType := range rrTypes {
-		// Create the DNS question
 		req := dns.Msg{}
 
 		req.Authoritative = aaFlag
@@ -35,14 +34,12 @@ func resolve(
 			req.SetEdns0(udpBuffer, true)
 		}
 
-		// Set QCLASS
 		var class uint16
 		if chaos {
 			class = dns.ClassCHAOS
 		} else {
 			class = dns.ClassINET
 		}
-		req.RecursionDesired = true
 		req.Question = []dns.Question{{
 			Name:   dns.Fqdn(name),
 			Qtype:  qType,
@@ -68,5 +65,5 @@ func resolve(
 	// Calculate total query time
 	queryTime := time.Now().Sub(queryStartTime)
 
-	return answers, queryTime, nil // nil error
+	return answers, queryTime, nil
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -31,7 +32,7 @@ type optsTemplate struct {
 	CheckingDisabled    bool     `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
 	RecursionDesired    bool     `long:"rd" description:"Set RD (Recursion Desired) flag in query"`
 	RecursionAvailable  bool     `long:"ra" description:"Set RA (Recursion Available) flag in query"`
-	Zero                bool     `short:"z" description:"Set Z (Zero) flag in query"`
+	Zero                bool     `long:"z" description:"Set Z (Zero) flag in query"`
 	UDPBuffer           uint16   `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
 	Verbose             bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
 	ShowVersion         bool     `short:"V" long:"version" description:"Show version and exit"`
@@ -69,10 +70,56 @@ func clearOpts() {
 	opts.RecursionDesired = true
 }
 
+// parsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
+func parsePlusFlags(args []string) {
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "+") && len(arg) > 3 {
+			state := arg[1:3] != "no"
+			flag := strings.ToLower(arg[3:])
+			if state {
+				flag = strings.ToLower(arg[1:])
+			}
+
+			v := reflect.ValueOf(opts)
+			vT := v.Type()
+			for i := 0; i < v.NumField(); i++ {
+				fieldTag := vT.Field(i).Tag.Get("long")
+				if vT.Field(i).Type == reflect.TypeOf(true) && fieldTag == flag {
+					reflect.ValueOf(&opts).Elem().Field(i).SetBool(state)
+					break
+				}
+			}
+		}
+	}
+}
+
+func queryFlags() string {
+	flags := " "
+	if opts.AuthoritativeAnswer {
+		flags += "aa "
+	}
+	if opts.AuthenticData {
+		flags += "ad "
+	}
+	if opts.CheckingDisabled {
+		flags += "cd "
+	}
+	if opts.RecursionDesired {
+		flags += "rd "
+	}
+	if opts.RecursionAvailable {
+		flags += "ra "
+	}
+	if opts.Zero {
+		flags += "Z "
+	}
+
+	// Remove trailing space
+	return strings.TrimSpace(flags)
+}
+
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string) error {
-	// Parse cli flags
-	clearOpts()
 	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Usage") {
@@ -80,6 +127,7 @@ func driver(args []string) error {
 		}
 		os.Exit(1)
 	}
+	parsePlusFlags(args)
 
 	// Enable debug logging in development releases
 	if //noinspection GoBoolExpressions
@@ -258,6 +306,7 @@ func driver(args []string) error {
 }
 
 func main() {
+	clearOpts()
 	if err := driver(os.Args); err != nil {
 		log.Fatal(err)
 	}

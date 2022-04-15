@@ -180,3 +180,10 @@ func TestMainChaosClass(t *testing.T) {
 		"--format=json",
 	}))
 }
+
+func TestMainParsePlusFlags(t *testing.T) {
+	clearOpts()
+	parsePlusFlags([]string{"+dnssec", "+nord"})
+	assert.True(t, opts.DNSSEC)
+	assert.False(t, opts.RecursionDesired)
+}
