@@ -22,6 +22,8 @@ type optsTemplate struct {
 	Types               []string `short:"t" long:"type" description:"RR type"`
 	Reverse             bool     `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC              bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
+	NSID                bool     `short:"n" long:"nsid" description:"TODO"`
+	ClientSubnet        string   `long:"subnet" description:"Set EDNS0 client subnet"`
 	Format              string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
 	Chaos               bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy           string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
@@ -250,8 +252,7 @@ func driver(args []string) error {
 	}
 	answers, queryTime, err := resolve(
 		opts.Name,
-		opts.Chaos,
-		opts.DNSSEC,
+		opts.Chaos, opts.DNSSEC, opts.NSID,
 		opts.ODoHProxy,
 		u,
 		rrTypesSlice,
@@ -262,6 +263,7 @@ func driver(args []string) error {
 		opts.RecursionAvailable,
 		opts.Zero,
 		opts.UDPBuffer,
+		opts.ClientSubnet,
 	)
 	if err != nil {
 		return err
