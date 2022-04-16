@@ -12,7 +12,7 @@ import (
 )
 
 // HTTP makes a DNS query over HTTP(s)
-func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent string) (*dns.Msg, error) {
+func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string) (*dns.Msg, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
@@ -28,7 +28,7 @@ func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent string) (*dns.Msg
 	}
 
 	queryURL := server + "?dns=" + base64.RawURLEncoding.EncodeToString(buf)
-	req, err := http.NewRequest("GET", queryURL, nil)
+	req, err := http.NewRequest(method, queryURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating http request to %s: %w", queryURL, err)
 	}

@@ -44,7 +44,8 @@ type optsTemplate struct {
 	TLSMaxVersion string `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
 
 	// HTTP
-	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent"`
+	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent" default:""`
+	HTTPMethod    string `long:"http-method" description:"HTTP method" default:"GET"`
 
 	// QUIC
 	QUICALPNTokens []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
@@ -302,7 +303,7 @@ func driver(args []string) error {
 		} else {
 			log.Debug("Using HTTP(s) transport")
 			for _, msg := range msgs {
-				reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent)
+				reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent, opts.HTTPMethod)
 				if err != nil {
 					return err
 				}
