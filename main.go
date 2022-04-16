@@ -128,7 +128,11 @@ func parsePlusFlags(args []string) {
 
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string) error {
-	_, err := flags.ParseArgs(&opts, args)
+	parser := flags.NewParser(&opts, flags.Default)
+	parser.Usage = `[OPTIONS] [@server] [type...] [name]
+
+All long form (--) flags can be toggled with the dig-standard +[no]flag notation.`
+	_, err := parser.ParseArgs(args)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Usage") {
 			log.Fatal(err)
