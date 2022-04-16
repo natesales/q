@@ -1,4 +1,4 @@
-package main
+package transport
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildURL(t *testing.T) {
+func TestTransportBuildURL(t *testing.T) {
 	// Test with no query params
 	u := buildURL("https://www.example.com", "")
 	assert.Equal(t, "https://www.example.com", u.String())
@@ -22,7 +22,7 @@ func TestBuildURL(t *testing.T) {
 	assert.Equal(t, "http://www.example.com", u.String())
 }
 
-func TestODoHQuery(t *testing.T) {
+func TestTransportODoH(t *testing.T) {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -31,12 +31,12 @@ func TestODoHQuery(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	reply, err := odohQuery(msg, "odoh.cloudflare-dns.com", "odoh1.surfdomeinen.nl")
+	reply, err := ODoH(msg, "odoh.cloudflare-dns.com", "odoh1.surfdomeinen.nl")
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
-func TestODoHInvalidTarget(t *testing.T) {
+func TestTransportODoHInvalidTarget(t *testing.T) {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -45,12 +45,12 @@ func TestODoHInvalidTarget(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	_, err := odohQuery(msg, "example.com", "odoh1.surfdomeinen.nl")
+	_, err := ODoH(msg, "example.com", "odoh1.surfdomeinen.nl")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Invalid serialized ObliviousDoHConfig")
 }
 
-func TestODoHInvalidProxy(t *testing.T) {
+func TestTransportODoHInvalidProxy(t *testing.T) {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -59,7 +59,7 @@ func TestODoHInvalidProxy(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	_, err := odohQuery(msg, "odoh.cloudflare-dns.com", "example.com")
+	_, err := ODoH(msg, "odoh.cloudflare-dns.com", "example.com")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "responded with an invalid Content-Type header")
 }
