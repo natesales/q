@@ -271,6 +271,8 @@ func driver(args []string) error {
 	} else if a.Scheme == "quic" {
 		a.Host += ":8853"
 		tlsConfig.NextProtos = opts.QUICALPNTokens
+	} else if a.Scheme == "tls" {
+		a.Host += ":853"
 	} else if a.Port() == "" {
 		a.Host += ":53"
 	}
@@ -292,6 +294,15 @@ func driver(args []string) error {
 		log.Debug("Using QUIC transport")
 		for _, msg := range msgs {
 			reply, err := transport.QUIC(&msg, a.Host, tlsConfig, 5*time.Second, 5*time.Second, 5*time.Second)
+			if err != nil {
+				return err
+			}
+			replies = append(replies, reply)
+		}
+	case "tls":
+		log.Debug("Using TLS transport")
+		for _, msg := range msgs {
+			reply, err := transport.TLS(&msg, a.Host, tlsConfig, 5*time.Second)
 			if err != nil {
 				return err
 			}
