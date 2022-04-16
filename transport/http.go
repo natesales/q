@@ -11,21 +11,15 @@ import (
 	"github.com/miekg/dns"
 )
 
-const (
-	httpTransportMaxConnsPerHost = 1
-	httpTransportMaxIdleConns    = 1
-	httpRequestTimeout           = 5 * time.Second
-)
-
 // HTTP makes a DNS query over HTTP(s)
 func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent string) (*dns.Msg, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
-			MaxConnsPerHost: httpTransportMaxConnsPerHost,
-			MaxIdleConns:    httpTransportMaxIdleConns,
+			MaxConnsPerHost: 1,
+			MaxIdleConns:    1,
 		},
-		Timeout: httpRequestTimeout,
+		Timeout: 5 * time.Second,
 	}
 
 	buf, err := m.Pack()
