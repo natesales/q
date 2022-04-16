@@ -136,11 +136,11 @@ func driver(args []string) error {
 	}
 	parsePlusFlags(args)
 
-	//// Enable debug logging in development releases
-	//if //noinspection GoBoolExpressions
-	//version == "dev" || opts.Verbose {
-	//	log.SetLevel(log.DebugLevel)
-	//}
+	// Enable debug logging in development releases
+	if //noinspection GoBoolExpressions
+	version == "dev" || opts.Verbose {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	if opts.ShowVersion {
 		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
@@ -282,13 +282,24 @@ func driver(args []string) error {
 	startTime := time.Now()
 	switch a.Scheme {
 	case "https", "http":
-		log.Debug("Using HTTP(s) transport")
-		for _, msg := range msgs {
-			reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent)
-			if err != nil {
-				return err
+		if opts.ODoHProxy != "" {
+			log.Debugf("Using ODoH transport with proxy %s", opts.ODoHProxy)
+			for _, msg := range msgs {
+				reply, err := transport.ODoH(msg, a.Host, opts.ODoHProxy)
+				if err != nil {
+					return fmt.Errorf("ODoH query: %s", err)
+				}
+				replies = append(replies, reply)
 			}
-			replies = append(replies, reply)
+		} else {
+			log.Debug("Using HTTP(s) transport")
+			for _, msg := range msgs {
+				reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent)
+				if err != nil {
+					return err
+				}
+				replies = append(replies, reply)
+			}
 		}
 	case "quic":
 		log.Debug("Using QUIC transport")

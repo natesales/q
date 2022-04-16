@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package main
+package transport
 
 import (
 	"bytes"
@@ -58,7 +58,8 @@ func buildURL(s, defaultPath string) *url.URL {
 	return u
 }
 
-func odohQuery(query dns.Msg, target, proxy string) (*dns.Msg, error) {
+// ODoH makes a DNS query over ODoH
+func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	// Query ODoH configs on target
 	req, err := http.NewRequest(http.MethodGet, buildURL(target, "/.well-known/odohconfigs").String(), nil)
 	if err != nil {
