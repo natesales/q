@@ -1,9 +1,10 @@
 package main
 
 import (
+	"net"
+
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
-	"net"
 )
 
 // createQuery creates a slice of DNS queries

@@ -62,7 +62,7 @@ func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent string) (*dns.Msg
 	response := dns.Msg{}
 	err = response.Unpack(body)
 	if err != nil {
-		return nil, fmt.Errorf("unpacking response from %s: body is %s: %w", queryURL, string(body), err)
+		return nil, fmt.Errorf("unpacking DNS response from %s: body is %s: %w", queryURL, string(body), err)
 	}
 
 	if response.Id != m.Id {

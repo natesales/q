@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
@@ -227,62 +224,62 @@ func driver(args []string) error {
 
 	//log.Debugf("using server %s", u.Address())
 
-	var rrTypesSlice []uint16
-	for rrType := range rrTypes {
-		rrTypesSlice = append(rrTypesSlice, rrType)
-	}
-	answers, queryTime, err := resolve(
-		opts.Name,
-		opts.Chaos, opts.DNSSEC, opts.NSID,
-		opts.ODoHProxy,
-		rrTypesSlice,
-		opts.AuthoritativeAnswer,
-		opts.AuthenticData,
-		opts.CheckingDisabled,
-		opts.RecursionDesired,
-		opts.RecursionAvailable,
-		opts.Zero,
-		opts.UDPBuffer,
-		opts.ClientSubnet,
-	)
-	if err != nil {
-		return err
-	}
-
-	// Print answers
-	switch opts.Format {
-	case "pretty":
-		for _, a := range answers {
-			fmt.Printf("%s %s %s %s\n",
-				color("purple", a.Header().Name),
-				color("green", time.Duration(a.Header().Ttl)*time.Second),
-				color("magenta", dns.TypeToString[a.Header().Rrtype]),
-				strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
-			)
-		}
-	case "raw":
-		for _, a := range answers {
-			fmt.Println(a.String())
-		}
-		fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), opts.Server, queryTime.Round(time.Millisecond))
-	case "json":
-		// Marshal answers to JSON
-		marshalled, err := json.Marshal(struct {
-			Server    string
-			QueryTime int64
-			Answers   []dns.RR
-		}{
-			Server:    opts.Server,
-			QueryTime: int64(queryTime / time.Millisecond),
-			Answers:   answers,
-		})
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(marshalled))
-	default:
-		return errors.New("invalid output format")
-	}
+	//var rrTypesSlice []uint16
+	//for rrType := range rrTypes {
+	//	rrTypesSlice = append(rrTypesSlice, rrType)
+	//}
+	//answers, queryTime, err := resolve(
+	//	opts.Name,
+	//	opts.Chaos, opts.DNSSEC, opts.NSID,
+	//	opts.ODoHProxy,
+	//	rrTypesSlice,
+	//	opts.AuthoritativeAnswer,
+	//	opts.AuthenticData,
+	//	opts.CheckingDisabled,
+	//	opts.RecursionDesired,
+	//	opts.RecursionAvailable,
+	//	opts.Zero,
+	//	opts.UDPBuffer,
+	//	opts.ClientSubnet,
+	//)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//// Print answers
+	//switch opts.Format {
+	//case "pretty":
+	//	for _, a := range answers {
+	//		fmt.Printf("%s %s %s %s\n",
+	//			color("purple", a.Header().Name),
+	//			color("green", time.Duration(a.Header().Ttl)*time.Second),
+	//			color("magenta", dns.TypeToString[a.Header().Rrtype]),
+	//			strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
+	//		)
+	//	}
+	//case "raw":
+	//	for _, a := range answers {
+	//		fmt.Println(a.String())
+	//	}
+	//	fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), opts.Server, queryTime.Round(time.Millisecond))
+	//case "json":
+	//	// Marshal answers to JSON
+	//	marshalled, err := json.Marshal(struct {
+	//		Server    string
+	//		QueryTime int64
+	//		Answers   []dns.RR
+	//	}{
+	//		Server:    opts.Server,
+	//		QueryTime: int64(queryTime / time.Millisecond),
+	//		Answers:   answers,
+	//	})
+	//	if err != nil {
+	//		return err
+	//	}
+	//	fmt.Println(string(marshalled))
+	//default:
+	//	return errors.New("invalid output format")
+	//}
 
 	return nil // nil error
 }
