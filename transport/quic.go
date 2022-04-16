@@ -34,13 +34,11 @@ func QUIC(msg *dns.Msg, server string, tlsConfig *tls.Config, dialTimeout, hands
 		return nil, fmt.Errorf("opening quic session to %s: %v", server, err)
 	}
 
-	// If any message sent on a DoQ connection contains an edns-tcp-keepalive EDNS(0) Option,
-	// this is a fatal error and the recipient of the defective message MUST forcibly abort
-	// the connection immediately.
-	// https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-02#section-6.6.2
+	// Clients and servers MUST NOT send the edns-tcp-keepalive EDNS(0) Option [RFC7828] in any messages sent
+	// on a DoQ connection (because it is specific to the use of TCP/TLS as a transport).
+	// https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-11#section-6.4
 	if opt := msg.IsEdns0(); opt != nil {
 		for _, option := range opt.Option {
-			// Check for EDNS TCP keepalive option
 			if option.Option() == dns.EDNS0TCPKEEPALIVE {
 				_ = session.CloseWithError(protocolError, "") // Already closing the connection, so we don't care about the error
 				return nil, fmt.Errorf("EDNS0 TCP keepalive option is set")
@@ -55,8 +53,11 @@ func QUIC(msg *dns.Msg, server string, tlsConfig *tls.Config, dialTimeout, hands
 		return nil, fmt.Errorf("open new stream to %s: %v", server, err)
 	}
 
-	// https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-02#section-6.4
-	// When sending queries over a QUIC connection, the DNS Message ID MUST be set to zero.
+	// When sending queries over a QUIC connection, the DNS Message ID MUST
+	// be set to zero.  The stream mapping for DoQ allows for unambiguous
+	// correlation of queries and responses and so the Message ID field is
+	// not required.
+	// https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-11#section-5.2.1
 	msg.Id = 0
 	buf, err := msg.Pack()
 	if err != nil {
@@ -71,7 +72,7 @@ func QUIC(msg *dns.Msg, server string, tlsConfig *tls.Config, dialTimeout, hands
 	// The client MUST send the DNS query over the selected stream, and MUST
 	// indicate through the STREAM FIN mechanism that no further data will
 	// be sent on that stream.
-	// stream.Close() -- closes the write-direction of the stream.
+	// https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-11#section-5.2
 	_ = stream.Close()
 
 	respBuf, err := io.ReadAll(stream)
