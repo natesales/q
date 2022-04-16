@@ -351,10 +351,6 @@ func driver(args []string) error {
 	queryTime := time.Since(startTime)
 
 	for i, reply := range replies {
-		if reply.Rcode != dns.RcodeSuccess {
-			return fmt.Errorf("dns query failed: %s", dns.RcodeToString[reply.Rcode])
-		}
-
 		// Print answers
 		switch opts.Format {
 		case "pretty":
