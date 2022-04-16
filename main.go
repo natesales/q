@@ -1,39 +1,57 @@
 package main
 
 import (
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
+	"github.com/natesales/q/transport"
 	log "github.com/sirupsen/logrus"
 )
 
 // CLI flags
 type optsTemplate struct {
-	Name                string   `short:"q" long:"qname" description:"Query name"`
-	Server              string   `short:"s" long:"server" description:"DNS server"`
-	Types               []string `short:"t" long:"type" description:"RR type"`
-	Reverse             bool     `short:"x" long:"reverse" description:"Reverse lookup"`
-	DNSSEC              bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
-	NSID                bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
-	ClientSubnet        string   `long:"subnet" description:"Set EDNS0 client subnet"`
-	Format              string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
-	Chaos               bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
-	ODoHProxy           string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	TLSVerify           bool     `short:"i" long:"tls-verify" description:"Enable TLS certificate verification"`
-	Timeout             uint     `long:"timeout" description:"Upstream timeout in seconds" default:"10"`
-	AuthoritativeAnswer bool     `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
-	AuthenticData       bool     `long:"ad" description:"Set AD (Authentic Data) flag in query"`
-	CheckingDisabled    bool     `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
-	RecursionDesired    bool     `long:"rd" description:"Set RD (Recursion Desired) flag in query"`
-	RecursionAvailable  bool     `long:"ra" description:"Set RA (Recursion Available) flag in query"`
-	Zero                bool     `long:"z" description:"Set Z (Zero) flag in query"`
-	UDPBuffer           uint16   `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
-	Verbose             bool     `short:"v" long:"verbose" description:"Show verbose log messages"`
-	ShowVersion         bool     `short:"V" long:"version" description:"Show version and exit"`
+	Name         string   `short:"q" long:"qname" description:"Query name"`
+	Server       string   `short:"s" long:"server" description:"DNS server"`
+	Types        []string `short:"t" long:"type" description:"RR type"`
+	Reverse      bool     `short:"x" long:"reverse" description:"Reverse lookup"`
+	DNSSEC       bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
+	NSID         bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
+	ClientSubnet string   `long:"subnet" description:"Set EDNS0 client subnet"`
+	Format       string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
+	Timeout      string   `long:"timeout" description:"Query timeout duration" default:"10s"`
+
+	// Header flags
+	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
+	AuthenticData       bool `long:"ad" description:"Set AD (Authentic Data) flag in query"`
+	CheckingDisabled    bool `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
+	RecursionDesired    bool `long:"rd" description:"Set RD (Recursion Desired) flag in query"`
+	RecursionAvailable  bool `long:"ra" description:"Set RA (Recursion Available) flag in query"`
+	Zero                bool `long:"z" description:"Set Z (Zero) flag in query"`
+
+	// TCP parameters
+	TLSNoVerify   bool   `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
+	TLSMinVersion string `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
+	TLSMaxVersion string `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+
+	// HTTP
+	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent"`
+
+	// QUIC
+	QUICALPNTokens []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
+
+	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
+	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
+	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
 }
 
 var opts = optsTemplate{}
@@ -66,7 +84,22 @@ func color(color string, args ...interface{}) string {
 func clearOpts() {
 	opts = optsTemplate{}
 	opts.RecursionDesired = true
-	opts.TLSVerify = true
+}
+
+// tlsVersion returns a TLS version number by given protocol string
+func tlsVersion(version string, fallback uint16) uint16 {
+	switch version {
+	case "1.0":
+		return tls.VersionTLS10
+	case "1.1":
+		return tls.VersionTLS11
+	case "1.2":
+		return tls.VersionTLS12
+	case "1.3":
+		return tls.VersionTLS13
+	default:
+		return fallback
+	}
 }
 
 // parsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
@@ -92,31 +125,6 @@ func parsePlusFlags(args []string) {
 	}
 }
 
-func queryFlags() string {
-	flags := " "
-	if opts.AuthoritativeAnswer {
-		flags += "aa "
-	}
-	if opts.AuthenticData {
-		flags += "ad "
-	}
-	if opts.CheckingDisabled {
-		flags += "cd "
-	}
-	if opts.RecursionDesired {
-		flags += "rd "
-	}
-	if opts.RecursionAvailable {
-		flags += "ra "
-	}
-	if opts.Zero {
-		flags += "Z "
-	}
-
-	// Remove trailing space
-	return strings.TrimSpace(flags)
-}
-
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string) error {
 	_, err := flags.ParseArgs(&opts, args)
@@ -128,15 +136,20 @@ func driver(args []string) error {
 	}
 	parsePlusFlags(args)
 
-	// Enable debug logging in development releases
-	if //noinspection GoBoolExpressions
-	version == "dev" || opts.Verbose {
-		log.SetLevel(log.DebugLevel)
-	}
+	//// Enable debug logging in development releases
+	//if //noinspection GoBoolExpressions
+	//version == "dev" || opts.Verbose {
+	//	log.SetLevel(log.DebugLevel)
+	//}
 
 	if opts.ShowVersion {
 		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
 		return nil
+	}
+
+	timeoutDuration, err := time.ParseDuration(opts.Timeout)
+	if err != nil {
+		log.Fatalf("invalid timeout duration: %s", err)
 	}
 
 	// Parse requested RR types
@@ -208,8 +221,6 @@ func driver(args []string) error {
 		log.Debugf("RR types: %+v", rrTypeStrings)
 	}
 
-	log.Debugf("qname %s", opts.Name)
-
 	// Set default DNS server
 	if opts.Server == "" {
 		conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
@@ -222,64 +233,129 @@ func driver(args []string) error {
 		}
 	}
 
-	//log.Debugf("using server %s", u.Address())
+	// Create TLS config
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: opts.TLSNoVerify,
+		MinVersion:         tlsVersion(opts.TLSMinVersion, tls.VersionTLS10),
+		MaxVersion:         tlsVersion(opts.TLSMaxVersion, tls.VersionTLS13),
+	}
 
-	//var rrTypesSlice []uint16
-	//for rrType := range rrTypes {
-	//	rrTypesSlice = append(rrTypesSlice, rrType)
-	//}
-	//answers, queryTime, err := resolve(
-	//	opts.Name,
-	//	opts.Chaos, opts.DNSSEC, opts.NSID,
-	//	opts.ODoHProxy,
-	//	rrTypesSlice,
-	//	opts.AuthoritativeAnswer,
-	//	opts.AuthenticData,
-	//	opts.CheckingDisabled,
-	//	opts.RecursionDesired,
-	//	opts.RecursionAvailable,
-	//	opts.Zero,
-	//	opts.UDPBuffer,
-	//	opts.ClientSubnet,
-	//)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//// Print answers
-	//switch opts.Format {
-	//case "pretty":
-	//	for _, a := range answers {
-	//		fmt.Printf("%s %s %s %s\n",
-	//			color("purple", a.Header().Name),
-	//			color("green", time.Duration(a.Header().Ttl)*time.Second),
-	//			color("magenta", dns.TypeToString[a.Header().Rrtype]),
-	//			strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
-	//		)
-	//	}
-	//case "raw":
-	//	for _, a := range answers {
-	//		fmt.Println(a.String())
-	//	}
-	//	fmt.Printf(";; Received %d answers from %s in %s\n", len(answers), opts.Server, queryTime.Round(time.Millisecond))
-	//case "json":
-	//	// Marshal answers to JSON
-	//	marshalled, err := json.Marshal(struct {
-	//		Server    string
-	//		QueryTime int64
-	//		Answers   []dns.RR
-	//	}{
-	//		Server:    opts.Server,
-	//		QueryTime: int64(queryTime / time.Millisecond),
-	//		Answers:   answers,
-	//	})
-	//	if err != nil {
-	//		return err
-	//	}
-	//	fmt.Println(string(marshalled))
-	//default:
-	//	return errors.New("invalid output format")
-	//}
+	var rrTypesSlice []uint16
+	for rrType := range rrTypes {
+		rrTypesSlice = append(rrTypesSlice, rrType)
+	}
+	msgs := createQuery(
+		opts.Name,
+		opts.Chaos, opts.DNSSEC, opts.NSID,
+		rrTypesSlice,
+		opts.AuthoritativeAnswer, opts.AuthenticData, opts.CheckingDisabled, opts.RecursionDesired, opts.RecursionAvailable, opts.Zero,
+		opts.UDPBuffer,
+		opts.ClientSubnet,
+	)
+	var replies []*dns.Msg
+
+	// Parse server as URL
+	if !strings.Contains(opts.Server, "://") {
+		opts.Server = "plain://" + opts.Server
+	}
+	a, err := url.Parse(opts.Server)
+	if err != nil {
+		return fmt.Errorf("invalid server URL: %s", err)
+	}
+	if (a.Scheme == "http" || a.Scheme == "https") && a.Path == "" {
+		a.Path = "/dns-query"
+	} else if a.Scheme == "quic" {
+		a.Host += ":8853"
+		tlsConfig.NextProtos = opts.QUICALPNTokens
+	} else if a.Port() == "" {
+		a.Host += ":53"
+	}
+
+	log.Debugf("Server: %s", a.String())
+
+	startTime := time.Now()
+	switch a.Scheme {
+	case "https", "http":
+		log.Debug("Using HTTP(s) transport")
+		for _, msg := range msgs {
+			reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent)
+			if err != nil {
+				return err
+			}
+			replies = append(replies, reply)
+		}
+	case "quic":
+		log.Debug("Using QUIC transport")
+		for _, msg := range msgs {
+			reply, err := transport.QUIC(&msg, a.Host, tlsConfig, 5*time.Second, 5*time.Second, 5*time.Second)
+			if err != nil {
+				return err
+			}
+			replies = append(replies, reply)
+		}
+	case "tcp":
+		log.Debug("Using TCP transport")
+		for _, msg := range msgs {
+			reply, err := transport.Plain(&msg, a.Host, true, timeoutDuration, opts.UDPBuffer)
+			if err != nil {
+				return err
+			}
+			replies = append(replies, reply)
+		}
+	case "plain":
+		log.Debug("Using UDP with TCP fallback")
+		for _, msg := range msgs {
+			reply, err := transport.Plain(&msg, a.Host, false, timeoutDuration, opts.UDPBuffer)
+			if err != nil {
+				return err
+			}
+			replies = append(replies, reply)
+		}
+	default:
+		log.Fatalf("Unknown transport protocol %s", a.Scheme)
+	}
+	queryTime := time.Since(startTime)
+
+	for _, reply := range replies {
+		if reply.Rcode != dns.RcodeSuccess {
+			return fmt.Errorf("dns query failed: %s", dns.RcodeToString[reply.Rcode])
+		}
+
+		// Print answers
+		switch opts.Format {
+		case "pretty":
+			for _, a := range reply.Answer {
+				fmt.Printf("%s %s %s %s\n",
+					color("purple", a.Header().Name),
+					color("green", time.Duration(a.Header().Ttl)*time.Second),
+					color("magenta", dns.TypeToString[a.Header().Rrtype]),
+					strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
+				)
+			}
+		case "raw":
+			fmt.Println(reply.String())
+			fmt.Printf(";; Received %d B\n", 0)
+			fmt.Printf(";; Time %s\n", time.Now().Format("2006-01-02 15:04:05 MST"))
+			fmt.Printf(";; From %s in %s\n", a.String(), queryTime.Round(100*time.Microsecond))
+		case "json":
+			// Marshal answers to JSON
+			marshalled, err := json.Marshal(struct {
+				Server    string
+				QueryTime int64
+				Answers   []dns.RR
+			}{
+				Server:    opts.Server,
+				QueryTime: int64(queryTime / time.Millisecond),
+				Answers:   reply.Answer,
+			})
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(marshalled))
+		default:
+			return fmt.Errorf("invalid output format")
+		}
+	}
 
 	return nil // nil error
 }
