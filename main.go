@@ -320,7 +320,7 @@ func driver(args []string) error {
 	}
 	queryTime := time.Since(startTime)
 
-	for _, reply := range replies {
+	for i, reply := range replies {
 		if reply.Rcode != dns.RcodeSuccess {
 			return fmt.Errorf("dns query failed: %s", dns.RcodeToString[reply.Rcode])
 		}
@@ -338,9 +338,14 @@ func driver(args []string) error {
 			}
 		case "raw":
 			fmt.Println(reply.String())
-			fmt.Printf(";; Received %d B\n", 0)
-			fmt.Printf(";; Time %s\n", time.Now().Format("2006-01-02 15:04:05 MST"))
+			fmt.Printf(";; Received %d B\n", reply.Len())
+			fmt.Printf(";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
 			fmt.Printf(";; From %s in %s\n", a.String(), queryTime.Round(100*time.Microsecond))
+
+			// Print separator if there is more than one query
+			if len(replies) > 0 && i != len(replies)-1 {
+				fmt.Printf("\n--\n\n")
+			}
 		case "json":
 			// Marshal answers to JSON
 			marshalled, err := json.Marshal(struct {
