@@ -14,13 +14,17 @@ import (
 // DoQ Error Codes
 // https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-11#section-5.3
 const (
-	noError          = 0x0        // No error. This is used when the connection or stream needs to be closed, but there is no error to signal.
-	internalError    = 0x1        // The DoQ implementation encountered an internal error and is incapable of pursuing the transaction or the connection.
-	protocolError    = 0x2        // The DoQ implementation encountered a protocol error and is forcibly aborting the connection.
-	requestCancelled = 0x3        // A DoQ client uses this to signal that it wants to cancel an outstanding transaction.
-	excessiveLoad    = 0x4        // A DoQ implementation uses this to signal when closing a connection due to excessive load.
-	unspecifiedError = 0x5        // A DoQ implementation uses this in the absence of a more specific error code.
-	errorReserved    = 0xd098ea5e // Alternative error code used for tests.
+	DoQNoError          = 0x0        // No error. This is used when the connection or stream needs to be closed, but there is no error to signal.
+	DoQInternalError    = 0x1        // The DoQ implementation encountered an internal error and is incapable of pursuing the transaction or the connection.
+	DoQProtocolError    = 0x2        // The DoQ implementation encountered a protocol error and is forcibly aborting the connection.
+	DoQRequestCancelled = 0x3        // A DoQ client uses this to signal that it wants to cancel an outstanding transaction.
+	DoQExcessiveLoad    = 0x4        // A DoQ implementation uses this to signal when closing a connection due to excessive load.
+	DoQUnspecifiedError = 0x5        // A DoQ implementation uses this in the absence of a more specific error code.
+	DoQErrorReserved    = 0xd098ea5e // Alternative error code used for tests.
+)
+
+var (
+	DoQALPNTokens = []string{"doq", "doq-i11"}
 )
 
 // QUIC makes a DNS query over QUIC
@@ -40,7 +44,7 @@ func QUIC(msg *dns.Msg, server string, tlsConfig *tls.Config, dialTimeout, hands
 	if opt := msg.IsEdns0(); opt != nil {
 		for _, option := range opt.Option {
 			if option.Option() == dns.EDNS0TCPKEEPALIVE {
-				_ = session.CloseWithError(protocolError, "") // Already closing the connection, so we don't care about the error
+				_ = session.CloseWithError(DoQProtocolError, "") // Already closing the connection, so we don't care about the error
 				return nil, fmt.Errorf("EDNS0 TCP keepalive option is set")
 			}
 		}
