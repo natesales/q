@@ -266,6 +266,14 @@ func driver(args []string) error {
 	if err != nil {
 		return fmt.Errorf("invalid server URL: %s", err)
 	}
+
+	if opts.ODoHProxy != "" && !strings.HasPrefix(opts.ODoHProxy, "https://") {
+		return fmt.Errorf("ODoH proxy must use HTTPS")
+	}
+	if opts.ODoHProxy != "" && a.Scheme != "https" {
+		return fmt.Errorf("ODoH target must use HTTPS")
+	}
+
 	if (a.Scheme == "http" || a.Scheme == "https") && a.Path == "" {
 		a.Path = "/dns-query"
 	} else if a.Scheme == "quic" {

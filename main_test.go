@@ -92,9 +92,8 @@ func TestMainInvalidODoHUpstream(t *testing.T) {
 		"-s", "tls://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
 	})
-	if !(err != nil && strings.Contains(err.Error(), "doesn't have an explicit HTTPS protocol")) {
-		t.Errorf("expected invalid upstream error, got %+v", err)
-	}
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "ODoH target must use HTTPS")
 }
 
 func TestMainInvalidODoHProxy(t *testing.T) {
@@ -105,9 +104,8 @@ func TestMainInvalidODoHProxy(t *testing.T) {
 		"-s", "https://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "tls://odoh1.surfdomeinen.nl",
 	})
-	if !(err != nil && strings.Contains(err.Error(), "doesn't have an explicit HTTPS protocol")) {
-		t.Errorf("expected proxy error, got %+v", err)
-	}
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "ODoH proxy must use HTTPS")
 }
 
 func TestMainReverseQuery(t *testing.T) {
