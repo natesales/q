@@ -197,9 +197,13 @@ func driver(args []string) error {
 
 	// If no RR types are defined, set a list of default ones
 	if len(rrTypes) < 1 {
-		for _, defaultRRType := range []string{"A", "AAAA", "NS", "MX", "TXT", "CNAME"} {
-			rrType, _ := dns.StringToType[defaultRRType]
-			rrTypes[rrType] = true
+		if opts.Name == "" {
+			rrTypes[dns.StringToType["NS"]] = true
+		} else {
+			for _, defaultRRType := range []string{"A", "AAAA", "NS", "MX", "TXT", "CNAME"} {
+				rrType, _ := dns.StringToType[defaultRRType]
+				rrTypes[rrType] = true
+			}
 		}
 	}
 
