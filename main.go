@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
@@ -226,26 +225,7 @@ func driver(args []string) error {
 		}
 	}
 
-	// Create the upstream server
-	u, err := upstream.AddressToUpstream(opts.Server, &upstream.Options{
-		Timeout:            time.Duration(opts.Timeout) * time.Second,
-		InsecureSkipVerify: !opts.TLSVerify,
-	})
-	if err != nil {
-		return fmt.Errorf("cannot create upstream %v", err)
-	}
-
-	if opts.ODoHProxy != "" {
-		log.Debugf("using ODoH proxy %s", opts.ODoHProxy)
-		if !strings.HasPrefix(u.Address(), "https") {
-			return fmt.Errorf("upstream %s doesn't have an explicit HTTPS protocol", u.Address())
-		}
-		if !strings.HasPrefix(opts.ODoHProxy, "https") {
-			return fmt.Errorf("proxy %s doesn't have an explicit HTTPS protocol", opts.ODoHProxy)
-		}
-	}
-
-	log.Debugf("using server %s", u.Address())
+	//log.Debugf("using server %s", u.Address())
 
 	var rrTypesSlice []uint16
 	for rrType := range rrTypes {
@@ -255,7 +235,6 @@ func driver(args []string) error {
 		opts.Name,
 		opts.Chaos, opts.DNSSEC, opts.NSID,
 		opts.ODoHProxy,
-		u,
 		rrTypesSlice,
 		opts.AuthoritativeAnswer,
 		opts.AuthenticData,

@@ -1,6 +1,6 @@
 module github.com/natesales/q
 
-go 1.18
+go 1.17
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.39.9

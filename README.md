@@ -48,3 +48,16 @@ Help Options:
 
 ### Installation
 `q` is available as a deb/rpm for apt/yum in my [public code repositories](https://github.com/natesales/repo), as a binary under [releases](https://github.com/natesales/q/releases), and in the AUR as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/).
+
+--doh-method (GET, POST, etc)
+--tls-sni
+--padding
+--retry
+--cookie
+--stats (show query latency, time, etc)
+--tap-dump (dump to DNSTAP file)
+--tap-read (read from DNSTAP file instead of making a query. Alternatively prefix server name with a slash for an absolute path)
+
+Query type and class ints
+
+Rename to qdig?
