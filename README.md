@@ -19,36 +19,41 @@ Usage:
 All long form (--) flags can be toggled with the dig-standard +[no]flag notation.
 
 Application Options:
-  -q, --qname=            Query name
-  -s, --server=           DNS server
-  -t, --type=             RR type
-  -x, --reverse           Reverse lookup
-  -d, --dnssec            Set the DO (DNSSEC OK) bit in the OPT record
-  -n, --nsid              Set EDNS0 NSID opt
-      --subnet=           Set EDNS0 client subnet
-  -f, --format=           Output format (pretty, json, raw) (default: pretty)
-  -c, --chaos             Use CHAOS query class
-  -p, --odoh-proxy=       ODoH proxy
-      --timeout=          Query timeout duration (default: 10s)
-      --pad               Set EDNS0 padding
-      --aa                Set AA (Authoritative Answer) flag in query
-      --ad                Set AD (Authentic Data) flag in query
-      --cd                Set CD (Checking Disabled) flag in query
-      --rd                Set RD (Recursion Desired) flag in query
-      --ra                Set RA (Recursion Available) flag in query
-      --z                 Set Z (Zero) flag in query
-  -i, --tls-no-verify     Disable TLS certificate verification
-      --tls-min-version=  Minimum TLS version to use (default: 1.0)
-      --tls-max-version=  Maximum TLS version to use (default: 1.3)
-      --http-user-agent=  HTTP user agent
-      --http-method=      HTTP method (default: GET)
-      --quic-alpn-tokens= QUIC ALPN tokens (default: doq, doq-i11)
-      --udp-buffer=       Set EDNS0 UDP size in query (default: 4096)
-  -v, --verbose           Show verbose log messages
-  -V, --version           Show version and exit
+  -q, --qname=             Query name
+  -s, --server=            DNS server
+  -t, --type=              RR type
+  -x, --reverse            Reverse lookup
+  -d, --dnssec             Set the DO (DNSSEC OK) bit in the OPT record
+  -n, --nsid               Set EDNS0 NSID opt
+      --subnet=            Set EDNS0 client subnet
+  -f, --format=            Output format (pretty, json, raw) (default: pretty)
+  -c, --chaos              Use CHAOS query class
+  -p, --odoh-proxy=        ODoH proxy
+      --timeout=           Query timeout in seconds (default: 10)
+      --pad                Set EDNS0 padding
+      --aa                 Set AA (Authoritative Answer) flag in query
+      --ad                 Set AD (Authentic Data) flag in query
+      --cd                 Set CD (Checking Disabled) flag in query
+      --rd                 Set RD (Recursion Desired) flag in query
+      --ra                 Set RA (Recursion Available) flag in query
+      --z                  Set Z (Zero) flag in query
+  -i, --tls-no-verify      Disable TLS certificate verification
+      --tls-min-version=   Minimum TLS version to use (default: 1.0)
+      --tls-max-version=   Maximum TLS version to use (default: 1.3)
+      --http-user-agent=   HTTP user agent
+      --http-method=       HTTP method (default: GET)
+      --quic-alpn-tokens=  QUIC ALPN tokens (default: doq, doq-i11)
+      --quic-keep-alive    QUIC keep-alive
+      --quic-no-pmtud      Disable QUIC PMTU discovery
+      --quic-dial-timeout= QUIC dial timeout (default: 10)
+      --quic-idle-timeout= QUIC stream open timeout (default: 10)
+      --handshake-timeout= Handshake timeout (default: 10)
+      --udp-buffer=        Set EDNS0 UDP size in query (default: 4096)
+  -v, --verbose            Show verbose log messages
+  -V, --version            Show version and exit
 
 Help Options:
-  -h, --help              Show this help message
+  -h, --help               Show this help message
 ```
 
 ### Demo
