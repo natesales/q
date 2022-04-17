@@ -48,3 +48,9 @@ publishers:
       - nfpm-default
     dir: "{{ dir .ArtifactPath }}"
     cmd: curl -s -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/natesales/
+brews:
+  - name: q
+    homepage: https://github.com/natesales/homebrew-repo
+    tap:
+      owner: natesales
+      name: homebrew-repo
