@@ -50,7 +50,7 @@ publishers:
     cmd: curl -s -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/natesales/
 brews:
   - name: q
-    homepage: https://github.com/natesales/homebrew-tap
+    homepage: https://github.com/natesales/repo
     tap:
       owner: natesales
-      name: homebrew-tap
+      name: repo
