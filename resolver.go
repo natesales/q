@@ -7,8 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var respPadBuf [128]byte
-
 // createQuery creates a slice of DNS queries
 func createQuery(
 	name string,
@@ -71,22 +69,22 @@ func createQuery(
 			}
 
 			if clientSubnet != "" {
-				addr := net.ParseIP(clientSubnet)
-				if addr == nil {
-					log.Fatalf("parsing IP address %s", clientSubnet)
+				ip, ipNet, err := net.ParseCIDR(clientSubnet)
+				if err != nil {
+					log.Fatalf("parsing subnet %s", clientSubnet)
 				}
+				mask, _ := ipNet.Mask.Size()
+				log.Debugf("EDNS0 client subnet %s/%d", ip, mask)
 
 				ednsSubnet := &dns.EDNS0_SUBNET{
 					Code:          dns.EDNS0SUBNET,
-					Address:       addr,
+					Address:       ip,
 					Family:        1, // IPv4
-					SourceNetmask: 32,
+					SourceNetmask: uint8(mask),
 				}
 
-				// Set IPv6 family/mask
 				if ednsSubnet.Address.To4() == nil {
 					ednsSubnet.Family = 2 // IPv6
-					ednsSubnet.SourceNetmask = 128
 				}
 				opt.Option = append(opt.Option, ednsSubnet)
 			}

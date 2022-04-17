@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
 )
 
 // HTTP makes a DNS query over HTTP(s)
@@ -34,8 +35,12 @@ func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string) (
 	}
 
 	req.Header.Set("Accept", "application/dns-message")
-	req.Header.Set("User-Agent", userAgent)
+	if userAgent != "" {
+		log.Debugf("Setting User-Agent to %s", userAgent)
+		req.Header.Set("User-Agent", userAgent)
+	}
 
+	log.Debugf("[http] sending %s request to %s", method, queryURL)
 	resp, err := httpClient.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
