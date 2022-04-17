@@ -195,3 +195,119 @@ func TestMainParsePlusFlags(t *testing.T) {
 	assert.True(t, opts.DNSSEC)
 	assert.False(t, opts.RecursionDesired)
 }
+
+func TestMainTCPQuery(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"@tcp://1.1.1.1",
+		"--format=json",
+	}))
+}
+
+func TestMainTLSQuery(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"-t", "A",
+		"@tls://dns.quad9.net",
+		"--format=json",
+	}))
+}
+
+func TestMainHTTPSQuery(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"-t", "A",
+		"@https://dns.quad9.net",
+		"--format=json",
+	}))
+}
+
+func TestMainQUICQuery(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"-t", "A",
+		"@quic://dns.adguard.com",
+		"--format=json",
+	}))
+}
+
+func TestMainInvalidServerURL(t *testing.T) {
+	clearOpts()
+	assert.NotNil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"@bad::server::url",
+		"--format=json",
+	}))
+}
+
+func TestMainInvalidTransportScheme(t *testing.T) {
+	clearOpts()
+	assert.NotNil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"@invalid://example.com",
+		"--format=json",
+	}))
+}
+
+func TestMainTLS12(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"--tls-min-version=1.1",
+		"--tls-max-version=1.2",
+		"@tls://dns.quad9.net",
+		"--format=json",
+	}))
+}
+
+func TestMainNSID(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"@tls://dns.quad9.net",
+		"+nsid",
+	}))
+	// TODO: Remove parentheses
+}
+
+func TestMainECSv4(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"@script-ns.packetframe.com",
+		"TXT",
+		"query.script.packetframe.com",
+		"--subnet", "192.0.2.0/24",
+	}))
+}
+
+func TestMainECSv6(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"@script-ns.packetframe.com",
+		"TXT",
+		"query.script.packetframe.com",
+		"--subnet", "2001:db8::/48",
+	}))
+}
+
+func TestMainHTTPUserAgent(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"@https://dns.quad9.net",
+		"--http-user-agent", "Example/1.0",
+	}))
+}
