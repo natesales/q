@@ -283,12 +283,12 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	if (a.Scheme == "http" || a.Scheme == "https") && a.Path == "" {
 		a.Path = "/dns-query"
-	} else if a.Scheme == "quic" {
+	} else if a.Scheme == "quic" && a.Port() == "" {
 		a.Host += ":8853"
 		tlsConfig.NextProtos = opts.QUICALPNTokens
-	} else if a.Scheme == "tls" {
+	} else if a.Scheme == "tls" && a.Port() == "" {
 		a.Host += ":853"
-	} else if a.Port() == "" {
+	} else if a.Port() == "" && a.Port() == "" {
 		a.Host += ":53"
 	}
 
@@ -353,7 +353,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			replies = append(replies, reply)
 		}
 	default:
-		log.Fatalf("Unknown transport protocol %s", a.Scheme)
+		return fmt.Errorf("unknown transport protocol %s", a.Scheme)
 	}
 	queryTime := time.Since(startTime)
 
