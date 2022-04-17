@@ -29,12 +29,19 @@ var (
 )
 
 // QUIC makes a DNS query over QUIC
-func QUIC(msg *dns.Msg, server string, tlsConfig *tls.Config, dialTimeout, handshakeTimeout, openStreamTimeout time.Duration) (*dns.Msg, error) {
+func QUIC(msg *dns.Msg,
+	server string,
+	tlsConfig *tls.Config,
+	dialTimeout, handshakeTimeout, openStreamTimeout time.Duration,
+	noPMTUD, keepAlive bool,
+) (*dns.Msg, error) {
 	log.Debugf("Dialing with QUIC ALPN tokens: %v", tlsConfig.NextProtos)
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), dialTimeout)
 	defer dialCancel()
 	session, err := quic.DialAddrContext(dialCtx, server, tlsConfig, &quic.Config{
-		HandshakeIdleTimeout: handshakeTimeout,
+		HandshakeIdleTimeout:    handshakeTimeout,
+		DisablePathMTUDiscovery: noPMTUD,
+		KeepAlive:               keepAlive,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("opening quic session to %s: %v", server, err)

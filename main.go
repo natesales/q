@@ -28,7 +28,7 @@ type optsTemplate struct {
 	Format       string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
 	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	Timeout      string   `long:"timeout" description:"Query timeout duration" default:"10s"`
+	Timeout      uint16   `long:"timeout" description:"Query timeout in seconds" default:"10"`
 	Pad          bool     `long:"pad" description:"Set EDNS0 padding"`
 
 	// Header flags
@@ -49,7 +49,13 @@ type optsTemplate struct {
 	HTTPMethod    string `long:"http-method" description:"HTTP method" default:"GET"`
 
 	// QUIC
-	QUICALPNTokens []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
+	QUICALPNTokens        []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
+	QUICKeepAlive         bool     `long:"quic-keep-alive" description:"QUIC keep-alive"`
+	QUICNoPMTUD           bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
+	QUICDialTimeout       uint16   `long:"quic-dial-timeout" description:"QUIC dial timeout" default:"10"`
+	QUICOpenStreamTimeout uint16   `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10"`
+
+	HandshakeTimeout uint16 `long:"handshake-timeout" description:"Handshake timeout" default:"10"`
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
@@ -151,11 +157,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	if opts.ShowVersion {
 		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
 		return nil
-	}
-
-	timeoutDuration, err := time.ParseDuration(opts.Timeout)
-	if err != nil {
-		log.Fatalf("invalid timeout duration: %s", err)
 	}
 
 	// Parse requested RR types
@@ -312,7 +313,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		} else {
 			log.Debug("Using HTTP(s) transport")
 			for _, msg := range msgs {
-				reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent, opts.HTTPMethod)
+				reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent, opts.HTTPMethod,
+					time.Duration(opts.Timeout)*time.Second, time.Duration(opts.HandshakeTimeout)*time.Second)
 				if err != nil {
 					return err
 				}
@@ -322,7 +324,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "quic":
 		log.Debug("Using QUIC transport")
 		for _, msg := range msgs {
-			reply, err := transport.QUIC(&msg, a.Host, tlsConfig, 5*time.Second, 5*time.Second, 5*time.Second)
+			reply, err := transport.QUIC(&msg, a.Host, tlsConfig,
+				time.Duration(opts.QUICDialTimeout)*time.Second,
+				time.Duration(opts.HandshakeTimeout)*time.Second,
+				time.Duration(opts.QUICOpenStreamTimeout)*time.Second,
+				opts.QUICNoPMTUD, opts.QUICKeepAlive)
 			if err != nil {
 				return err
 			}
@@ -340,7 +346,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "tcp":
 		log.Debug("Using TCP transport")
 		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, a.Host, true, timeoutDuration, opts.UDPBuffer)
+			reply, err := transport.Plain(&msg, a.Host, true, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
 			if err != nil {
 				return err
 			}
@@ -349,7 +355,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "plain":
 		log.Debug("Using UDP with TCP fallback")
 		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, a.Host, false, timeoutDuration, opts.UDPBuffer)
+			reply, err := transport.Plain(&msg, a.Host, false, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
 			if err != nil {
 				return err
 			}

@@ -13,14 +13,15 @@ import (
 )
 
 // HTTP makes a DNS query over HTTP(s)
-func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string) (*dns.Msg, error) {
+func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string, timeout, handshakeTimeout time.Duration) (*dns.Msg, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: tlsConfig,
-			MaxConnsPerHost: 1,
-			MaxIdleConns:    1,
+			TLSClientConfig:     tlsConfig,
+			MaxConnsPerHost:     1,
+			MaxIdleConns:        1,
+			TLSHandshakeTimeout: handshakeTimeout,
 		},
-		Timeout: 5 * time.Second,
+		Timeout: timeout,
 	}
 
 	buf, err := m.Pack()

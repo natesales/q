@@ -19,19 +19,19 @@ func TestTransportHTTP(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	reply, err := HTTP(&msg, &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET")
+	reply, err := HTTP(&msg, &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET", 2*time.Second, 2*time.Second)
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
 func TestTransportHTTPInvalidResolver(t *testing.T) {
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://example.com", "", "GET")
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://example.com", "", "GET", 2*time.Second, 2*time.Second)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "unpacking DNS response")
 }
 
 func TestTransportHTTPServerError(t *testing.T) {
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://httpstat.us/500", "", "GET")
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://httpstat.us/500", "", "GET", 2*time.Second, 2*time.Second)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "got status code 500")
 }
@@ -50,7 +50,7 @@ func TestTransportHTTPIDMismatch(t *testing.T) {
 		}))
 	}()
 	time.Sleep(50 * time.Millisecond)
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8085", "", "GET")
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8085", "", "GET", 2*time.Second, 2*time.Second)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "id mismatch")
 }
