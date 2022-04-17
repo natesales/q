@@ -30,10 +30,13 @@ jobs:
       - name: Run test
         run: gopherbadger -style=for-the-badge -covercmd "go test -v -race -covermode atomic -coverprofile=cover.out ./... && go tool cover -func=cover.out"
 
-      - name: Commit coverage badge
+      - name: Update usage in README
+        run: ./update-usage-readme.sh
+
+      - name: Commit coverage badge and README update
         uses: EndBug/add-and-commit@v7
         with:
-          message: "ci: update coverage"
-          add: "coverage_badge.png"
+          message: "ci: update coverage and readme"
+          add: "coverage_badge.png README.md"
           author_name: "github-actions[bot]"
           author_email: "github-actions[bot]@users.noreply.github.com"
