@@ -30,6 +30,7 @@ Application Options:
   -c, --chaos             Use CHAOS query class
   -p, --odoh-proxy=       ODoH proxy
       --timeout=          Query timeout duration (default: 10s)
+      --pad               Set EDNS0 padding
       --aa                Set AA (Authoritative Answer) flag in query
       --ad                Set AD (Authentic Data) flag in query
       --cd                Set CD (Checking Disabled) flag in query
