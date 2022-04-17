@@ -6,9 +6,8 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-#      - freebsd
-#      - darwin
-#      - windows
+      - darwin
+      - windows
     goarch:
       - amd64
       - arm64
@@ -42,12 +41,12 @@ nfpms:
     formats:
       - deb
       - rpm
-#publishers:
-#  - name: fury.io
-#    ids:
-#      - nfpm-default
-#    dir: "{{ dir .ArtifactPath }}"
-#    cmd: curl -s -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/natesales/
+publishers:
+  - name: fury.io
+    ids:
+      - nfpm-default
+    dir: "{{ dir .ArtifactPath }}"
+    cmd: curl -s -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/natesales/
 brews:
   - name: q
     homepage: https://github.com/natesales/homebrew-repo
