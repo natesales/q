@@ -7,6 +7,7 @@ builds:
     goos:
       - linux
       - darwin
+      - freebsd
       - windows
     goarch:
       - amd64
@@ -49,7 +50,7 @@ publishers:
     cmd: curl -s -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/natesales/
 brews:
   - name: q
-    homepage: https://github.com/natesales/homebrew-repo
+    homepage: https://github.com/natesales/homebrew-tap
     tap:
       owner: natesales
-      name: homebrew-repo
+      name: homebrew-tap
