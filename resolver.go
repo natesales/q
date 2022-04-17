@@ -7,6 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var respPadBuf [128]byte
+
 // createQuery creates a slice of DNS queries
 func createQuery(
 	name string,
@@ -15,6 +17,7 @@ func createQuery(
 	aaFlag, adFlag, cdFlag, rdFlag, raFlag, zFlag bool,
 	udpBuffer uint16,
 	clientSubnet string,
+	pad bool,
 ) []dns.Msg {
 	var queries []dns.Msg
 
@@ -29,7 +32,7 @@ func createQuery(
 		req.RecursionAvailable = raFlag
 		req.Zero = zFlag
 
-		if dnssec || nsid || clientSubnet != "" {
+		if dnssec || nsid || pad || clientSubnet != "" {
 			opt := &dns.OPT{
 				Hdr: dns.RR_Header{
 					Name:   ".",
@@ -46,6 +49,25 @@ func createQuery(
 				opt.Option = append(opt.Option, &dns.EDNS0_NSID{
 					Code: dns.EDNS0NSID,
 				})
+			}
+
+			if pad {
+				paddingOpt := new(dns.EDNS0_PADDING)
+
+				msgLen := req.Len()
+				padLen := 128 - msgLen%128
+
+				// Truncate padding to fit in UDP buffer
+				if msgLen+padLen > int(opt.UDPSize()) {
+					padLen = int(opt.UDPSize()) - msgLen
+					if padLen < 0 { // Stop padding
+						padLen = 0
+					}
+				}
+
+				log.Debugf("Padding with %d bytes", padLen)
+				paddingOpt.Padding = make([]byte, padLen)
+				opt.Option = append(opt.Option, paddingOpt)
 			}
 
 			if clientSubnet != "" {

@@ -168,6 +168,16 @@ func TestMainDNSSECArg(t *testing.T) {
 	}))
 }
 
+func TestMainPad(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"-q", "example.com",
+		"--pad",
+		"--format=json",
+	}))
+}
+
 func TestMainChaosClass(t *testing.T) {
 	clearOpts()
 	assert.Nil(t, driver([]string{

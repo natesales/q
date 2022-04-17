@@ -29,6 +29,7 @@ type optsTemplate struct {
 	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Timeout      string   `long:"timeout" description:"Query timeout duration" default:"10s"`
+	Pad          bool     `long:"pad" description:"Set EDNS0 padding"`
 
 	// Header flags
 	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
@@ -260,6 +261,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.AuthoritativeAnswer, opts.AuthenticData, opts.CheckingDisabled, opts.RecursionDesired, opts.RecursionAvailable, opts.Zero,
 		opts.UDPBuffer,
 		opts.ClientSubnet,
+		opts.Pad,
 	)
 	var replies []*dns.Msg
 
