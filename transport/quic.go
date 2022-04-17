@@ -3,6 +3,7 @@ package transport
 import (
 	"crypto/tls"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 
@@ -29,6 +30,7 @@ var (
 
 // QUIC makes a DNS query over QUIC
 func QUIC(msg *dns.Msg, server string, tlsConfig *tls.Config, dialTimeout, handshakeTimeout, openStreamTimeout time.Duration) (*dns.Msg, error) {
+	log.Debugf("Dialing with QUIC ALPN tokens: %v", tlsConfig.NextProtos)
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), dialTimeout)
 	defer dialCancel()
 	session, err := quic.DialAddrContext(dialCtx, server, tlsConfig, &quic.Config{

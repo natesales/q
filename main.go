@@ -285,11 +285,14 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		a.Path = "/dns-query"
 	} else if a.Scheme == "quic" && a.Port() == "" {
 		a.Host += ":8853"
-		tlsConfig.NextProtos = opts.QUICALPNTokens
 	} else if a.Scheme == "tls" && a.Port() == "" {
 		a.Host += ":853"
 	} else if a.Port() == "" && a.Port() == "" {
 		a.Host += ":53"
+	}
+
+	if a.Scheme == "quic" {
+		tlsConfig.NextProtos = opts.QUICALPNTokens
 	}
 
 	log.Debugf("Server: %s", a.String())
