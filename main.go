@@ -159,20 +159,20 @@ func parseServer() (string, string, error) {
 			port = ""
 		}
 		host = "[" + strings.Split(strings.Split(host, "[")[1], "]")[0] + "]"
-		log.Infof("host contains ], treating as v6 with port. host: %s port: %s", host, port)
+		log.Tracef("host contains ], treating as v6 with port. host: %s port: %s", host, port)
 	} else if strings.Contains(host, ".") && strings.Contains(host, ":") { // IPv4 or hostname with port
 		parts := strings.Split(host, ":")
 		host = parts[0]
 		port = parts[1]
-		log.Debugf("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
+		log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
 	} else if strings.Contains(host, ":") { // IPv6 no port
 		host = "[" + host + "]"
-		log.Infof("host contains :, treating as v6 without port. host %s", host)
+		log.Tracef("host contains :, treating as v6 without port. host %s", host)
 	} else {
-		log.Debugf("no cases matched for host %s port %s", host, port)
+		log.Tracef("no cases matched for host %s port %s", host, port)
 	}
 
-	log.Debugf("host: %s port %s", host, port)
+	log.Debugf("Using scheme: %s host: %s port: %s", scheme, host, port)
 
 	// Validate ODoH
 	if opts.ODoHProxy != "" && !strings.HasPrefix(opts.ODoHProxy, "https://") {
@@ -193,16 +193,16 @@ func parseServer() (string, string, error) {
 		default:
 			port = "53"
 		}
-		log.Debugf("Setting port to %s", port)
+		log.Tracef("Setting port to %s", port)
 	} else {
-		log.Debugf("Port is %s, not overriding", port)
+		log.Tracef("Port is %s, not overriding", port)
 	}
 
 	fqdn := scheme + "://" + host
 	if scheme != "https" {
 		fqdn += ":" + port
 	}
-	log.Debugf("checking FQDN %s", fqdn)
+	log.Tracef("checking FQDN %s", fqdn)
 	u, err := url.Parse(fqdn)
 	if err != nil {
 		return "", "", err
@@ -218,7 +218,7 @@ func parseServer() (string, string, error) {
 		// Add default path if missing
 		if u.Path == "" {
 			server += "/dns-query"
-			log.Debugf("HTTPS scheme and no path, setting server to %s", server)
+			log.Tracef("HTTPS scheme and no path, setting server to %s", server)
 		}
 	}
 
