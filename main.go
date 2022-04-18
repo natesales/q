@@ -284,12 +284,17 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	if (a.Scheme == "http" || a.Scheme == "https") && a.Path == "" {
 		a.Path = "/dns-query"
-	} else if a.Scheme == "quic" && a.Port() == "" {
-		a.Host += ":8853"
-	} else if a.Scheme == "tls" && a.Port() == "" {
-		a.Host += ":853"
-	} else if a.Port() == "" && a.Port() == "" {
-		a.Host += ":53"
+	} else if a.Port() == "" {
+		if strings.Contains(a.Host, ":") {
+			a.Host = "[" + a.Host + "]"
+		}
+		if a.Scheme == "quic" {
+			a.Host += ":8853"
+		} else if a.Scheme == "tls" {
+			a.Host += ":853"
+		} else if a.Port() == "" {
+			a.Host += ":53"
+		}
 	}
 
 	if a.Scheme == "quic" {
