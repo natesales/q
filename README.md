@@ -88,8 +88,6 @@ with `git clone https://github.com/natesales/q && cd q && go build`.
 
 ### Feature Comparison
 
-How does it compare to other DNS clients?
-
 #### DNS Transport Protocols
 
 | Protocol                                                     |  q  | doggo | dog | kdig | dig | drill |
