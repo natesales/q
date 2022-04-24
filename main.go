@@ -503,6 +503,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 					printPrettyRR(a)
 				}
 			}
+
+			// Print separator if there is more than one query
+			if len(replies) > 0 && i != len(replies)-1 {
+				fmt.Printf("\n──\n\n")
+			}
 		case "raw":
 			s := reply.MsgHdr.String() + " "
 			s += "QUERY: " + strconv.Itoa(len(reply.Question)) + ", "
