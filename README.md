@@ -12,6 +12,7 @@ A tiny command line DNS client with support for UDP, TCP, DoT, DoH, DoQ, and ODo
 </div>
 
 ### Usage
+
 ```
 Usage:
   q [OPTIONS] [@server] [type...] [name]
@@ -75,11 +76,15 @@ Help Options:
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
 - DNS over QUIC ([draft-ietf-dprive-dnsoquic-12](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-12))
-- Oblivious DNS over HTTPS ([draft-pauly-dprive-oblivious-doh-11](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-11))
+- Oblivious DNS over
+  HTTPS ([draft-pauly-dprive-oblivious-doh-11](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-11))
 
 ### Installation
 
-`q` is available from my [public package repositories](https://github.com/natesales/repo), as a binary from [releases](https://github.com/natesales/q/releases), from the AUR as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/), or from source with `git clone https://github.com/natesales/q && cd q && go build`.
+`q` is available from my [public package repositories](https://github.com/natesales/repo), as a binary
+from [releases](https://github.com/natesales/q/releases), from the AUR
+as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/), or from source
+with `git clone https://github.com/natesales/q && cd q && go build`.
 
 ### Feature Comparison
 
@@ -97,12 +102,12 @@ How does it compare to other DNS clients?
 
 #### Output Formats
 
-| Format         |  q  | doggo | dog | kdig | dig | drill |
-|:---------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| "dig standard" |  +  |   -   |  +  |  +   |  +  |   +   |
-| Pretty colors  |  +  |   +   |  +  |  -   |  -  |   -   |
-| JSON           |  +  |   +   |  +  |  -   |  -  |   -   |
-| YAML           |  +  |   -   |  -  |  -   |  +  |   -   |
+| Format          |  q  | doggo | dog | kdig | dig | drill |
+|:----------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| Raw (dig-style) |  +  |   -   |  +  |  +   |  +  |   +   |
+| Pretty colors   |  +  |   +   |  +  |  -   |  -  |   -   |
+| JSON            |  +  |   +   |  +  |  -   |  -  |   -   |
+| YAML            |  +  |   -   |  -  |  -   |  +  |   -   |
 
 #### Output Flags
 
