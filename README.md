@@ -31,6 +31,7 @@ Application Options:
       --timeout=           Query timeout in seconds (default: 10)
       --pad                Set EDNS0 padding
   -f, --format=            Output format (pretty, json, raw) (default: pretty)
+      --pretty-ttls        Format TTLs in human readable format (default: true)
       --color              Enable color output
       --question           Show question section
       --answer             Show answer section (default: true)
