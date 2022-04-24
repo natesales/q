@@ -21,7 +21,7 @@ import (
 type optsTemplate struct {
 	Name         string   `short:"q" long:"qname" description:"Query name"`
 	Server       string   `short:"s" long:"server" description:"DNS server"`
-	Types        []string `short:"t" long:"type" description:"RR type"`
+	Types        []string `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
 	Reverse      bool     `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC       bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
 	NSID         bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
@@ -296,7 +296,12 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		if ok {
 			rrTypes[typeCode] = true
 		} else {
-			return fmt.Errorf("%s is not a valid RR type", rrType)
+			typeCode, err := strconv.Atoi(rrType)
+			if err != nil {
+				return fmt.Errorf("%s is not a valid RR type", rrType)
+			}
+			log.Debugf("using RR type %d as integer", typeCode)
+			rrTypes[uint16(typeCode)] = true
 		}
 	}
 
