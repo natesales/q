@@ -26,6 +26,7 @@ type optsTemplate struct {
 	NSID         bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
 	ClientSubnet string   `long:"subnet" description:"Set EDNS0 client subnet"`
 	Format       string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	Color        bool     `long:"color" description:"Enable color output"`
 	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Timeout      uint16   `long:"timeout" description:"Query timeout in seconds" default:"10"`
@@ -85,13 +86,22 @@ var colors = map[string]string{
 
 // color returns a color formatted string
 func color(color string, args ...interface{}) string {
-	return fmt.Sprintf(colors[color], fmt.Sprint(args...))
+	if opts.Color {
+		return fmt.Sprintf(colors[color], fmt.Sprint(args...))
+	} else {
+		return fmt.Sprint(args...)
+	}
 }
 
 // clearOpts sets the default values for the CLI options
 func clearOpts() {
 	opts = optsTemplate{}
 	opts.RecursionDesired = true
+
+	// Enable color output if stdout is a terminal
+	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
+		opts.Color = true
+	}
 }
 
 // tlsVersion returns a TLS version number by given protocol string
