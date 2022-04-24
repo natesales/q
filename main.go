@@ -15,6 +15,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/natesales/q/transport"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 // CLI flags
@@ -32,7 +33,7 @@ type optsTemplate struct {
 	Pad          bool     `long:"pad" description:"Set EDNS0 padding"`
 
 	// Output
-	Format         string `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	Format         string `short:"f" long:"format" description:"Output format (pretty, json, yaml, raw)" default:"pretty"`
 	PrettyTTLs     bool   `long:"pretty-ttls" description:"Format TTLs in human readable format (default: true)"`
 	Color          bool   `long:"color" description:"Enable color output"`
 	ShowQuestion   bool   `long:"question" description:"Show question section"`
@@ -49,6 +50,7 @@ type optsTemplate struct {
 	RecursionDesired    bool `long:"rd" description:"Set RD (Recursion Desired) flag in query (default: true)"`
 	RecursionAvailable  bool `long:"ra" description:"Set RA (Recursion Available) flag in query"`
 	Zero                bool `long:"z" description:"Set Z (Zero) flag in query"`
+	Truncated           bool `long:"t" description:"Set TC (Truncated) flag in query"`
 
 	// TCP parameters
 	TLSNoVerify   bool   `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
@@ -397,7 +399,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.Name,
 		opts.Chaos, opts.DNSSEC, opts.NSID,
 		rrTypesSlice,
-		opts.AuthoritativeAnswer, opts.AuthenticData, opts.CheckingDisabled, opts.RecursionDesired, opts.RecursionAvailable, opts.Zero,
+		opts.AuthoritativeAnswer, opts.AuthenticData, opts.CheckingDisabled, opts.RecursionDesired, opts.RecursionAvailable, opts.Zero, opts.Truncated,
 		opts.UDPBuffer,
 		opts.ClientSubnet,
 		opts.Pad,
@@ -572,9 +574,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			if len(replies) > 0 && i != len(replies)-1 {
 				fmt.Printf("\n--\n\n")
 			}
-		case "json":
-			// Marshal answers to JSON
-			marshalled, err := json.Marshal(struct {
+		case "json", "yml", "yaml":
+			body := struct {
 				Server    string
 				QueryTime int64
 				Answers   []dns.RR
@@ -582,11 +583,18 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				Server:    opts.Server,
 				QueryTime: int64(queryTime / time.Millisecond),
 				Answers:   reply.Answer,
-			})
+			}
+			var b []byte
+			var err error
+			if opts.Format == "json" {
+				b, err = json.Marshal(body)
+			} else {
+				b, err = yaml.Marshal(body)
+			}
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(marshalled))
+			fmt.Println(string(b))
 		default:
 			return fmt.Errorf("invalid output format")
 		}

@@ -12,7 +12,7 @@ func createQuery(
 	name string,
 	chaos, dnssec, nsid bool,
 	rrTypes []uint16,
-	aaFlag, adFlag, cdFlag, rdFlag, raFlag, zFlag bool,
+	aaFlag, adFlag, cdFlag, rdFlag, raFlag, zFlag, tcFlag bool,
 	udpBuffer uint16,
 	clientSubnet string,
 	pad bool,
@@ -29,6 +29,7 @@ func createQuery(
 		req.RecursionDesired = rdFlag
 		req.RecursionAvailable = raFlag
 		req.Zero = zFlag
+		req.Truncated = tcFlag
 
 		if dnssec || nsid || pad || clientSubnet != "" {
 			opt := &dns.OPT{

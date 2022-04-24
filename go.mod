@@ -10,6 +10,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
