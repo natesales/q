@@ -79,3 +79,59 @@ Help Options:
 ### Installation
 
 `q` is available from my [public package repositories](https://github.com/natesales/repo), as a binary from [releases](https://github.com/natesales/q/releases), from the AUR as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/), or from source with `git clone https://github.com/natesales/q && cd q && go build`.
+
+### Feature Comparison
+
+How does it compare to other DNS clients?
+
+#### DNS Transport Protocols
+
+| Protocol                                                     |  q  | doggo | dog | kdig | dig | drill |
+|:-------------------------------------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| RFC 1034 UDP/TCP                                             |  +  |   +   |  +  |  +   |  +  |   +   |
+| RFC 7858 DNS over TLS                                        |  +  |   +   |  +  |  +   |  -  |   -   |
+| RFC 8484 DNS over HTTPS                                      |  +  |   +   |  +  |  +   |  -  |   -   |
+| draft-ietf-dprive-dnsoquic-12 DNS over QUIC                  |  +  |   +   |  -  |  -   |  -  |   -   |
+| draft-pauly-dprive-oblivious-doh-11 Oblivious DNS over HTTPS |  +  |   -   |  -  |  -   |  -  |   -   |
+
+#### Output Formats
+
+| Format         |  q  | doggo | dog | kdig | dig | drill |
+|:---------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| "dig standard" |  +  |   -   |  +  |  +   |  +  |   +   |
+| Pretty colors  |  +  |   +   |  +  |  -   |  -  |   -   |
+| JSON           |  +  |   +   |  +  |  -   |  -  |   -   |
+| YAML           |  +  |   -   |  -  |  -   |  +  |   -   |
+
+#### Output Flags
+
+| Option                    |  q  | doggo | dog | kdig | dig | drill |
+|:--------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| Toggle question section   |  +  |   -   |  -  |  +   |  +  |   -   |
+| Toggle answer section     |  +  |   -   |  -  |  +   |  +  |   -   |
+| Toggle authority section  |  +  |   -   |  -  |  +   |  +  |   -   |
+| Toggle additional section |  +  |   -   |  -  |  +   |  +  |   -   |
+| Show query time           |  +  |   -   |  -  |  +   |  +  |   -   |
+
+#### Query Flags
+
+| Flag |  q  | doggo | dog | kdig | dig | drill |
+|:-----|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| AA   |  +  |   -   |  +  |  +   |  +  |   +   |
+| AD   |  +  |   -   |  +  |  +   |  +  |   +   |
+| CD   |  +  |   -   |  +  |  +   |  +  |   +   |
+| RD   |  +  |   -   |  -  |  +   |  +  |   +   |
+| Z    |  +  |   -   |  -  |  +   |  +  |   -   |
+| DO   |  +  |   -   |  +  |  +   |  +  |   +   |
+| TC   |  +  |   -   |  -  |  +   |  +  |   +   |
+
+#### Protocol Tweaks
+
+| Flag                          |  q  | doggo | dog | kdig | dig | drill |
+|:------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| HTTP Method                   |  +  |   -   |  -  |  -   |  -  |   -   |
+| QUIC ALPN Tokens              |  +  |   -   |  -  |  -   |  -  |   -   |
+| QUIC Keepalive                |  +  |   -   |  -  |  -   |  -  |   -   |
+| QUIC toggle PMTU discovery    |  +  |   -   |  -  |  -   |  -  |   -   |
+| QUIC timeouts (dial and idle) |  +  |   -   |  -  |  -   |  -  |   -   |
+| TLS handshake timeout         |  +  |   -   |  -  |  -   |  -  |   -   |
