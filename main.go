@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,18 +26,26 @@ type optsTemplate struct {
 	DNSSEC       bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
 	NSID         bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
 	ClientSubnet string   `long:"subnet" description:"Set EDNS0 client subnet"`
-	Format       string   `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
-	Color        bool     `long:"color" description:"Enable color output"`
 	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Timeout      uint16   `long:"timeout" description:"Query timeout in seconds" default:"10"`
 	Pad          bool     `long:"pad" description:"Set EDNS0 padding"`
 
+	// Output
+	Format         string `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	Color          bool   `long:"color" description:"Enable color output"`
+	ShowQuestion   bool   `long:"question" description:"Show question section"`
+	ShowAnswer     bool   `long:"answer" description:"Show answer section (default: true)"`
+	ShowAuthority  bool   `long:"authority" description:"Show authority section"`
+	ShowAdditional bool   `long:"additional" description:"Show additional section"`
+	ShowStats      bool   `long:"stats" description:"Show time statistics"`
+	ShowAll        bool   `long:"all" description:"Show all sections and statistics"`
+
 	// Header flags
 	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
 	AuthenticData       bool `long:"ad" description:"Set AD (Authentic Data) flag in query"`
 	CheckingDisabled    bool `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
-	RecursionDesired    bool `long:"rd" description:"Set RD (Recursion Desired) flag in query"`
+	RecursionDesired    bool `long:"rd" description:"Set RD (Recursion Desired) flag in query (default: true)"`
 	RecursionAvailable  bool `long:"ra" description:"Set RA (Recursion Available) flag in query"`
 	Zero                bool `long:"z" description:"Set Z (Zero) flag in query"`
 
@@ -93,10 +102,21 @@ func color(color string, args ...interface{}) string {
 	}
 }
 
+// printPrettyRR prints a pretty RR
+func printPrettyRR(a dns.RR) {
+	fmt.Printf("%s %s %s %s\n",
+		color("purple", a.Header().Name),
+		color("green", time.Duration(a.Header().Ttl)*time.Second),
+		color("magenta", dns.TypeToString[a.Header().Rrtype]),
+		strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
+	)
+}
+
 // clearOpts sets the default values for the CLI options
 func clearOpts() {
 	opts = optsTemplate{}
 	opts.RecursionDesired = true
+	opts.ShowAnswer = true
 
 	// Enable color output if stdout is a terminal
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
@@ -259,6 +279,14 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	if opts.ShowVersion {
 		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
 		return nil
+	}
+
+	if opts.ShowAll {
+		opts.ShowQuestion = true
+		opts.ShowAnswer = true
+		opts.ShowAuthority = true
+		opts.ShowAdditional = true
+		opts.ShowStats = true
 	}
 
 	// Parse requested RR types
@@ -441,19 +469,83 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		// Print answers
 		switch opts.Format {
 		case "pretty":
-			for _, a := range reply.Answer {
-				fmt.Printf("%s %s %s %s\n",
-					color("purple", a.Header().Name),
-					color("green", time.Duration(a.Header().Ttl)*time.Second),
-					color("magenta", dns.TypeToString[a.Header().Rrtype]),
-					strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
-				)
+			if opts.ShowQuestion {
+				fmt.Println(color("white", "Question:"))
+				for _, a := range reply.Question {
+					fmt.Printf("%s %s\n",
+						color("purple", a.Name),
+						color("magenta", dns.TypeToString[a.Qtype]),
+					)
+				}
+			}
+			if opts.ShowAnswer && len(reply.Answer) > 0 {
+				if opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional {
+					fmt.Println(color("white", "Answer:"))
+				}
+				for _, a := range reply.Answer {
+					printPrettyRR(a)
+				}
+			}
+			if opts.ShowAuthority && len(reply.Ns) > 0 {
+				fmt.Println(color("white", "Authority:"))
+				for _, a := range reply.Ns {
+					printPrettyRR(a)
+				}
+			}
+			if opts.ShowAdditional && len(reply.Extra) > 0 {
+				fmt.Println(color("white", "Additional:"))
+				for _, a := range reply.Extra {
+					printPrettyRR(a)
+				}
 			}
 		case "raw":
-			fmt.Println(reply.String())
-			fmt.Printf(";; Received %d B\n", reply.Len())
-			fmt.Printf(";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
-			fmt.Printf(";; From %s in %s\n", server, queryTime.Round(100*time.Microsecond))
+			s := reply.MsgHdr.String() + " "
+			s += "QUERY: " + strconv.Itoa(len(reply.Question)) + ", "
+			s += "ANSWER: " + strconv.Itoa(len(reply.Answer)) + ", "
+			s += "AUTHORITY: " + strconv.Itoa(len(reply.Ns)) + ", "
+			s += "ADDITIONAL: " + strconv.Itoa(len(reply.Extra)) + "\n"
+			opt := reply.IsEdns0()
+			if opt != nil {
+				// OPT PSEUDOSECTION
+				s += opt.String() + "\n"
+			}
+			if opts.ShowQuestion && len(reply.Question) > 0 {
+				s += "\n;; QUESTION SECTION:\n"
+				for _, r := range reply.Question {
+					s += r.String() + "\n"
+				}
+			}
+			if opts.ShowAnswer && len(reply.Answer) > 0 {
+				s += "\n;; ANSWER SECTION:\n"
+				for _, r := range reply.Answer {
+					if r != nil {
+						s += r.String() + "\n"
+					}
+				}
+			}
+			if opts.ShowAuthority && len(reply.Ns) > 0 {
+				s += "\n;; AUTHORITY SECTION:\n"
+				for _, r := range reply.Ns {
+					if r != nil {
+						s += r.String() + "\n"
+					}
+				}
+			}
+			if opts.ShowAdditional && len(reply.Extra) > 0 && (opt == nil || len(reply.Extra) > 1) {
+				s += "\n;; ADDITIONAL SECTION:\n"
+				for _, r := range reply.Extra {
+					if r != nil && r.Header().Rrtype != dns.TypeOPT {
+						s += r.String() + "\n"
+					}
+				}
+			}
+			fmt.Println(s)
+
+			if opts.ShowStats {
+				fmt.Printf(";; Received %d B\n", reply.Len())
+				fmt.Printf(";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
+				fmt.Printf(";; From %s in %s\n", server, queryTime.Round(100*time.Microsecond))
+			}
 
 			// Print separator if there is more than one query
 			if len(replies) > 0 && i != len(replies)-1 {
