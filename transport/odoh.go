@@ -61,15 +61,15 @@ func buildURL(s, defaultPath string) *url.URL {
 // ODoH makes a DNS query over ODoH
 func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	// Query ODoH configs on target
-	req, err := http.NewRequest(http.MethodGet, buildURL(target, "/.well-known/odohconfigs").String(), nil)
+	req, err := http.NewRequest(http.MethodGet, buildURL(strings.TrimSuffix(target, "/dns-query"), "/.well-known/odohconfigs").String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new target configs request: %s", err)
 	}
 
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("do target configs request: %s", err)
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -78,7 +78,7 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	}
 	odohConfigs, err := odoh.UnmarshalObliviousDoHConfigs(bodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal target configs: %s", err)
 	}
 
 	if len(odohConfigs.Configs) == 0 {
@@ -95,7 +95,7 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	log.Debugf("[odoh] using first ODoH config: %+v", firstODoHConfig)
 	odnsMessage, queryContext, err := firstODoHConfig.Contents.EncryptQuery(odoh.CreateObliviousDNSQuery(packedDnsQuery, 0))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("encrypt query: %s", err)
 	}
 
 	t := buildURL(target, "/dns-query")
@@ -111,7 +111,7 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 
 	req, err = http.NewRequest(http.MethodPost, p.String(), bytes.NewBuffer(odnsMessage.Marshal()))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create new request: %s", err)
 	}
 
 	req.Header.Set("Content-Type", ODoHContentType)
@@ -119,7 +119,7 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 
 	resp, err = client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("do request: %s", err)
 	}
 
 	contentType := resp.Header.Get("Content-Type")
@@ -131,19 +131,22 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 
 	bodyBytes, err = io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read response body: %s", err)
 	}
 	odohMessage, err := odoh.UnmarshalDNSMessage(bodyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("odoh unmarshal: %s", err)
 	}
 
 	decryptedResponse, err := queryContext.OpenAnswer(odohMessage)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open answer: %s", err)
 	}
 
 	msg := &dns.Msg{}
 	err = msg.Unpack(decryptedResponse)
+	if err != nil {
+		err = fmt.Errorf("unpack message: %s", err)
+	}
 	return msg, err
 }

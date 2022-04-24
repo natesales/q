@@ -311,3 +311,79 @@ func TestMainHTTPUserAgent(t *testing.T) {
 		"--http-user-agent", "Example/1.0",
 	}))
 }
+
+func TestMainParseServer(t *testing.T) {
+	for _, tc := range []struct {
+		Server           string
+		ExpectedProtocol string
+		ExpectedHost     string
+	}{
+		{ // IPv4 plain with no port
+			Server:           "1.1.1.1",
+			ExpectedProtocol: "plain",
+			ExpectedHost:     "1.1.1.1:53",
+		},
+		{ // IPv4 plain with explicit port
+			Server:           "1.1.1.1:5353",
+			ExpectedProtocol: "plain",
+			ExpectedHost:     "1.1.1.1:5353",
+		},
+		{ // IPv6 plain with no port
+			Server:           "2a09::",
+			ExpectedProtocol: "plain",
+			ExpectedHost:     "[2a09::]:53",
+		},
+		{ // IPv6 plain with explicit port
+			Server:           "[2a09::]:5353",
+			ExpectedProtocol: "plain",
+			ExpectedHost:     "[2a09::]:5353",
+		},
+		{ // TLS with no port
+			Server:           "tls://dns.quad9.net",
+			ExpectedProtocol: "tls",
+			ExpectedHost:     "dns.quad9.net:853",
+		},
+		{ // TLS with explicit port
+			Server:           "tls://dns.quad9.net:8530",
+			ExpectedProtocol: "tls",
+			ExpectedHost:     "dns.quad9.net:8530",
+		},
+		{ // HTTPS with no endpoint
+			Server:           "https://dns.quad9.net",
+			ExpectedProtocol: "https",
+			ExpectedHost:     "https://dns.quad9.net:443/dns-query",
+		},
+		{ // HTTPS with IPv4 address
+			Server:           "https://1.1.1.1",
+			ExpectedProtocol: "https",
+			ExpectedHost:     "https://1.1.1.1:443/dns-query",
+		},
+		{ // HTTPS with IPv6 address
+			Server:           "https://2a09::",
+			ExpectedProtocol: "https",
+			ExpectedHost:     "https://[2a09::]:443/dns-query",
+		},
+		{ // HTTPS with explicit endpoint
+			Server:           "https://dns.quad9.net/other-dns-endpoint",
+			ExpectedProtocol: "https",
+			ExpectedHost:     "https://dns.quad9.net:443/other-dns-endpoint",
+		},
+		{ // QUIC with no port
+			Server:           "quic://dns.adguard.com",
+			ExpectedProtocol: "quic",
+			ExpectedHost:     "dns.adguard.com:8853",
+		},
+		{ // QUIC with explicit port
+			Server:           "quic://dns.adguard.com:8530",
+			ExpectedProtocol: "quic",
+			ExpectedHost:     "dns.adguard.com:8530",
+		},
+	} {
+		clearOpts()
+		opts.Server = tc.Server
+		proto, host, err := parseServer()
+		assert.Nilf(t, err, "%s", tc.Server)
+		assert.Equalf(t, tc.ExpectedProtocol, proto, "%s", tc.Server)
+		assert.Equalf(t, tc.ExpectedHost, host, "%s", tc.Server)
+	}
+}

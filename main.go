@@ -143,6 +143,98 @@ func parsePlusFlags(args []string) {
 	}
 }
 
+// parseServer parses opts.Server into a protocol and host:port
+func parseServer() (string, string, error) {
+	var scheme, host, port string
+
+	// Set default protocol
+	if !strings.Contains(opts.Server, "://") {
+		scheme = "plain"
+	} else {
+		scheme = strings.Split(opts.Server, "://")[0]
+	}
+
+	// Server without port or protocol
+	host = strings.ReplaceAll(opts.Server, scheme+"://", "")
+
+	// Remove port from host
+	if strings.Contains(host, "[") && !strings.Contains(host, "]") ||
+		!strings.Contains(host, "[") && strings.Contains(host, "]") {
+		return "", "", fmt.Errorf("invalid IPv6 bracket notation")
+	} else if strings.Contains(host, "[") && strings.Contains(host, "]") { // IPv6 in bracket notation
+		portSuffix := strings.Split(host, "]:")
+		if len(portSuffix) > 1 { // With explicit port
+			port = portSuffix[1]
+		} else {
+			port = ""
+		}
+		host = "[" + strings.Split(strings.Split(host, "[")[1], "]")[0] + "]"
+		log.Tracef("host contains ], treating as v6 with port. host: %s port: %s", host, port)
+	} else if strings.Contains(host, ".") && strings.Contains(host, ":") { // IPv4 or hostname with port
+		parts := strings.Split(host, ":")
+		host = parts[0]
+		port = parts[1]
+		log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
+	} else if strings.Contains(host, ":") { // IPv6 no port
+		host = "[" + host + "]"
+		log.Tracef("host contains :, treating as v6 without port. host %s", host)
+	} else {
+		log.Tracef("no cases matched for host %s port %s", host, port)
+	}
+
+	log.Debugf("Using scheme: %s host: %s port: %s", scheme, host, port)
+
+	// Validate ODoH
+	if opts.ODoHProxy != "" && !strings.HasPrefix(opts.ODoHProxy, "https://") {
+		return "", "", fmt.Errorf("ODoH proxy must use HTTPS")
+	}
+	if opts.ODoHProxy != "" && scheme != "https" {
+		return "", "", fmt.Errorf("ODoH target must use HTTPS")
+	}
+
+	if port == "" {
+		switch scheme {
+		case "quic":
+			port = "8853"
+		case "tls":
+			port = "853"
+		case "https":
+			port = "443"
+		default:
+			port = "53"
+		}
+		log.Tracef("Setting port to %s", port)
+	} else {
+		log.Tracef("Port is %s, not overriding", port)
+	}
+
+	fqdn := scheme + "://" + host
+	if scheme != "https" {
+		fqdn += ":" + port
+	}
+	log.Tracef("checking FQDN %s", fqdn)
+	u, err := url.Parse(fqdn)
+	if err != nil {
+		return "", "", err
+	}
+
+	server := host + ":" + port
+
+	if scheme == "https" {
+		port = strings.Split(port, "/")[0]
+		u.Host += ":" + port
+		server = u.String()
+
+		// Add default path if missing
+		if u.Path == "" {
+			server += "/dns-query"
+			log.Tracef("HTTPS scheme and no path, setting server to %s", server)
+		}
+	}
+
+	return scheme, server, nil
+}
+
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string) error {
 	parser := flags.NewParser(&opts, flags.Default)
@@ -185,14 +277,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		// Find a server by @ symbol if it isn't set by flag
 		if opts.Server == "" && strings.HasPrefix(arg, "@") {
 			opts.Server = strings.TrimPrefix(arg, "@")
-		}
-
-		// Parse boolean options
-		if strings.HasPrefix(arg, "+") {
-			switch arg {
-			case "+dnssec":
-				opts.DNSSEC = true
-			}
 		}
 
 		// Parse chaos class
@@ -276,45 +360,22 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	)
 	var replies []*dns.Msg
 
-	// Parse server as URL
-	if !strings.Contains(opts.Server, "://") {
-		opts.Server = "plain://" + opts.Server
-	}
-	a, err := url.Parse(opts.Server)
+	protocol, server, err := parseServer()
 	if err != nil {
-		return fmt.Errorf("invalid server URL: %s", err)
+		return err
 	}
 
-	if opts.ODoHProxy != "" && !strings.HasPrefix(opts.ODoHProxy, "https://") {
-		return fmt.Errorf("ODoH proxy must use HTTPS")
-	}
-	if opts.ODoHProxy != "" && a.Scheme != "https" {
-		return fmt.Errorf("ODoH target must use HTTPS")
-	}
-
-	if (a.Scheme == "http" || a.Scheme == "https") && a.Path == "" {
-		a.Path = "/dns-query"
-	} else if a.Scheme == "quic" && a.Port() == "" {
-		a.Host += ":8853"
-	} else if a.Scheme == "tls" && a.Port() == "" {
-		a.Host += ":853"
-	} else if a.Port() == "" && a.Port() == "" {
-		a.Host += ":53"
-	}
-
-	if a.Scheme == "quic" {
+	if protocol == "quic" {
 		tlsConfig.NextProtos = opts.QUICALPNTokens
 	}
 
-	log.Debugf("Server: %s", a.String())
-
 	startTime := time.Now()
-	switch a.Scheme {
+	switch protocol {
 	case "https", "http":
 		if opts.ODoHProxy != "" {
-			log.Debugf("Using ODoH transport with proxy %s", opts.ODoHProxy)
+			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
 			for _, msg := range msgs {
-				reply, err := transport.ODoH(msg, a.Host, opts.ODoHProxy)
+				reply, err := transport.ODoH(msg, server, opts.ODoHProxy)
 				if err != nil {
 					return fmt.Errorf("ODoH query: %s", err)
 				}
@@ -323,7 +384,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		} else {
 			log.Debug("Using HTTP(s) transport")
 			for _, msg := range msgs {
-				reply, err := transport.HTTP(&msg, tlsConfig, a.String(), opts.HTTPUserAgent, opts.HTTPMethod,
+				reply, err := transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod,
 					time.Duration(opts.Timeout)*time.Second, time.Duration(opts.HandshakeTimeout)*time.Second)
 				if err != nil {
 					return err
@@ -334,7 +395,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "quic":
 		log.Debug("Using QUIC transport")
 		for _, msg := range msgs {
-			reply, err := transport.QUIC(&msg, a.Host, tlsConfig,
+			reply, err := transport.QUIC(&msg, server, tlsConfig,
 				time.Duration(opts.QUICDialTimeout)*time.Second,
 				time.Duration(opts.HandshakeTimeout)*time.Second,
 				time.Duration(opts.QUICOpenStreamTimeout)*time.Second,
@@ -347,7 +408,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "tls":
 		log.Debug("Using TLS transport")
 		for _, msg := range msgs {
-			reply, err := transport.TLS(&msg, a.Host, tlsConfig, 5*time.Second)
+			reply, err := transport.TLS(&msg, server, tlsConfig, 5*time.Second)
 			if err != nil {
 				return err
 			}
@@ -356,7 +417,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "tcp":
 		log.Debug("Using TCP transport")
 		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, a.Host, true, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
+			reply, err := transport.Plain(&msg, server, true, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
 			if err != nil {
 				return err
 			}
@@ -365,14 +426,14 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "plain":
 		log.Debug("Using UDP with TCP fallback")
 		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, a.Host, false, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
+			reply, err := transport.Plain(&msg, server, false, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
 			if err != nil {
 				return err
 			}
 			replies = append(replies, reply)
 		}
 	default:
-		return fmt.Errorf("unknown transport protocol %s", a.Scheme)
+		return fmt.Errorf("unknown transport protocol %s", protocol)
 	}
 	queryTime := time.Since(startTime)
 
@@ -392,7 +453,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			fmt.Println(reply.String())
 			fmt.Printf(";; Received %d B\n", reply.Len())
 			fmt.Printf(";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
-			fmt.Printf(";; From %s in %s\n", a.String(), queryTime.Round(100*time.Microsecond))
+			fmt.Printf(";; From %s in %s\n", server, queryTime.Round(100*time.Microsecond))
 
 			// Print separator if there is more than one query
 			if len(replies) > 0 && i != len(replies)-1 {
