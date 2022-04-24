@@ -1,7 +1,7 @@
 <div align="center">
 <h1>q</h1>
 
-A tiny command line DNS client with support for UDP, TCP, DoT, DoH, DoQ, and ODoH.
+A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, DoH, DoQ, and ODoH.
 
 [![Release](https://img.shields.io/github/v/release/natesales/q?style=for-the-badge)](https://github.com/natesales/q/releases)
 ![Coverage](coverage_badge.png)
