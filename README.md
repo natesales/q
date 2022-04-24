@@ -12,7 +12,6 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 </div>
 
 ### Usage
-
 ```
 Usage:
   q [OPTIONS] [@server] [type...] [name]
@@ -31,7 +30,8 @@ Application Options:
   -p, --odoh-proxy=        ODoH proxy
       --timeout=           Query timeout in seconds (default: 10)
       --pad                Set EDNS0 padding
-  -f, --format=            Output format (pretty, json, raw) (default: pretty)
+  -f, --format=            Output format (pretty, json, yaml, raw) (default:
+                           pretty)
       --pretty-ttls        Format TTLs in human readable format (default: true)
       --color              Enable color output
       --question           Show question section
@@ -47,6 +47,7 @@ Application Options:
                            true)
       --ra                 Set RA (Recursion Available) flag in query
       --z                  Set Z (Zero) flag in query
+      --t                  Set TC (Truncated) flag in query
   -i, --tls-no-verify      Disable TLS certificate verification
       --tls-min-version=   Minimum TLS version to use (default: 1.0)
       --tls-max-version=   Maximum TLS version to use (default: 1.3)
