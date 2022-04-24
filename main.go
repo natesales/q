@@ -33,6 +33,7 @@ type optsTemplate struct {
 
 	// Output
 	Format         string `short:"f" long:"format" description:"Output format (pretty, json, raw)" default:"pretty"`
+	PrettyTTLs     bool   `long:"pretty-ttls" description:"Format TTLs in human readable format (default: true)"`
 	Color          bool   `long:"color" description:"Enable color output"`
 	ShowQuestion   bool   `long:"question" description:"Show question section"`
 	ShowAnswer     bool   `long:"answer" description:"Show answer section (default: true)"`
@@ -104,9 +105,13 @@ func color(color string, args ...interface{}) string {
 
 // printPrettyRR prints a pretty RR
 func printPrettyRR(a dns.RR) {
+	ttl := fmt.Sprintf("%d", a.Header().Ttl)
+	if opts.PrettyTTLs {
+		ttl = fmt.Sprintf("%s", time.Duration(a.Header().Ttl)*time.Second)
+	}
 	fmt.Printf("%s %s %s %s\n",
 		color("purple", a.Header().Name),
-		color("green", time.Duration(a.Header().Ttl)*time.Second),
+		color("green", ttl),
 		color("magenta", dns.TypeToString[a.Header().Rrtype]),
 		strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
 	)
@@ -117,6 +122,7 @@ func clearOpts() {
 	opts = optsTemplate{}
 	opts.RecursionDesired = true
 	opts.ShowAnswer = true
+	opts.PrettyTTLs = true
 
 	// Enable color output if stdout is a terminal
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
@@ -510,7 +516,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			}
 
 			// Print separator if there is more than one query
-			if len(replies) > 0 && i != len(replies)-1 {
+			if (opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional) && (len(replies) > 0 && i != len(replies)-1) {
 				fmt.Printf("\n──\n\n")
 			}
 		case "raw":
