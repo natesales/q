@@ -319,7 +319,12 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" && (strings.Contains(arg, ".") || strings.Contains(arg, ":")) && !strings.Contains(arg, "@") && !strings.Contains(arg, "/") && !strings.HasPrefix(arg, "-") {
+		if opts.Name == "" &&
+			(strings.Contains(arg, ".") || strings.Contains(arg, ":")) &&
+			!strings.Contains(arg, "@") &&
+			!strings.Contains(arg, "/") &&
+			!strings.HasPrefix(arg, "-") &&
+			!strings.HasPrefix(arg, "+") {
 			opts.Name = arg
 		}
 	}
