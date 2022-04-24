@@ -26,15 +26,23 @@ Application Options:
   -d, --dnssec             Set the DO (DNSSEC OK) bit in the OPT record
   -n, --nsid               Set EDNS0 NSID opt
       --subnet=            Set EDNS0 client subnet
-  -f, --format=            Output format (pretty, json, raw) (default: pretty)
   -c, --chaos              Use CHAOS query class
   -p, --odoh-proxy=        ODoH proxy
       --timeout=           Query timeout in seconds (default: 10)
       --pad                Set EDNS0 padding
+  -f, --format=            Output format (pretty, json, raw) (default: pretty)
+      --color              Enable color output
+      --question           Show question section
+      --answer             Show answer section (default: true)
+      --authority          Show authority section
+      --additional         Show additional section
+      --stats              Show time statistics
+      --all                Show all sections and statistics
       --aa                 Set AA (Authoritative Answer) flag in query
       --ad                 Set AD (Authentic Data) flag in query
       --cd                 Set CD (Checking Disabled) flag in query
-      --rd                 Set RD (Recursion Desired) flag in query
+      --rd                 Set RD (Recursion Desired) flag in query (default:
+                           true)
       --ra                 Set RA (Recursion Available) flag in query
       --z                  Set Z (Zero) flag in query
   -i, --tls-no-verify      Disable TLS certificate verification
