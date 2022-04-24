@@ -73,7 +73,7 @@ Help Options:
 - UDP/TCP DNS ([RFC 1034](https://tools.ietf.org/html/rfc1034))
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
-- DNS over QUIC ([draft-ietf-dprive-dnsoquic-11](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-11))
+- DNS over QUIC ([draft-ietf-dprive-dnsoquic-12](https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-12))
 - Oblivious DNS over HTTPS ([draft-pauly-dprive-oblivious-doh-11](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-11))
 
 ### Installation
