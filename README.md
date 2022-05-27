@@ -81,11 +81,19 @@ Help Options:
   HTTPS ([draft-pauly-dprive-oblivious-doh-11](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-11))
 
 ### Installation
+`q` is available in binary form from:  
+* [my public package repositories](https://github.com/natesales/repo),
+* [GitHub releases](https://github.com/natesales/q/releases),
+* and the AUR as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/)
 
-`q` is available from my [public package repositories](https://github.com/natesales/repo), as a binary
-from [releases](https://github.com/natesales/q/releases), from the AUR
-as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/), or from source
-with `git clone https://github.com/natesales/q && cd q && go build`.
+To install `q` from source do:  
+```sh
+git clone https://github.com/natesales/q && cd q
+go install
+
+# without debug information
+go install -ldflags="-s -w -X main.version=release"
+```
 
 ### Feature Comparison
 
