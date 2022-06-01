@@ -30,8 +30,7 @@ Application Options:
   -p, --odoh-proxy=        ODoH proxy
       --timeout=           Query timeout in seconds (default: 10)
       --pad                Set EDNS0 padding
-  -f, --format=            Output format (pretty, json, yaml, raw) (default:
-                           pretty)
+  -f, --format=            Output format (pretty, json, yaml, raw) (default: pretty)
       --pretty-ttls        Format TTLs in human readable format (default: true)
       --color              Enable color output
       --question           Show question section
@@ -43,8 +42,7 @@ Application Options:
       --aa                 Set AA (Authoritative Answer) flag in query
       --ad                 Set AD (Authentic Data) flag in query
       --cd                 Set CD (Checking Disabled) flag in query
-      --rd                 Set RD (Recursion Desired) flag in query (default:
-                           true)
+      --rd                 Set RD (Recursion Desired) flag in query (default: true)
       --ra                 Set RA (Recursion Available) flag in query
       --z                  Set Z (Zero) flag in query
       --t                  Set TC (Truncated) flag in query
@@ -59,7 +57,7 @@ Application Options:
       --quic-dial-timeout= QUIC dial timeout (default: 10)
       --quic-idle-timeout= QUIC stream open timeout (default: 10)
       --handshake-timeout= Handshake timeout (default: 10)
-      --udp-buffer=        Set EDNS0 UDP size in query (default: 4096)
+      --udp-buffer=        Set EDNS0 UDP size in query (default: 1232)
   -v, --verbose            Show verbose log messages
   -V, --version            Show version and exit
 

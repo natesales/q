@@ -70,7 +70,7 @@ type optsTemplate struct {
 
 	HandshakeTimeout uint16 `long:"handshake-timeout" description:"Handshake timeout" default:"10"`
 
-	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"4096"`
+	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
 }
