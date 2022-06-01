@@ -31,7 +31,13 @@ func TestTransportHTTPInvalidResolver(t *testing.T) {
 }
 
 func TestTransportHTTPServerError(t *testing.T) {
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://httpstat.us/500", "", "GET", 2*time.Second, 2*time.Second)
+	go func() {
+		http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Server Error", http.StatusInternalServerError)
+		}))
+	}()
+
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8080", "", "GET", 2*time.Second, 2*time.Second)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "got status code 500")
 }
