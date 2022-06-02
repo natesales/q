@@ -3,12 +3,12 @@ package transport
 import (
 	"crypto/tls"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"time"
 
 	"github.com/lucas-clemente/quic-go"
 	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	DoQALPNTokens = []string{"doq", "doq-i11"}
+	DoQALPNTokens = []string{"doq"}
 )
 
 // QUIC makes a DNS query over QUIC

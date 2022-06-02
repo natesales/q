@@ -223,7 +223,7 @@ func parseServer() (string, string, error) {
 	if port == "" {
 		switch scheme {
 		case "quic":
-			port = "8853"
+			port = "853"
 		case "tls":
 			port = "853"
 		case "https":
