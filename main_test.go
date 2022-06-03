@@ -371,7 +371,7 @@ func TestMainParseServer(t *testing.T) {
 		{ // QUIC with no port
 			Server:           "quic://dns.adguard.com",
 			ExpectedProtocol: "quic",
-			ExpectedHost:     "dns.adguard.com:8853",
+			ExpectedHost:     "dns.adguard.com:853",
 		},
 		{ // QUIC with explicit port
 			Server:           "quic://dns.adguard.com:8530",
