@@ -38,7 +38,7 @@ Application Options:
       --answer             Show answer section (default: true)
       --authority          Show authority section
       --additional         Show additional section
-      --stats              Show time statistics
+  -S, --stats              Show time statistics
       --all                Show all sections and statistics
       --aa                 Set AA (Authoritative Answer) flag in query
       --ad                 Set AD (Authentic Data) flag in query
