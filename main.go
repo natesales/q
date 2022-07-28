@@ -40,7 +40,7 @@ type optsTemplate struct {
 	ShowAnswer     bool   `long:"answer" description:"Show answer section (default: true)"`
 	ShowAuthority  bool   `long:"authority" description:"Show authority section"`
 	ShowAdditional bool   `long:"additional" description:"Show additional section"`
-	ShowStats      bool   `long:"stats" description:"Show time statistics"`
+	ShowStats      bool   `short:"S" long:"stats" description:"Show time statistics"`
 	ShowAll        bool   `long:"all" description:"Show all sections and statistics"`
 
 	// Header flags
@@ -520,6 +520,16 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			// Print separator if there is more than one query
 			if (opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional) && (len(replies) > 0 && i != len(replies)-1) {
 				fmt.Printf("\n──\n\n")
+			}
+
+			if opts.ShowStats {
+				fmt.Println(color("white", "Stats:"))
+				fmt.Printf("Received %s from %s in %s (%s)\n",
+					color("purple", fmt.Sprintf("%d B", reply.Len())),
+					color("green", server),
+					color("teal", queryTime.Round(100*time.Microsecond)),
+					color("magenta", time.Now().Format("15:04:05 01-02-2006 MST")),
+				)
 			}
 		case "raw":
 			s := reply.MsgHdr.String() + " "
