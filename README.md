@@ -77,7 +77,7 @@ Help Options:
 - DNS over TLS ([RFC 7858](https://tools.ietf.org/html/rfc7858))
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
 - DNS over QUIC ([RFC 9250](https://tools.ietf.org/html/rfc9250))
-- Oblivious DNS over HTTPS ([draft-pauly-dprive-oblivious-doh-11](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-11))
+- Oblivious DNS over HTTPS ([RFC 9230](https://tools.ietf.org/html/rfc9230))
 
 ### Installation
 `q` is available in binary form from:  
@@ -98,13 +98,13 @@ go install -ldflags="-s -w -X main.version=release"
 
 #### DNS Transport Protocols
 
-| Protocol                                                     |  q  | doggo | dog | kdig | dig | drill |
-|:-------------------------------------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| RFC 1034 UDP/TCP                                             |  +  |   +   |  +  |  +   |  +  |   +   |
-| RFC 7858 DNS over TLS                                        |  +  |   +   |  +  |  +   |  -  |   -   |
-| RFC 8484 DNS over HTTPS                                      |  +  |   +   |  +  |  +   |  -  |   -   |
-| draft-ietf-dprive-dnsoquic-12 DNS over QUIC                  |  +  |   +   |  -  |  -   |  -  |   -   |
-| draft-pauly-dprive-oblivious-doh-11 Oblivious DNS over HTTPS |  +  |   -   |  -  |  -   |  -  |   -   |
+| Protocol                          |  q  | doggo | dog | kdig | dig | drill |
+|:----------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
+| RFC 1034 UDP/TCP                  |  +  |   +   |  +  |  +   |  +  |   +   |
+| RFC 7858 DNS over TLS             |  +  |   +   |  +  |  +   |  -  |   -   |
+| RFC 8484 DNS over HTTPS           |  +  |   +   |  +  |  +   |  -  |   -   |
+| RFC 9250 DNS over QUIC            |  +  |   +   |  -  |  -   |  -  |   -   |
+| RFC 9230 Oblivious DNS over HTTPS |  +  |   -   |  -  |  -   |  -  |   -   |
 
 #### Output Formats
 
