@@ -54,7 +54,6 @@ Application Options:
       --http-user-agent=   HTTP user agent
       --http-method=       HTTP method (default: GET)
       --quic-alpn-tokens=  QUIC ALPN tokens (default: doq, doq-i11)
-      --quic-keep-alive    QUIC keep-alive
       --quic-no-pmtud      Disable QUIC PMTU discovery
       --quic-dial-timeout= QUIC dial timeout (default: 10)
       --quic-idle-timeout= QUIC stream open timeout (default: 10)
@@ -143,7 +142,6 @@ go install -ldflags="-s -w -X main.version=release"
 |:------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
 | HTTP Method                   |  +  |   -   |  -  |  -   |  -  |   -   |
 | QUIC ALPN Tokens              |  +  |   -   |  -  |  -   |  -  |   -   |
-| QUIC Keepalive                |  +  |   -   |  -  |  -   |  -  |   -   |
 | QUIC toggle PMTU discovery    |  +  |   -   |  -  |  -   |  -  |   -   |
 | QUIC timeouts (dial and idle) |  +  |   -   |  -  |  -   |  -  |   -   |
 | TLS handshake timeout         |  +  |   -   |  -  |  -   |  -  |   -   |

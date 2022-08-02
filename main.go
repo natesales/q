@@ -63,7 +63,6 @@ type optsTemplate struct {
 
 	// QUIC
 	QUICALPNTokens        []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
-	QUICKeepAlive         bool     `long:"quic-keep-alive" description:"QUIC keep-alive"`
 	QUICNoPMTUD           bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
 	QUICDialTimeout       uint16   `long:"quic-dial-timeout" description:"QUIC dial timeout" default:"10"`
 	QUICOpenStreamTimeout uint16   `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10"`
@@ -445,7 +444,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				time.Duration(opts.QUICDialTimeout)*time.Second,
 				time.Duration(opts.HandshakeTimeout)*time.Second,
 				time.Duration(opts.QUICOpenStreamTimeout)*time.Second,
-				opts.QUICNoPMTUD, opts.QUICKeepAlive)
+				opts.QUICNoPMTUD)
 			if err != nil {
 				return err
 			}

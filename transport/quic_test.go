@@ -18,7 +18,7 @@ func TestTransportQUIC(t *testing.T) {
 		Qclass: dns.ClassINET,
 	}}
 
-	reply, err := QUIC(&msg, "dns.adguard.com:8853", &tls.Config{NextProtos: DoQALPNTokens}, 2*time.Second, 2*time.Second, 2*time.Second, false, false)
+	reply, err := QUIC(&msg, "dns.adguard.com:8853", &tls.Config{NextProtos: DoQALPNTokens}, 2*time.Second, 2*time.Second, 2*time.Second, false)
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }

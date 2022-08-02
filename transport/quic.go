@@ -33,7 +33,7 @@ func QUIC(msg *dns.Msg,
 	server string,
 	tlsConfig *tls.Config,
 	dialTimeout, handshakeTimeout, openStreamTimeout time.Duration,
-	noPMTUD, keepAlive bool,
+	noPMTUD bool,
 ) (*dns.Msg, error) {
 	log.Debugf("Dialing with QUIC ALPN tokens: %v", tlsConfig.NextProtos)
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), dialTimeout)
@@ -41,7 +41,6 @@ func QUIC(msg *dns.Msg,
 	session, err := quic.DialAddrContext(dialCtx, server, tlsConfig, &quic.Config{
 		HandshakeIdleTimeout:    handshakeTimeout,
 		DisablePathMTUDiscovery: noPMTUD,
-		KeepAlive:               keepAlive,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("opening quic session to %s: %v", server, err)
