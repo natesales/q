@@ -55,9 +55,12 @@ type optsTemplate struct {
 	Truncated           bool `long:"t" description:"Set TC (Truncated) flag in query"`
 
 	// TCP parameters
-	TLSNoVerify   bool   `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
-	TLSMinVersion string `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
-	TLSMaxVersion string `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+	TLSNoVerify     bool     `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
+	TLSServerName   string   `long:"tls-server-name" description:"TLS server name for host verification"`
+	TLSMinVersion   string   `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
+	TLSMaxVersion   string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+	TLSNextProtos   []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
+	TLSCipherSuites []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
 
 	// HTTP
 	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent" default:""`
