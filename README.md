@@ -12,7 +12,6 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 </div>
 
 ### Usage
-[comment]: <> (usage)
 ```
 Usage:
   q [OPTIONS] [@server] [type...] [name]
@@ -69,7 +68,6 @@ Application Options:
 Help Options:
   -h, --help               Show this help message
 ```
-[comment]: <> (usage)
 
 ### Demo
 
