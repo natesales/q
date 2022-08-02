@@ -10,7 +10,8 @@ import (
 // createQuery creates a slice of DNS queries
 func createQuery(
 	name string,
-	chaos, dnssec, nsid bool,
+	dnssec, nsid bool,
+	class uint16,
 	rrTypes []uint16,
 	aaFlag, adFlag, cdFlag, rdFlag, raFlag, zFlag, tcFlag bool,
 	udpBuffer uint16,
@@ -92,12 +93,6 @@ func createQuery(
 			req.Extra = append(req.Extra, opt)
 		}
 
-		var class uint16
-		if chaos {
-			class = dns.ClassCHAOS
-		} else {
-			class = dns.ClassINET
-		}
 		req.Question = []dns.Question{{
 			Name:   dns.Fqdn(name),
 			Qtype:  qType,

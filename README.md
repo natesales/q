@@ -28,6 +28,7 @@ Application Options:
   -n, --nsid               Set EDNS0 NSID opt
       --subnet=            Set EDNS0 client subnet
   -c, --chaos              Use CHAOS query class
+  -C=                      Set query class (default: IN 0x01) (default: 1)
   -p, --odoh-proxy=        ODoH proxy
       --timeout=           Query timeout in seconds (default: 10)
       --pad                Set EDNS0 padding

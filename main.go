@@ -30,6 +30,7 @@ type optsTemplate struct {
 	NSID         bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
 	ClientSubnet string   `long:"subnet" description:"Set EDNS0 client subnet"`
 	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	Class        uint16   `short:"C" description:"Set query class (default: IN 0x01)" default:"1"`
 	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Timeout      uint16   `long:"timeout" description:"Query timeout in seconds" default:"10"`
 	Pad          bool     `long:"pad" description:"Set EDNS0 padding"`
@@ -432,6 +433,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 	}
 
+	if opts.Chaos {
+		log.Debug("Flag set, using chaos class")
+		opts.Class = dns.ClassCHAOS
+	}
+
 	// Create TLS config
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: opts.TLSNoVerify,
@@ -448,7 +454,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	msgs := createQuery(
 		opts.Name,
-		opts.Chaos, opts.DNSSEC, opts.NSID,
+		opts.DNSSEC, opts.NSID,
+		opts.Class,
 		rrTypesSlice,
 		opts.AuthoritativeAnswer, opts.AuthenticData, opts.CheckingDisabled, opts.RecursionDesired, opts.RecursionAvailable, opts.Zero, opts.Truncated,
 		opts.UDPBuffer,
