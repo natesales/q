@@ -55,9 +55,12 @@ type optsTemplate struct {
 	Truncated           bool `long:"t" description:"Set TC (Truncated) flag in query"`
 
 	// TCP parameters
-	TLSNoVerify   bool   `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
-	TLSMinVersion string `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
-	TLSMaxVersion string `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+	TLSNoVerify     bool     `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
+	TLSServerName   string   `long:"tls-server-name" description:"TLS server name for host verification"`
+	TLSMinVersion   string   `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
+	TLSMaxVersion   string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+	TLSNextProtos   []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
+	TLSCipherSuites []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
 
 	// HTTP
 	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent" default:""`
@@ -95,6 +98,50 @@ var colors = map[string]string{
 	"magenta": "\033[1;35m%s\033[0m",
 	"teal":    "\033[1;36m%s\033[0m",
 	"white":   "\033[1;37m%s\033[0m",
+}
+
+var tlsCipherSuiteToInt = map[string]uint16{
+	// TLS 1.0 - 1.2
+	"TLS_RSA_WITH_RC4_128_SHA":                      tls.TLS_RSA_WITH_RC4_128_SHA,
+	"TLS_RSA_WITH_3DES_EDE_CBC_SHA":                 tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	"TLS_RSA_WITH_AES_128_CBC_SHA":                  tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	"TLS_RSA_WITH_AES_256_CBC_SHA":                  tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	"TLS_RSA_WITH_AES_128_CBC_SHA256":               tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
+	"TLS_RSA_WITH_AES_128_GCM_SHA256":               tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+	"TLS_RSA_WITH_AES_256_GCM_SHA384":               tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	"TLS_ECDHE_ECDSA_WITH_RC4_128_SHA":              tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+	"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA":          tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+	"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA":          tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+	"TLS_ECDHE_RSA_WITH_RC4_128_SHA":                tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+	"TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":           tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+	"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA":            tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA":            tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256":       tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+	"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256":         tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+	"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":         tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256":       tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384":         tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384":       tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256":   tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+	"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256": tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+
+	// TLS 1.3
+	"TLS_AES_128_GCM_SHA256":       tls.TLS_AES_128_GCM_SHA256,
+	"TLS_AES_256_GCM_SHA384":       tls.TLS_AES_256_GCM_SHA384,
+	"TLS_CHACHA20_POLY1305_SHA256": tls.TLS_CHACHA20_POLY1305_SHA256,
+}
+
+// parseTLSCipherSuites converts a slice of cipher suite names to a slice of cipher suite ints
+func parseTLSCipherSuites(cipherSuites []string) []uint16 {
+	var cipherSuiteInts []uint16
+	for _, cipherSuite := range cipherSuites {
+		if cipherSuiteInt, ok := tlsCipherSuiteToInt[cipherSuite]; ok {
+			cipherSuiteInts = append(cipherSuiteInts, cipherSuiteInt)
+		} else {
+			log.Fatalf("Unknown TLS cipher suite: %s", cipherSuite)
+		}
+	}
+	return cipherSuiteInts
 }
 
 // color returns a color formatted string
@@ -388,8 +435,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	// Create TLS config
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: opts.TLSNoVerify,
+		ServerName:         opts.TLSServerName,
 		MinVersion:         tlsVersion(opts.TLSMinVersion, tls.VersionTLS10),
 		MaxVersion:         tlsVersion(opts.TLSMaxVersion, tls.VersionTLS13),
+		NextProtos:         opts.TLSNextProtos,
+		CipherSuites:       parseTLSCipherSuites(opts.TLSCipherSuites),
 	}
 
 	var rrTypesSlice []uint16
