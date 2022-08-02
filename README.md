@@ -12,6 +12,7 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 </div>
 
 ### Usage
+[comment]: <> (usage)
 ```
 Usage:
   q [OPTIONS] [@server] [type...] [name]
@@ -49,8 +50,11 @@ Application Options:
       --z                  Set Z (Zero) flag in query
       --t                  Set TC (Truncated) flag in query
   -i, --tls-no-verify      Disable TLS certificate verification
+      --tls-server-name=   TLS server name for host verification
       --tls-min-version=   Minimum TLS version to use (default: 1.0)
       --tls-max-version=   Maximum TLS version to use (default: 1.3)
+      --tls-next-protos=   TLS next protocols for ALPN
+      --tls-cipher-suites= TLS cipher suites
       --http-user-agent=   HTTP user agent
       --http-method=       HTTP method (default: GET)
       --quic-alpn-tokens=  QUIC ALPN tokens (default: doq, doq-i11)
@@ -65,6 +69,7 @@ Application Options:
 Help Options:
   -h, --help               Show this help message
 ```
+[comment]: <> (usage)
 
 ### Demo
 
@@ -80,16 +85,17 @@ Help Options:
 
 ### Installation
 `q` is available in binary form from:  
-* [my public package repositories](https://github.com/natesales/repo),
-* [GitHub releases](https://github.com/natesales/q/releases),
-* and the AUR as [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/)
+- [apt/yum/brew from my package repositories](https://github.com/natesales/repo)
+- [GitHub releases](https://github.com/natesales/q/releases)
+- [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/) in the AUR
+- `go install https://github.com/natesales/q@latest`
 
-To install `q` from source do:  
+To install `q` from source:  
 ```sh
 git clone https://github.com/natesales/q && cd q
 go install
 
-# without debug information
+# Without debug information
 go install -ldflags="-s -w -X main.version=release"
 ```
 

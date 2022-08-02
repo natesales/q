@@ -1,5 +1,7 @@
 package main
 
+//go:generate python3 generate.py
+
 import (
 	"crypto/tls"
 	"encoding/json"
