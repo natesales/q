@@ -87,7 +87,7 @@ Help Options:
 - [apt/yum/brew from my package repositories](https://github.com/natesales/repo)
 - [GitHub releases](https://github.com/natesales/q/releases)
 - [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/) in the AUR
-- `go install https://github.com/natesales/q@latest`
+- `go install github.com/natesales/q@latest`
 
 To install `q` from source:  
 ```sh
