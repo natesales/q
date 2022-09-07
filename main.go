@@ -22,18 +22,18 @@ import (
 
 // CLI flags
 type optsTemplate struct {
-	Name         string   `short:"q" long:"qname" description:"Query name"`
-	Server       string   `short:"s" long:"server" description:"DNS server"`
-	Types        []string `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
-	Reverse      bool     `short:"x" long:"reverse" description:"Reverse lookup"`
-	DNSSEC       bool     `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
-	NSID         bool     `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
-	ClientSubnet string   `long:"subnet" description:"Set EDNS0 client subnet"`
-	Chaos        bool     `short:"c" long:"chaos" description:"Use CHAOS query class"`
-	Class        uint16   `short:"C" description:"Set query class (default: IN 0x01)" default:"1"`
-	ODoHProxy    string   `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	Timeout      uint16   `long:"timeout" description:"Query timeout in seconds" default:"10"`
-	Pad          bool     `long:"pad" description:"Set EDNS0 padding"`
+	Name         string        `short:"q" long:"qname" description:"Query name"`
+	Server       string        `short:"s" long:"server" description:"DNS server"`
+	Types        []string      `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
+	Reverse      bool          `short:"x" long:"reverse" description:"Reverse lookup"`
+	DNSSEC       bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
+	NSID         bool          `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
+	ClientSubnet string        `long:"subnet" description:"Set EDNS0 client subnet"`
+	Chaos        bool          `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	Class        uint16        `short:"C" description:"Set query class (default: IN 0x01)" default:"1"`
+	ODoHProxy    string        `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
+	Timeout      time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
+	Pad          bool          `long:"pad" description:"Set EDNS0 padding"`
 
 	// Output
 	Format         string `short:"f" long:"format" description:"Output format (pretty, json, yaml, raw)" default:"pretty"`
@@ -68,12 +68,12 @@ type optsTemplate struct {
 	HTTPMethod    string `long:"http-method" description:"HTTP method" default:"GET"`
 
 	// QUIC
-	QUICALPNTokens        []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
-	QUICNoPMTUD           bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
-	QUICDialTimeout       uint16   `long:"quic-dial-timeout" description:"QUIC dial timeout" default:"10"`
-	QUICOpenStreamTimeout uint16   `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10"`
+	QUICALPNTokens        []string      `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
+	QUICNoPMTUD           bool          `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
+	QUICDialTimeout       time.Duration `long:"quic-dial-timeout" description:"QUIC dial timeout" default:"10s"`
+	QUICOpenStreamTimeout time.Duration `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10s"`
 
-	HandshakeTimeout uint16 `long:"handshake-timeout" description:"Handshake timeout" default:"10"`
+	HandshakeTimeout time.Duration `long:"handshake-timeout" description:"Handshake timeout" default:"10s"`
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
@@ -488,8 +488,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		} else {
 			log.Debug("Using HTTP(s) transport")
 			for _, msg := range msgs {
-				reply, err := transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod,
-					time.Duration(opts.Timeout)*time.Second, time.Duration(opts.HandshakeTimeout)*time.Second)
+				reply, err := transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod, opts.Timeout, opts.HandshakeTimeout)
 				if err != nil {
 					return err
 				}
@@ -500,9 +499,9 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		log.Debug("Using QUIC transport")
 		for _, msg := range msgs {
 			reply, err := transport.QUIC(&msg, server, tlsConfig,
-				time.Duration(opts.QUICDialTimeout)*time.Second,
-				time.Duration(opts.HandshakeTimeout)*time.Second,
-				time.Duration(opts.QUICOpenStreamTimeout)*time.Second,
+				opts.QUICDialTimeout,
+				opts.HandshakeTimeout,
+				opts.QUICOpenStreamTimeout,
 				opts.QUICNoPMTUD)
 			if err != nil {
 				return err
@@ -521,7 +520,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "tcp":
 		log.Debug("Using TCP transport")
 		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, server, true, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
+			reply, err := transport.Plain(&msg, server, true, opts.Timeout, opts.UDPBuffer)
 			if err != nil {
 				return err
 			}
@@ -530,7 +529,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "plain":
 		log.Debug("Using UDP with TCP fallback")
 		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, server, false, time.Duration(opts.Timeout)*time.Second, opts.UDPBuffer)
+			reply, err := transport.Plain(&msg, server, false, opts.Timeout, opts.UDPBuffer)
 			if err != nil {
 				return err
 			}
