@@ -29,7 +29,7 @@ Application Options:
   -c, --chaos              Use CHAOS query class
   -C=                      Set query class (default: IN 0x01) (default: 1)
   -p, --odoh-proxy=        ODoH proxy
-      --timeout=           Query timeout in seconds (default: 10)
+      --timeout=           Query timeout (default: 10s)
       --pad                Set EDNS0 padding
   -f, --format=            Output format (pretty, json, yaml, raw) (default:
                            pretty)
@@ -59,9 +59,9 @@ Application Options:
       --http-method=       HTTP method (default: GET)
       --quic-alpn-tokens=  QUIC ALPN tokens (default: doq, doq-i11)
       --quic-no-pmtud      Disable QUIC PMTU discovery
-      --quic-dial-timeout= QUIC dial timeout (default: 10)
-      --quic-idle-timeout= QUIC stream open timeout (default: 10)
-      --handshake-timeout= Handshake timeout (default: 10)
+      --quic-dial-timeout= QUIC dial timeout (default: 10s)
+      --quic-idle-timeout= QUIC stream open timeout (default: 10s)
+      --handshake-timeout= Handshake timeout (default: 10s)
       --udp-buffer=        Set EDNS0 UDP size in query (default: 1232)
   -v, --verbose            Show verbose log messages
   -V, --version            Show version and exit
