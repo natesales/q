@@ -646,16 +646,20 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				Server    string
 				QueryTime int64
 				Answers   []dns.RR
+				ID        uint16
+				Truncated bool
 			}{
 				Server:    opts.Server,
 				QueryTime: int64(queryTime / time.Millisecond),
 				Answers:   reply.Answer,
+				ID:        reply.Id,
+				Truncated: reply.Truncated,
 			}
 			var b []byte
 			var err error
 			if opts.Format == "json" {
 				b, err = json.Marshal(body)
-			} else {
+			} else { // yaml
 				b, err = yaml.Marshal(body)
 			}
 			if err != nil {
