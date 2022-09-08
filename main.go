@@ -386,7 +386,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			!strings.Contains(arg, "@") &&
 			!strings.Contains(arg, "/") &&
 			!strings.HasPrefix(arg, "-") &&
-			!strings.HasPrefix(arg, "+") {
+			!strings.HasPrefix(arg, "+") &&
+			!strings.Contains(arg, ".exe") {
 			opts.Name = arg
 		}
 	}
