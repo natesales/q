@@ -8,6 +8,13 @@ on:
       - "*.go"
       - ".github/workflows/*"
       - "README.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "*.go"
+      - ".github/workflows/*"
+      - "README.md"
 
 jobs:
   build:
