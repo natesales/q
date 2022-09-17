@@ -20,6 +20,7 @@ func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string, t
 			MaxConnsPerHost:     1,
 			MaxIdleConns:        1,
 			TLSHandshakeTimeout: handshakeTimeout,
+			Proxy:               http.ProxyFromEnvironment,
 		},
 		Timeout: timeout,
 	}
