@@ -24,6 +24,7 @@ func createQuery(
 	for _, qType := range rrTypes {
 		req := dns.Msg{}
 
+		req.Id = dns.Id()
 		req.Authoritative = aaFlag
 		req.AuthenticatedData = adFlag
 		req.CheckingDisabled = cdFlag
