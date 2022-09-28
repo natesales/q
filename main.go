@@ -347,7 +347,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Parse requested RR types
-	var rrTypes = make(map[uint16]bool)
+	rrTypes := make(map[uint16]bool)
 	for _, rrType := range opts.Types {
 		typeCode, ok := dns.StringToType[strings.ToUpper(rrType)]
 		if ok {
@@ -429,8 +429,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			opts.Server = "https://cloudflare-dns.com/dns-query"
 			log.Debugf("no server set, using %s", opts.Server)
 		} else {
-			opts.Server = conf.Servers[0]
-			log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
+			if len(conf.Servers) == 0 {
+				opts.Server = "https://cloudflare-dns.com/dns-query"
+				log.Debugf("no server set, using %s", opts.Server)
+			} else {
+				opts.Server = conf.Servers[0]
+				log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
+			}
 		}
 	}
 
