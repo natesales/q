@@ -179,6 +179,12 @@ func clearOpts() {
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
 		opts.Color = true
 	}
+
+	// Disable color output if NO_COLOR env var is set
+	if os.Getenv("NO_COLOR") != "" {
+		log.Debug("NO_COLOR set")
+		opts.Color = false
+	}
 }
 
 // tlsVersion returns a TLS version number by given protocol string
