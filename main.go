@@ -327,9 +327,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	parsePlusFlags(args)
 
-	// Enable debug logging in development releases
-	if //noinspection GoBoolExpressions
-	version == "dev" || opts.Verbose {
+	if opts.Verbose {
 		log.SetLevel(log.DebugLevel)
 	}
 
