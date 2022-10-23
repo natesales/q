@@ -154,8 +154,18 @@ func color(color string, args ...interface{}) string {
 	}
 }
 
+var existingRRs = map[string]bool{}
+
 // printPrettyRR prints a pretty RR
 func printPrettyRR(a dns.RR) {
+	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
+	rrSignature := fmt.Sprintf("%s %d %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val)
+	if ok := existingRRs[rrSignature]; ok {
+		return
+	} else {
+		existingRRs[rrSignature] = true
+	}
+
 	ttl := fmt.Sprintf("%d", a.Header().Ttl)
 	if opts.PrettyTTLs {
 		ttl = fmt.Sprintf("%s", time.Duration(a.Header().Ttl)*time.Second)
@@ -164,7 +174,7 @@ func printPrettyRR(a dns.RR) {
 		color("purple", a.Header().Name),
 		color("green", ttl),
 		color("magenta", dns.TypeToString[a.Header().Rrtype]),
-		strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], "")),
+		val,
 	)
 }
 
