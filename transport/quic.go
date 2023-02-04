@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
 	"github.com/miekg/dns"
+	"github.com/quic-go/quic-go"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
