@@ -15,6 +15,7 @@ import (
 
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
+	whois "github.com/natesales/bgptools-go"
 	"github.com/natesales/q/transport"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -45,6 +46,7 @@ type optsTemplate struct {
 	ShowAdditional bool   `long:"additional" description:"Show additional section"`
 	ShowStats      bool   `short:"S" long:"stats" description:"Show time statistics"`
 	ShowAll        bool   `long:"all" description:"Show all sections and statistics"`
+	Whois          bool   `short:"w" description:"Resolve ASN/ASName for A and AAAA records"`
 
 	// Header flags
 	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
@@ -157,7 +159,7 @@ func color(color string, args ...interface{}) string {
 var existingRRs = map[string]bool{}
 
 // printPrettyRR prints a pretty RR
-func printPrettyRR(a dns.RR) {
+func printPrettyRR(a dns.RR, doWhois bool) {
 	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
 	rrSignature := fmt.Sprintf("%s %d %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val)
 	if ok := existingRRs[rrSignature]; ok {
@@ -170,6 +172,16 @@ func printPrettyRR(a dns.RR) {
 	if opts.PrettyTTLs {
 		ttl = fmt.Sprintf("%s", time.Duration(a.Header().Ttl)*time.Second)
 	}
+
+	if doWhois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
+		resp, err := whois.Query(val)
+		if err != nil {
+			log.Warnf("bgp.tools query: %s", err)
+		} else {
+			val += color("teal", fmt.Sprintf(" (AS%d %s)", resp.AS, resp.ASName))
+		}
+	}
+
 	fmt.Printf("%s %s %s %s\n",
 		color("purple", a.Header().Name),
 		color("green", ttl),
@@ -578,19 +590,19 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 					fmt.Println(color("white", "Answer:"))
 				}
 				for _, a := range reply.Answer {
-					printPrettyRR(a)
+					printPrettyRR(a, opts.Whois)
 				}
 			}
 			if opts.ShowAuthority && len(reply.Ns) > 0 {
 				fmt.Println(color("white", "Authority:"))
 				for _, a := range reply.Ns {
-					printPrettyRR(a)
+					printPrettyRR(a, opts.Whois)
 				}
 			}
 			if opts.ShowAdditional && len(reply.Extra) > 0 {
 				fmt.Println(color("white", "Additional:"))
 				for _, a := range reply.Extra {
-					printPrettyRR(a)
+					printPrettyRR(a, opts.Whois)
 				}
 			}
 

@@ -31,8 +31,7 @@ Application Options:
   -p, --odoh-proxy=        ODoH proxy
       --timeout=           Query timeout (default: 10s)
       --pad                Set EDNS0 padding
-  -f, --format=            Output format (pretty, json, yaml, raw) (default:
-                           pretty)
+  -f, --format=            Output format (pretty, json, yaml, raw) (default: pretty)
       --pretty-ttls        Format TTLs in human readable format (default: true)
       --color              Enable color output
       --question           Show question section
@@ -41,11 +40,11 @@ Application Options:
       --additional         Show additional section
   -S, --stats              Show time statistics
       --all                Show all sections and statistics
+  -w                       Resolve ASN/ASName for A and AAAA records
       --aa                 Set AA (Authoritative Answer) flag in query
       --ad                 Set AD (Authentic Data) flag in query
       --cd                 Set CD (Checking Disabled) flag in query
-      --rd                 Set RD (Recursion Desired) flag in query (default:
-                           true)
+      --rd                 Set RD (Recursion Desired) flag in query (default: true)
       --ra                 Set RA (Recursion Available) flag in query
       --z                  Set Z (Zero) flag in query
       --t                  Set TC (Truncated) flag in query
