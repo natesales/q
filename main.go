@@ -80,6 +80,7 @@ type optsTemplate struct {
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
+	Trace       bool   `long:"trace" description:"Show trace log messages"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
 }
 
@@ -251,7 +252,7 @@ func parsePlusFlags(args []string) {
 
 // parseServer parses opts.Server into a protocol and host:port
 func parseServer() (string, string, error) {
-	var scheme, host, port string
+	var scheme, host, port, scopeId string
 
 	// Set default protocol
 	if !strings.Contains(opts.Server, "://") {
@@ -284,8 +285,7 @@ func parseServer() (string, string, error) {
 		host = strings.ReplaceAll(opts.Server, scheme+"://", "")
 
 		// Remove port from host
-		if strings.Contains(host, "[") && !strings.Contains(host, "]") ||
-			!strings.Contains(host, "[") && strings.Contains(host, "]") {
+		if strings.Contains(host, "[") && !strings.Contains(host, "]") || !strings.Contains(host, "[") && strings.Contains(host, "]") {
 			return "", "", fmt.Errorf("invalid IPv6 bracket notation")
 		} else if strings.Contains(host, "[") && strings.Contains(host, "]") { // IPv6 in bracket notation
 			portSuffix := strings.Split(host, "]:")
@@ -294,7 +294,17 @@ func parseServer() (string, string, error) {
 			} else {
 				port = ""
 			}
-			host = "[" + strings.Split(strings.Split(host, "[")[1], "]")[0] + "]"
+
+			host = strings.Split(strings.Split(host, "[")[1], "]")[0]
+
+			// Remove IPv6 scope ID
+			if strings.Contains(host, "%") {
+				parts := strings.Split(host, "%")
+				host = parts[0]
+				scopeId = parts[1]
+			}
+
+			host = "[" + host + "]"
 			log.Tracef("host contains ], treating as v6 with port. host: %s port: %s", host, port)
 		} else if strings.Contains(host, ".") && strings.Contains(host, ":") { // IPv4 or hostname with port
 			parts := strings.Split(host, ":")
@@ -302,14 +312,19 @@ func parseServer() (string, string, error) {
 			port = parts[1]
 			log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
 		} else if strings.Contains(host, ":") { // IPv6 no port
+			// Remove IPv6 scope ID
+			if strings.Contains(host, "%") {
+				parts := strings.Split(host, "%")
+				host = parts[0]
+				scopeId = parts[1]
+			}
+
 			host = "[" + host + "]"
 			log.Tracef("host contains :, treating as v6 without port. host %s", host)
 		} else {
 			log.Tracef("no cases matched for host %s port %s", host, port)
 		}
 	}
-
-	log.Debugf("Using scheme: %s host: %s port: %s", scheme, host, port)
 
 	// Validate ODoH
 	if opts.ODoHProxy != "" {
@@ -337,6 +352,7 @@ func parseServer() (string, string, error) {
 		log.Tracef("Port is %s, not overriding", port)
 	}
 
+	log.Infof("Using DNS server: %s://%s:%s", scheme, host, port)
 	fqdn := scheme + "://" + host
 	if scheme != "https" {
 		fqdn += ":" + port
@@ -361,6 +377,11 @@ func parseServer() (string, string, error) {
 		}
 	}
 
+	// Insert scope ID before ']'
+	if scopeId != "" {
+		server = strings.Replace(server, "]", "%"+scopeId+"]", 1)
+	}
+
 	return scheme, server, nil
 }
 
@@ -381,6 +402,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	if opts.Verbose {
 		log.SetLevel(log.DebugLevel)
+	} else if opts.Trace {
+		log.SetLevel(log.TraceLevel)
 	}
 
 	if opts.ShowVersion {

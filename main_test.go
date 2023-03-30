@@ -378,6 +378,11 @@ func TestMainParseServer(t *testing.T) {
 			ExpectedProtocol: "quic",
 			ExpectedHost:     "dns.adguard.com:8530",
 		},
+		{ // IPv6 with scope ID
+			Server:           "plain://[fe80::1%en0]:53",
+			ExpectedProtocol: "plain",
+			ExpectedHost:     "[fe80::1%en0]:53",
+		},
 	} {
 		clearOpts()
 		opts.Server = tc.Server
