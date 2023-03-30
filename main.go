@@ -34,6 +34,8 @@ type optsTemplate struct {
 	Timeout      time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
 	Pad          bool          `long:"pad" description:"Set EDNS0 padding"`
 
+	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
+
 	// Output
 	Format         string `short:"f" long:"format" description:"Output format (pretty, json, yaml, raw)" default:"pretty"`
 	PrettyTTLs     bool   `long:"pretty-ttls" description:"Format TTLs in human readable format (default: true)"`
@@ -501,6 +503,14 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	if protocol == "quic" {
 		tlsConfig.NextProtos = opts.QUICALPNTokens
+	}
+
+	if opts.RecAXFR {
+		if opts.Name == "" {
+			return fmt.Errorf("no name specified for AXFR")
+		}
+		_ = RecAXFR(opts.Name, server)
+		return nil
 	}
 
 	startTime := time.Now()

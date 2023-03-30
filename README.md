@@ -11,7 +11,21 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 ![q screenshot](carbon.svg)
 </div>
 
+### Examples
+
+```
+q example.com                            Lookup default records for a domain 
+q example.com MX SOA                     ...or specify a list of types
+
+q example.com MX @9.9.9.9                Query a specific server
+q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)
+
+q example.com MX --format=raw            Output in raw (dig) format
+q example.com MX --format=json           ...or as JSON (or YAML)
+```
+
 ### Usage
+
 ```
 Usage:
   q [OPTIONS] [@server] [type...] [name]
@@ -31,8 +45,8 @@ Application Options:
   -p, --odoh-proxy=        ODoH proxy
       --timeout=           Query timeout (default: 10s)
       --pad                Set EDNS0 padding
-  -f, --format=            Output format (pretty, json, yaml, raw) (default:
-                           pretty)
+      --recaxfr            Perform recursive AXFR
+  -f, --format=            Output format (pretty, json, yaml, raw) (default: pretty)
       --pretty-ttls        Format TTLs in human readable format (default: true)
       --color              Enable color output
       --question           Show question section
@@ -45,8 +59,7 @@ Application Options:
       --aa                 Set AA (Authoritative Answer) flag in query
       --ad                 Set AD (Authentic Data) flag in query
       --cd                 Set CD (Checking Disabled) flag in query
-      --rd                 Set RD (Recursion Desired) flag in query (default:
-                           true)
+      --rd                 Set RD (Recursion Desired) flag in query (default: true)
       --ra                 Set RA (Recursion Available) flag in query
       --z                  Set Z (Zero) flag in query
       --t                  Set TC (Truncated) flag in query
@@ -84,13 +97,16 @@ Help Options:
 - Oblivious DNS over HTTPS ([RFC 9230](https://tools.ietf.org/html/rfc9230))
 
 ### Installation
-`q` is available in binary form from:  
+
+`q` is available in binary form from:
+
 - [apt/yum/brew from my package repositories](https://github.com/natesales/repo)
 - [GitHub releases](https://github.com/natesales/q/releases)
 - [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/) in the AUR
 - `go install github.com/natesales/q@latest`
 
-To install `q` from source:  
+To install `q` from source:
+
 ```sh
 git clone https://github.com/natesales/q && cd q
 go install
