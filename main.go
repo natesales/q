@@ -352,7 +352,6 @@ func parseServer() (string, string, error) {
 		log.Tracef("Port is %s, not overriding", port)
 	}
 
-	log.Infof("Using DNS server: %s://%s:%s", scheme, host, port)
 	fqdn := scheme + "://" + host
 	if scheme != "https" {
 		fqdn += ":" + port
