@@ -80,6 +80,7 @@ Application Options:
       --handshake-timeout= Handshake timeout (default: 10s)
       --udp-buffer=        Set EDNS0 UDP size in query (default: 1232)
   -v, --verbose            Show verbose log messages
+      --trace              Show trace log messages
   -V, --version            Show version and exit
 
 Help Options:
