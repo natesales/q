@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jedisct1/go-dnsstamps"
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
 	whois "github.com/natesales/bgptools-go"
@@ -259,42 +260,65 @@ func parseServer() (string, string, error) {
 		scheme = strings.Split(opts.Server, "://")[0]
 	}
 
-	// Server without port or protocol
-	host = strings.ReplaceAll(opts.Server, scheme+"://", "")
-
-	// Remove port from host
-	if strings.Contains(host, "[") && !strings.Contains(host, "]") ||
-		!strings.Contains(host, "[") && strings.Contains(host, "]") {
-		return "", "", fmt.Errorf("invalid IPv6 bracket notation")
-	} else if strings.Contains(host, "[") && strings.Contains(host, "]") { // IPv6 in bracket notation
-		portSuffix := strings.Split(host, "]:")
-		if len(portSuffix) > 1 { // With explicit port
-			port = portSuffix[1]
-		} else {
-			port = ""
+	// Parse DNS stamp
+	if strings.HasPrefix(opts.Server, "sdns://") {
+		parsedStamp, err := dnsstamps.NewServerStampFromString(opts.Server)
+		if err != nil {
+			return "", "", err
 		}
-		host = "[" + strings.Split(strings.Split(host, "[")[1], "]")[0] + "]"
-		log.Tracef("host contains ], treating as v6 with port. host: %s port: %s", host, port)
-	} else if strings.Contains(host, ".") && strings.Contains(host, ":") { // IPv4 or hostname with port
-		parts := strings.Split(host, ":")
-		host = parts[0]
-		port = parts[1]
-		log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
-	} else if strings.Contains(host, ":") { // IPv6 no port
-		host = "[" + host + "]"
-		log.Tracef("host contains :, treating as v6 without port. host %s", host)
-	} else {
-		log.Tracef("no cases matched for host %s port %s", host, port)
+
+		switch parsedStamp.Proto {
+		case dnsstamps.StampProtoTypePlain:
+			scheme = "plain"
+		case dnsstamps.StampProtoTypeTLS:
+			scheme = "tls"
+		case dnsstamps.StampProtoTypeDoH:
+			scheme = "https"
+		default:
+			return "", "", fmt.Errorf("unsupported protocol %s in DNS stamp", parsedStamp.Proto.String())
+		}
+
+		host = parsedStamp.ProviderName
+	} else { // Not DNS stamp
+		// Server without port or protocol
+		host = strings.ReplaceAll(opts.Server, scheme+"://", "")
+
+		// Remove port from host
+		if strings.Contains(host, "[") && !strings.Contains(host, "]") ||
+			!strings.Contains(host, "[") && strings.Contains(host, "]") {
+			return "", "", fmt.Errorf("invalid IPv6 bracket notation")
+		} else if strings.Contains(host, "[") && strings.Contains(host, "]") { // IPv6 in bracket notation
+			portSuffix := strings.Split(host, "]:")
+			if len(portSuffix) > 1 { // With explicit port
+				port = portSuffix[1]
+			} else {
+				port = ""
+			}
+			host = "[" + strings.Split(strings.Split(host, "[")[1], "]")[0] + "]"
+			log.Tracef("host contains ], treating as v6 with port. host: %s port: %s", host, port)
+		} else if strings.Contains(host, ".") && strings.Contains(host, ":") { // IPv4 or hostname with port
+			parts := strings.Split(host, ":")
+			host = parts[0]
+			port = parts[1]
+			log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
+		} else if strings.Contains(host, ":") { // IPv6 no port
+			host = "[" + host + "]"
+			log.Tracef("host contains :, treating as v6 without port. host %s", host)
+		} else {
+			log.Tracef("no cases matched for host %s port %s", host, port)
+		}
 	}
 
 	log.Debugf("Using scheme: %s host: %s port: %s", scheme, host, port)
 
 	// Validate ODoH
-	if opts.ODoHProxy != "" && !strings.HasPrefix(opts.ODoHProxy, "https://") {
-		return "", "", fmt.Errorf("ODoH proxy must use HTTPS")
-	}
-	if opts.ODoHProxy != "" && scheme != "https" {
-		return "", "", fmt.Errorf("ODoH target must use HTTPS")
+	if opts.ODoHProxy != "" {
+		if !strings.HasPrefix(opts.ODoHProxy, "https://") {
+			return "", "", fmt.Errorf("ODoH proxy must use HTTPS")
+		}
+		if scheme != "https" {
+			return "", "", fmt.Errorf("ODoH target must use HTTPS")
+		}
 	}
 
 	if port == "" {

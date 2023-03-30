@@ -18,7 +18,8 @@ q example.com                            Lookup default records for a domain
 q example.com MX SOA                     ...or specify a list of types
 
 q example.com MX @9.9.9.9                Query a specific server
-q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)
+q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)...
+q @sdns://AgcAAAAAAAAAAAAHOS45LjkuOQA    ...or from a DNS Stamp
 
 q example.com MX --format=raw            Output in raw (dig) format
 q example.com MX --format=json           ...or as JSON (or YAML)

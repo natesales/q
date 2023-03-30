@@ -22,6 +22,7 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
+	github.com/jedisct1/go-dnsstamps v0.0.0-20230211133001-124a632de565 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
