@@ -20,6 +20,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const defaultServerVar = "Q_DEFAULT_SERVER"
+
 // CLI flags
 type optsTemplate struct {
 	Name         string        `short:"q" long:"qname" description:"Query name"`
@@ -497,17 +499,23 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	// Set default DNS server
 	if opts.Server == "" {
-		conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
-		if err != nil {
-			opts.Server = "https://cloudflare-dns.com/dns-query"
-			log.Debugf("no server set, using %s", opts.Server)
+		if os.Getenv(defaultServerVar) != "" {
+			opts.Server = os.Getenv(defaultServerVar)
+			log.Debugf("Using %s from %s environment variable", opts.Server, defaultServerVar)
 		} else {
-			if len(conf.Servers) == 0 {
+			log.Debugf("No server specified or %s set, using /etc/resolv.conf", defaultServerVar)
+			conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+			if err != nil {
 				opts.Server = "https://cloudflare-dns.com/dns-query"
 				log.Debugf("no server set, using %s", opts.Server)
 			} else {
-				opts.Server = conf.Servers[0]
-				log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
+				if len(conf.Servers) == 0 {
+					opts.Server = "https://cloudflare-dns.com/dns-query"
+					log.Debugf("no server set, using %s", opts.Server)
+				} else {
+					opts.Server = conf.Servers[0]
+					log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
+				}
 			}
 		}
 	}
