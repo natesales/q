@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTransportHTTP(t *testing.T) {
+func testQuery() *dns.Msg {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
 	msg.Question = []dns.Question{{
@@ -18,14 +18,23 @@ func TestTransportHTTP(t *testing.T) {
 		Qtype:  dns.StringToType["A"],
 		Qclass: dns.ClassINET,
 	}}
+	return &msg
+}
 
-	reply, err := HTTP(&msg, &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET", 2*time.Second, 2*time.Second)
+func TestTransportHTTP(t *testing.T) {
+	reply, err := HTTP(testQuery(), &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET", 2*time.Second, 2*time.Second, false, false)
+	assert.Nil(t, err)
+	assert.Greater(t, len(reply.Answer), 0)
+}
+
+func TestTransportHTTP3(t *testing.T) {
+	reply, err := HTTP(testQuery(), &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET", 2*time.Second, 2*time.Second, true, false)
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
 func TestTransportHTTPInvalidResolver(t *testing.T) {
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://example.com", "", "GET", 2*time.Second, 2*time.Second)
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://example.com", "", "GET", 2*time.Second, 2*time.Second, false, false)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "unpacking DNS response")
 }
@@ -37,7 +46,7 @@ func TestTransportHTTPServerError(t *testing.T) {
 		}))
 	}()
 
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8080", "", "GET", 2*time.Second, 2*time.Second)
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8080", "", "GET", 2*time.Second, 2*time.Second, false, false)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "got status code 500")
 }
@@ -56,7 +65,7 @@ func TestTransportHTTPIDMismatch(t *testing.T) {
 		}))
 	}()
 	time.Sleep(50 * time.Millisecond)
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8085", "", "GET", 2*time.Second, 2*time.Second)
+	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8085", "", "GET", 2*time.Second, 2*time.Second, false, false)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "id mismatch")
 }

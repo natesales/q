@@ -34,6 +34,7 @@ type optsTemplate struct {
 	ODoHProxy    string        `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Timeout      time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
 	Pad          bool          `long:"pad" description:"Set EDNS0 padding"`
+	HTTP3        bool          `long:"http3" description:"Use HTTP/3 for DoH"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
@@ -574,7 +575,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		} else {
 			log.Debug("Using HTTP(s) transport")
 			for _, msg := range msgs {
-				reply, err := transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod, opts.Timeout, opts.HandshakeTimeout)
+				reply, err := transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod, opts.Timeout, opts.HandshakeTimeout, opts.HTTP3, opts.QUICNoPMTUD)
 				if err != nil {
 					return err
 				}

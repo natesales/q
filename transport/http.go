@@ -9,11 +9,17 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 	log "github.com/sirupsen/logrus"
 )
 
 // HTTP makes a DNS query over HTTP(s)
-func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string, timeout, handshakeTimeout time.Duration) (*dns.Msg, error) {
+func HTTP(
+	m *dns.Msg, tlsConfig *tls.Config,
+	server, userAgent, method string,
+	timeout, handshakeTimeout time.Duration,
+	h3, noPMTUD bool) (*dns.Msg, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig:     tlsConfig,
@@ -23,6 +29,16 @@ func HTTP(m *dns.Msg, tlsConfig *tls.Config, server, userAgent, method string, t
 			Proxy:               http.ProxyFromEnvironment,
 		},
 		Timeout: timeout,
+	}
+	if h3 {
+		log.Debug("Using HTTP/3")
+		httpClient.Transport = &http3.RoundTripper{
+			TLSClientConfig: tlsConfig,
+			QuicConfig: &quic.Config{
+				HandshakeIdleTimeout:    handshakeTimeout,
+				DisablePathMTUDiscovery: noPMTUD,
+			},
+		}
 	}
 
 	buf, err := m.Pack()
