@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
@@ -45,7 +47,7 @@ func RecAXFR(label, server string) []dns.RR {
 	queried = make(map[string]bool)
 	all = make([]dns.RR, 0)
 
-	dir := strings.TrimPrefix(label, ".") + ".recaxfr"
+	dir := fmt.Sprintf("%s_%s_recaxfr", strings.TrimPrefix(label, "."), strings.ReplaceAll(time.Now().Format(time.UnixDate), " ", "-"))
 
 	// Create recursive AXFR directory if it doesn't exist
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -56,7 +58,7 @@ func RecAXFR(label, server string) []dns.RR {
 	}
 
 	addToTree(label, dir, server)
-	log.Infof("AXFR complete, %d records written in %s", len(all), dir)
+	log.Infof("AXFR complete, %d records saved to %s", len(all), dir)
 
 	return all
 }
