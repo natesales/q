@@ -15,7 +15,6 @@ import (
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
 	whois "github.com/natesales/bgptools-go"
-	"github.com/natesales/q/transport"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -459,13 +458,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" &&
-			(strings.Contains(arg, ".") || strings.Contains(arg, ":")) &&
-			!strings.Contains(arg, "@") &&
-			!strings.Contains(arg, "/") &&
-			!strings.Contains(arg, ".exe") &&
-			!strings.HasPrefix(arg, "-") &&
-			!strings.HasPrefix(arg, "+") {
+		if opts.Name == "" && (strings.Contains(arg, ".") || strings.Contains(arg, ":")) && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) {
 			opts.Name = arg
 		}
 	}
@@ -552,7 +545,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.ClientSubnet,
 		opts.Pad,
 	)
-	var replies []*dns.Msg
 
 	protocol, server, err := parseServer()
 	if err != nil {
@@ -572,69 +564,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	startTime := time.Now()
-	switch protocol {
-	case "https", "http":
-		if opts.ODoHProxy != "" {
-			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
-			for _, msg := range msgs {
-				reply, err := transport.ODoH(msg, server, opts.ODoHProxy)
-				if err != nil {
-					return fmt.Errorf("ODoH query: %s", err)
-				}
-				replies = append(replies, reply)
-			}
-		} else {
-			log.Debug("Using HTTP(s) transport")
-			for _, msg := range msgs {
-				reply, err := transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod, opts.Timeout, opts.HandshakeTimeout, opts.HTTP3, opts.QUICNoPMTUD)
-				if err != nil {
-					return err
-				}
-				replies = append(replies, reply)
-			}
+	var replies []*dns.Msg
+	for _, msg := range msgs {
+		reply, err := query(msg, server, protocol, tlsConfig)
+		if err != nil {
+			return err
 		}
-	case "quic":
-		log.Debug("Using QUIC transport")
-		for _, msg := range msgs {
-			reply, err := transport.QUIC(&msg, server, tlsConfig,
-				opts.QUICDialTimeout,
-				opts.HandshakeTimeout,
-				opts.QUICOpenStreamTimeout,
-				opts.QUICNoPMTUD)
-			if err != nil {
-				return err
-			}
-			replies = append(replies, reply)
-		}
-	case "tls":
-		log.Debug("Using TLS transport")
-		for _, msg := range msgs {
-			reply, err := transport.TLS(&msg, server, tlsConfig, opts.TCPDialTimeout)
-			if err != nil {
-				return err
-			}
-			replies = append(replies, reply)
-		}
-	case "tcp":
-		log.Debug("Using TCP transport")
-		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, server, true, opts.Timeout, opts.UDPBuffer)
-			if err != nil {
-				return err
-			}
-			replies = append(replies, reply)
-		}
-	case "plain":
-		log.Debug("Using UDP with TCP fallback")
-		for _, msg := range msgs {
-			reply, err := transport.Plain(&msg, server, false, opts.Timeout, opts.UDPBuffer)
-			if err != nil {
-				return err
-			}
-			replies = append(replies, reply)
-		}
-	default:
-		return fmt.Errorf("unknown transport protocol %s", protocol)
+		replies = append(replies, reply)
 	}
 	queryTime := time.Since(startTime)
 

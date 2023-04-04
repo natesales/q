@@ -1,10 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
+	"fmt"
 	"net"
 
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/natesales/q/transport"
 )
 
 // createQuery creates a slice of DNS queries
@@ -103,4 +107,36 @@ func createQuery(
 		queries = append(queries, req)
 	}
 	return queries
+}
+
+// query performs a DNS query and returns the reply
+func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Msg, error) {
+	var reply *dns.Msg
+	var err error
+
+	switch protocol {
+	case "https", "http":
+		if opts.ODoHProxy != "" {
+			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
+			reply, err = transport.ODoH(msg, server, opts.ODoHProxy)
+		} else {
+			log.Debug("Using HTTP(s) transport")
+			reply, err = transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod, opts.Timeout, opts.HandshakeTimeout, opts.HTTP3, opts.QUICNoPMTUD)
+		}
+	case "quic":
+		log.Debug("Using QUIC transport")
+		reply, err = transport.QUIC(&msg, server, tlsConfig, opts.QUICDialTimeout, opts.HandshakeTimeout, opts.QUICOpenStreamTimeout, opts.QUICNoPMTUD)
+	case "tls":
+		log.Debug("Using TLS transport")
+		reply, err = transport.TLS(&msg, server, tlsConfig, opts.TCPDialTimeout)
+	case "tcp":
+		log.Debug("Using TCP transport")
+		reply, err = transport.Plain(&msg, server, true, opts.Timeout, opts.UDPBuffer)
+	case "plain":
+		log.Debug("Using UDP with TCP fallback")
+		reply, err = transport.Plain(&msg, server, false, opts.Timeout, opts.UDPBuffer)
+	default:
+		return nil, fmt.Errorf("unknown transport protocol %s", protocol)
+	}
+	return reply, err
 }
