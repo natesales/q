@@ -82,6 +82,8 @@ type optsTemplate struct {
 	HandshakeTimeout time.Duration `long:"handshake-timeout" description:"Handshake timeout" default:"10s"`
 	TCPDialTimeout   time.Duration `long:"tcp-dial-timeout" description:"TCP dial timeout" default:"5s"`
 
+	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"CNAME"`
+
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
 	Trace       bool   `long:"trace" description:"Show trace log messages"`
@@ -473,7 +475,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		if opts.Name == "" {
 			rrTypes[dns.StringToType["NS"]] = true
 		} else {
-			for _, defaultRRType := range []string{"A", "AAAA", "NS", "MX", "TXT", "CNAME"} {
+			for _, defaultRRType := range opts.DefaultRRTypes {
 				rrType, _ := dns.StringToType[defaultRRType]
 				rrTypes[rrType] = true
 			}
