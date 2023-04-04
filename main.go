@@ -80,6 +80,7 @@ type optsTemplate struct {
 	QUICOpenStreamTimeout time.Duration `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10s"`
 
 	HandshakeTimeout time.Duration `long:"handshake-timeout" description:"Handshake timeout" default:"10s"`
+	TCPDialTimeout   time.Duration `long:"tcp-dial-timeout" description:"TCP dial timeout" default:"5s"`
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
@@ -606,7 +607,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case "tls":
 		log.Debug("Using TLS transport")
 		for _, msg := range msgs {
-			reply, err := transport.TLS(&msg, server, tlsConfig, 5*time.Second)
+			reply, err := transport.TLS(&msg, server, tlsConfig, opts.TCPDialTimeout)
 			if err != nil {
 				return err
 			}
