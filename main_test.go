@@ -392,3 +392,12 @@ func TestMainParseServer(t *testing.T) {
 		assert.Equalf(t, tc.ExpectedHost, host, "%s", tc.Server)
 	}
 }
+
+func TestMainRecAXFR(t *testing.T) {
+	clearOpts()
+	assert.Nil(t, driver([]string{
+		"-v",
+		"+recaxfr",
+		"@nsztm1.digi.ninja", "zonetransfer.me",
+	}))
+}
