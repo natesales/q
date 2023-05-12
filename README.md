@@ -132,7 +132,7 @@ go install -ldflags="-s -w -X main.version=release"
 ### TLS Decryption
 
 `q` supports TLS decryption through a key log file generated when
-`SSLKEYLOGFILE` environment variable is set to the absolute path of a
+the `SSLKEYLOGFILE` environment variable is set to the absolute path of a
 writable file.
 
 The generated file may be used by Wireshark to decipher the captured traffic.

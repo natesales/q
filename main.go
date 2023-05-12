@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"reflect"
@@ -522,18 +521,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.Class = dns.ClassCHAOS
 	}
 
-	var keyLog io.Writer
-
-	if klf := os.Getenv("SSLKEYLOGFILE"); klf != "" {
-
-		log.Warnf("SSLKEYLOGFILE is set! TLS master secrets will be logged.");
-
-		keyLog, err = os.OpenFile(klf, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-		if err != nil {
-			return fmt.Errorf("unable to open SSLKEYLOGFILE: %s %s", klf, err)
-		}
-	}
-
 	// Create TLS config
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: opts.TLSNoVerify,
@@ -542,7 +529,15 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		MaxVersion:         tlsVersion(opts.TLSMaxVersion, tls.VersionTLS13),
 		NextProtos:         opts.TLSNextProtos,
 		CipherSuites:       parseTLSCipherSuites(opts.TLSCipherSuites),
-		KeyLogWriter:       keyLog,
+	}
+
+	if klf := os.Getenv("SSLKEYLOGFILE"); klf != "" {
+		log.Warnf("SSLKEYLOGFILE is set! TLS master secrets will be logged.")
+		keyLog, err := os.OpenFile(klf, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		if err != nil {
+			return fmt.Errorf("unable to open SSLKEYLOGFILE: %s %s", klf, err)
+		}
+		tlsConfig.KeyLogWriter = keyLog
 	}
 
 	var rrTypesSlice []uint16
