@@ -35,6 +35,7 @@ func QUIC(msg *dns.Msg,
 	tlsConfig *tls.Config,
 	dialTimeout, handshakeTimeout, openStreamTimeout time.Duration,
 	noPMTUD bool,
+	addLengthPrefix bool,
 ) (*dns.Msg, error) {
 	log.Debugf("Dialing with QUIC ALPN tokens: %v", tlsConfig.NextProtos)
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), dialTimeout)
@@ -77,11 +78,15 @@ func QUIC(msg *dns.Msg,
 		return nil, err
 	}
 
-	// All DNS messages (queries and responses) sent over DoQ connections
-	// MUST be encoded as a 2-octet length field followed by the message
-	// content as specified in [RFC1035].
-	// https://datatracker.ietf.org/doc/html/rfc9250#section-4.2-4
-	_, err = stream.Write(addPrefix(buf))
+	if addLengthPrefix {
+		// All DNS messages (queries and responses) sent over DoQ connections
+		// MUST be encoded as a 2-octet length field followed by the message
+		// content as specified in [RFC1035].
+		// https://datatracker.ietf.org/doc/html/rfc9250#section-4.2-4
+		_, err = stream.Write(addPrefix(buf))
+	} else {
+		_, err = stream.Write(buf)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +106,11 @@ func QUIC(msg *dns.Msg,
 	}
 
 	reply := dns.Msg{}
-	err = reply.Unpack(respBuf[2:])
+	if addLengthPrefix {
+		err = reply.Unpack(respBuf[2:])
+	} else {
+		err = reply.Unpack(respBuf)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unpacking response from %s: %s", server, err)
 	}

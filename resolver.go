@@ -125,7 +125,7 @@ func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Ms
 		}
 	case "quic":
 		log.Debug("Using QUIC transport")
-		reply, err = transport.QUIC(&msg, server, tlsConfig, opts.QUICDialTimeout, opts.HandshakeTimeout, opts.QUICOpenStreamTimeout, opts.QUICNoPMTUD)
+		reply, err = transport.QUIC(&msg, server, tlsConfig, opts.QUICDialTimeout, opts.HandshakeTimeout, opts.QUICOpenStreamTimeout, opts.QUICNoPMTUD, !opts.QUICNoLengthPrefix)
 	case "tls":
 		log.Debug("Using TLS transport")
 		reply, err = transport.TLS(&msg, server, tlsConfig, opts.TCPDialTimeout)

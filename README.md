@@ -33,63 +33,61 @@ Usage:
 All long form (--) flags can be toggled with the dig-standard +[no]flag notation.
 
 Application Options:
-  -q, --qname=             Query name
-  -s, --server=            DNS server
-  -t, --type=              RR type (e.g. A, AAAA, MX, etc.) or type integer
-  -x, --reverse            Reverse lookup
-  -d, --dnssec             Set the DO (DNSSEC OK) bit in the OPT record
-  -n, --nsid               Set EDNS0 NSID opt
-      --subnet=            Set EDNS0 client subnet
-  -c, --chaos              Use CHAOS query class
-  -C=                      Set query class (default: IN 0x01) (default: 1)
-  -p, --odoh-proxy=        ODoH proxy
-      --timeout=           Query timeout (default: 10s)
-      --pad                Set EDNS0 padding
-      --http3              Use HTTP/3 for DoH
-      --recaxfr            Perform recursive AXFR
-  -f, --format=            Output format (pretty, json, yaml, raw) (default:
-                           pretty)
-      --pretty-ttls        Format TTLs in human readable format (default: true)
-      --color              Enable color output
-      --question           Show question section
-      --answer             Show answer section (default: true)
-      --authority          Show authority section
-      --additional         Show additional section
-  -S, --stats              Show time statistics
-      --all                Show all sections and statistics
-  -w                       Resolve ASN/ASName for A and AAAA records
-  -r, --value              Show record values only
-      --aa                 Set AA (Authoritative Answer) flag in query
-      --ad                 Set AD (Authentic Data) flag in query
-      --cd                 Set CD (Checking Disabled) flag in query
-      --rd                 Set RD (Recursion Desired) flag in query (default:
-                           true)
-      --ra                 Set RA (Recursion Available) flag in query
-      --z                  Set Z (Zero) flag in query
-      --t                  Set TC (Truncated) flag in query
-  -i, --tls-no-verify      Disable TLS certificate verification
-      --tls-server-name=   TLS server name for host verification
-      --tls-min-version=   Minimum TLS version to use (default: 1.0)
-      --tls-max-version=   Maximum TLS version to use (default: 1.3)
-      --tls-next-protos=   TLS next protocols for ALPN
-      --tls-cipher-suites= TLS cipher suites
-      --http-user-agent=   HTTP user agent
-      --http-method=       HTTP method (default: GET)
-      --quic-alpn-tokens=  QUIC ALPN tokens (default: doq, doq-i11)
-      --quic-no-pmtud      Disable QUIC PMTU discovery
-      --quic-dial-timeout= QUIC dial timeout (default: 10s)
-      --quic-idle-timeout= QUIC stream open timeout (default: 10s)
-      --handshake-timeout= Handshake timeout (default: 10s)
-      --tcp-dial-timeout=  TCP dial timeout (default: 5s)
-      --default-rr-types=  Default record types (default: A, AAAA, NS, MX, TXT,
-                           CNAME)
-      --udp-buffer=        Set EDNS0 UDP size in query (default: 1232)
-  -v, --verbose            Show verbose log messages
-      --trace              Show trace log messages
-  -V, --version            Show version and exit
+  -q, --qname=                 Query name
+  -s, --server=                DNS server
+  -t, --type=                  RR type (e.g. A, AAAA, MX, etc.) or type integer
+  -x, --reverse                Reverse lookup
+  -d, --dnssec                 Set the DO (DNSSEC OK) bit in the OPT record
+  -n, --nsid                   Set EDNS0 NSID opt
+      --subnet=                Set EDNS0 client subnet
+  -c, --chaos                  Use CHAOS query class
+  -C=                          Set query class (default: IN 0x01) (default: 1)
+  -p, --odoh-proxy=            ODoH proxy
+      --timeout=               Query timeout (default: 10s)
+      --pad                    Set EDNS0 padding
+      --http3                  Use HTTP/3 for DoH
+      --recaxfr                Perform recursive AXFR
+  -f, --format=                Output format (pretty, json, yaml, raw) (default: pretty)
+      --pretty-ttls            Format TTLs in human readable format (default: true)
+      --color                  Enable color output
+      --question               Show question section
+      --answer                 Show answer section (default: true)
+      --authority              Show authority section
+      --additional             Show additional section
+  -S, --stats                  Show time statistics
+      --all                    Show all sections and statistics
+  -w                           Resolve ASN/ASName for A and AAAA records
+  -r, --value                  Show record values only
+      --aa                     Set AA (Authoritative Answer) flag in query
+      --ad                     Set AD (Authentic Data) flag in query
+      --cd                     Set CD (Checking Disabled) flag in query
+      --rd                     Set RD (Recursion Desired) flag in query (default: true)
+      --ra                     Set RA (Recursion Available) flag in query
+      --z                      Set Z (Zero) flag in query
+      --t                      Set TC (Truncated) flag in query
+  -i, --tls-no-verify          Disable TLS certificate verification
+      --tls-server-name=       TLS server name for host verification
+      --tls-min-version=       Minimum TLS version to use (default: 1.0)
+      --tls-max-version=       Maximum TLS version to use (default: 1.3)
+      --tls-next-protos=       TLS next protocols for ALPN
+      --tls-cipher-suites=     TLS cipher suites
+      --http-user-agent=       HTTP user agent
+      --http-method=           HTTP method (default: GET)
+      --quic-alpn-tokens=      QUIC ALPN tokens (default: doq, doq-i11)
+      --quic-no-pmtud          Disable QUIC PMTU discovery
+      --quic-dial-timeout=     QUIC dial timeout (default: 10s)
+      --quic-idle-timeout=     QUIC stream open timeout (default: 10s)
+      --quic-no-length-prefix  Don't add RFC 9250 compliant length prefix
+      --handshake-timeout=     Handshake timeout (default: 10s)
+      --tcp-dial-timeout=      TCP dial timeout (default: 5s)
+      --default-rr-types=      Default record types (default: A, AAAA, NS, MX, TXT, CNAME)
+      --udp-buffer=            Set EDNS0 UDP size in query (default: 1232)
+  -v, --verbose                Show verbose log messages
+      --trace                  Show trace log messages
+  -V, --version                Show version and exit
 
 Help Options:
-  -h, --help               Show this help message
+  -h, --help                   Show this help message
 ```
 
 ### Demo
