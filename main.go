@@ -417,13 +417,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		// Add non-flag RR types
-		rrType, ok := dns.StringToType[strings.ToUpper(arg)]
-		if ok {
+		rrType, typeFound := dns.StringToType[strings.ToUpper(arg)]
+		if typeFound {
 			rrTypes[rrType] = true
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) {
+		if opts.Name == "" && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) && !typeFound {
 			opts.Name = arg
 		}
 	}
