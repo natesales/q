@@ -422,7 +422,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" && (strings.Contains(arg, ".") || strings.Contains(arg, ":")) && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) {
+		if opts.Name == "" && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) {
 			opts.Name = arg
 		}
 	}
@@ -450,6 +450,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	// Log RR types
 	if opts.Verbose {
+		log.Debugf("Name: %s", opts.Name)
 		var rrTypeStrings []string
 		for rrType := range rrTypes {
 			rrTypeStrings = append(rrTypeStrings, dns.TypeToString[rrType])
