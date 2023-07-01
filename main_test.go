@@ -28,7 +28,7 @@ func TestMainODoHQuery(t *testing.T) {
 		"-v",
 		"-q", "example.com",
 		"-s", "https://odoh.cloudflare-dns.com",
-		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
+		"--odoh-proxy", "https://odoh.crypto.sx",
 	}))
 }
 
@@ -90,7 +90,7 @@ func TestMainInvalidODoHUpstream(t *testing.T) {
 		"-v",
 		"-q", "example.com",
 		"-s", "tls://odoh.cloudflare-dns.com",
-		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
+		"--odoh-proxy", "https://odoh.crypto.sx",
 	})
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "ODoH target must use HTTPS")
