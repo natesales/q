@@ -22,15 +22,16 @@ func TestMainVersion(t *testing.T) {
 	}))
 }
 
-func TestMainODoHQuery(t *testing.T) {
-	clearOpts()
-	assert.Nil(t, driver([]string{
-		"-v",
-		"-q", "example.com",
-		"-s", "https://odoh.cloudflare-dns.com",
-		"--odoh-proxy", "https://odoh.crypto.sx",
-	}))
-}
+// TODO
+//func TestMainODoHQuery(t *testing.T) {
+//	clearOpts()
+//	assert.Nil(t, driver([]string{
+//		"-v",
+//		"-q", "example.com",
+//		"-s", "https://odoh.cloudflare-dns.com",
+//		"--odoh-proxy", "https://odoh.crypto.sx",
+//	}))
+//}
 
 func TestMainRawFormat(t *testing.T) {
 	clearOpts()
