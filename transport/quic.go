@@ -2,6 +2,7 @@ package transport
 
 import (
 	"crypto/tls"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"time"
@@ -34,6 +35,7 @@ func QUIC(msg *dns.Msg,
 	tlsConfig *tls.Config,
 	dialTimeout, handshakeTimeout, openStreamTimeout time.Duration,
 	noPMTUD bool,
+	addLengthPrefix bool,
 ) (*dns.Msg, error) {
 	log.Debugf("Dialing with QUIC ALPN tokens: %v", tlsConfig.NextProtos)
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), dialTimeout)
@@ -76,7 +78,15 @@ func QUIC(msg *dns.Msg,
 		return nil, err
 	}
 
-	_, err = stream.Write(buf)
+	if addLengthPrefix {
+		// All DNS messages (queries and responses) sent over DoQ connections
+		// MUST be encoded as a 2-octet length field followed by the message
+		// content as specified in [RFC1035].
+		// https://datatracker.ietf.org/doc/html/rfc9250#section-4.2-4
+		_, err = stream.Write(addPrefix(buf))
+	} else {
+		_, err = stream.Write(buf)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +106,23 @@ func QUIC(msg *dns.Msg,
 	}
 
 	reply := dns.Msg{}
-	err = reply.Unpack(respBuf)
+	if addLengthPrefix {
+		err = reply.Unpack(respBuf[2:])
+	} else {
+		err = reply.Unpack(respBuf)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unpacking response from %s: %s", server, err)
 	}
 
 	return &reply, nil
+}
+
+// addPrefix adds a 2-byte prefix with the DNS message length.
+func addPrefix(b []byte) (m []byte) {
+	m = make([]byte, 2+len(b))
+	binary.BigEndian.PutUint16(m, uint16(len(b)))
+	copy(m[2:], b)
+
+	return m
 }

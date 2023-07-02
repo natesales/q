@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -14,9 +13,7 @@ import (
 	"github.com/jedisct1/go-dnsstamps"
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
-	whois "github.com/natesales/bgptools-go"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 const defaultServerVar = "Q_DEFAULT_SERVER"
@@ -50,6 +47,7 @@ type optsTemplate struct {
 	ShowStats      bool   `short:"S" long:"stats" description:"Show time statistics"`
 	ShowAll        bool   `long:"all" description:"Show all sections and statistics"`
 	Whois          bool   `short:"w" description:"Resolve ASN/ASName for A and AAAA records"`
+	ValueOnly      bool   `short:"r" long:"value" description:"Show record values only"`
 
 	// Header flags
 	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
@@ -77,6 +75,7 @@ type optsTemplate struct {
 	QUICNoPMTUD           bool          `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
 	QUICDialTimeout       time.Duration `long:"quic-dial-timeout" description:"QUIC dial timeout" default:"10s"`
 	QUICOpenStreamTimeout time.Duration `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10s"`
+	QUICNoLengthPrefix    bool          `long:"quic-no-length-prefix" description:"Don't add RFC 9250 compliant length prefix"`
 
 	HandshakeTimeout time.Duration `long:"handshake-timeout" description:"Handshake timeout" default:"10s"`
 	TCPDialTimeout   time.Duration `long:"tcp-dial-timeout" description:"TCP dial timeout" default:"5s"`
@@ -161,40 +160,6 @@ func color(color string, args ...interface{}) string {
 	} else {
 		return fmt.Sprint(args...)
 	}
-}
-
-var existingRRs = map[string]bool{}
-
-// printPrettyRR prints a pretty RR
-func printPrettyRR(a dns.RR, doWhois bool) {
-	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
-	rrSignature := fmt.Sprintf("%s %d %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val)
-	if ok := existingRRs[rrSignature]; ok {
-		return
-	} else {
-		existingRRs[rrSignature] = true
-	}
-
-	ttl := fmt.Sprintf("%d", a.Header().Ttl)
-	if opts.PrettyTTLs {
-		ttl = fmt.Sprintf("%s", time.Duration(a.Header().Ttl)*time.Second)
-	}
-
-	if doWhois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		resp, err := whois.Query(val)
-		if err != nil {
-			log.Warnf("bgp.tools query: %s", err)
-		} else {
-			val += color("teal", fmt.Sprintf(" (AS%d %s)", resp.AS, resp.ASName))
-		}
-	}
-
-	fmt.Printf("%s %s %s %s\n",
-		color("purple", a.Header().Name),
-		color("green", ttl),
-		color("magenta", dns.TypeToString[a.Header().Rrtype]),
-		val,
-	)
 }
 
 // clearOpts sets the default values for the CLI options
@@ -452,13 +417,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		// Add non-flag RR types
-		rrType, ok := dns.StringToType[strings.ToUpper(arg)]
-		if ok {
+		rrType, typeFound := dns.StringToType[strings.ToUpper(arg)]
+		if typeFound {
 			rrTypes[rrType] = true
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" && (strings.Contains(arg, ".") || strings.Contains(arg, ":")) && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) {
+		if opts.Name == "" && !containsAny(arg, []string{"@", "/", ".exe", "-", "+"}) && !typeFound {
 			opts.Name = arg
 		}
 	}
@@ -486,6 +451,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	// Log RR types
 	if opts.Verbose {
+		log.Debugf("Name: %s", opts.Name)
 		var rrTypeStrings []string
 		for rrType := range rrTypes {
 			rrTypeStrings = append(rrTypeStrings, dns.TypeToString[rrType])
@@ -531,6 +497,15 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		CipherSuites:       parseTLSCipherSuites(opts.TLSCipherSuites),
 	}
 
+	if klf := os.Getenv("SSLKEYLOGFILE"); klf != "" {
+		log.Warnf("SSLKEYLOGFILE is set! TLS master secrets will be logged.")
+		keyLog, err := os.OpenFile(klf, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		if err != nil {
+			return fmt.Errorf("unable to open SSLKEYLOGFILE: %s %s", klf, err)
+		}
+		tlsConfig.KeyLogWriter = keyLog
+	}
+
 	var rrTypesSlice []uint16
 	for rrType := range rrTypes {
 		rrTypesSlice = append(rrTypesSlice, rrType)
@@ -574,138 +549,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	queryTime := time.Since(startTime)
 
-	for i, reply := range replies {
-		// Print answers
-		switch opts.Format {
-		case "pretty":
-			if opts.ShowQuestion {
-				fmt.Println(color("white", "Question:"))
-				for _, a := range reply.Question {
-					fmt.Printf("%s %s\n",
-						color("purple", a.Name),
-						color("magenta", dns.TypeToString[a.Qtype]),
-					)
-				}
-			}
-			if opts.ShowAnswer && len(reply.Answer) > 0 {
-				if opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional {
-					fmt.Println(color("white", "Answer:"))
-				}
-				for _, a := range reply.Answer {
-					printPrettyRR(a, opts.Whois)
-				}
-			}
-			if opts.ShowAuthority && len(reply.Ns) > 0 {
-				fmt.Println(color("white", "Authority:"))
-				for _, a := range reply.Ns {
-					printPrettyRR(a, opts.Whois)
-				}
-			}
-			if opts.ShowAdditional && len(reply.Extra) > 0 {
-				fmt.Println(color("white", "Additional:"))
-				for _, a := range reply.Extra {
-					printPrettyRR(a, opts.Whois)
-				}
-			}
-
-			// Print separator if there is more than one query
-			if (opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional) && (len(replies) > 0 && i != len(replies)-1) {
-				fmt.Printf("\n──\n\n")
-			}
-
-			if opts.ShowStats {
-				fmt.Println(color("white", "Stats:"))
-				fmt.Printf("Received %s from %s in %s (%s)\n",
-					color("purple", fmt.Sprintf("%d B", reply.Len())),
-					color("green", server),
-					color("teal", queryTime.Round(100*time.Microsecond)),
-					color("magenta", time.Now().Format("15:04:05 01-02-2006 MST")),
-				)
-			}
-		case "raw":
-			s := reply.MsgHdr.String() + " "
-			s += "QUERY: " + strconv.Itoa(len(reply.Question)) + ", "
-			s += "ANSWER: " + strconv.Itoa(len(reply.Answer)) + ", "
-			s += "AUTHORITY: " + strconv.Itoa(len(reply.Ns)) + ", "
-			s += "ADDITIONAL: " + strconv.Itoa(len(reply.Extra)) + "\n"
-			opt := reply.IsEdns0()
-			if opt != nil {
-				// OPT PSEUDOSECTION
-				s += opt.String() + "\n"
-			}
-			if opts.ShowQuestion && len(reply.Question) > 0 {
-				s += "\n;; QUESTION SECTION:\n"
-				for _, r := range reply.Question {
-					s += r.String() + "\n"
-				}
-			}
-			if opts.ShowAnswer && len(reply.Answer) > 0 {
-				s += "\n;; ANSWER SECTION:\n"
-				for _, r := range reply.Answer {
-					if r != nil {
-						s += r.String() + "\n"
-					}
-				}
-			}
-			if opts.ShowAuthority && len(reply.Ns) > 0 {
-				s += "\n;; AUTHORITY SECTION:\n"
-				for _, r := range reply.Ns {
-					if r != nil {
-						s += r.String() + "\n"
-					}
-				}
-			}
-			if opts.ShowAdditional && len(reply.Extra) > 0 && (opt == nil || len(reply.Extra) > 1) {
-				s += "\n;; ADDITIONAL SECTION:\n"
-				for _, r := range reply.Extra {
-					if r != nil && r.Header().Rrtype != dns.TypeOPT {
-						s += r.String() + "\n"
-					}
-				}
-			}
-			fmt.Println(s)
-
-			if opts.ShowStats {
-				fmt.Printf(";; Received %d B\n", reply.Len())
-				fmt.Printf(";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
-				fmt.Printf(";; From %s in %s\n", server, queryTime.Round(100*time.Microsecond))
-			}
-
-			// Print separator if there is more than one query
-			if len(replies) > 0 && i != len(replies)-1 {
-				fmt.Printf("\n--\n\n")
-			}
-		case "json", "yml", "yaml":
-			body := struct {
-				Server    string
-				QueryTime int64
-				Answers   []dns.RR
-				ID        uint16
-				Truncated bool
-			}{
-				Server:    opts.Server,
-				QueryTime: int64(queryTime / time.Millisecond),
-				Answers:   reply.Answer,
-				ID:        reply.Id,
-				Truncated: reply.Truncated,
-			}
-			var b []byte
-			var err error
-			if opts.Format == "json" {
-				b, err = json.Marshal(body)
-			} else { // yaml
-				b, err = yaml.Marshal(body)
-			}
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(b))
-		default:
-			return fmt.Errorf("invalid output format")
-		}
-	}
-
-	return nil // nil error
+	return display(replies, server, queryTime)
 }
 
 func main() {

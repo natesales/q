@@ -109,11 +109,11 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	}
 	p.RawQuery = qry.Encode()
 
+	log.Debugf("POST %s %+v", p, odnsMessage)
 	req, err = http.NewRequest(http.MethodPost, p.String(), bytes.NewBuffer(odnsMessage.Marshal()))
 	if err != nil {
 		return nil, fmt.Errorf("create new request: %s", err)
 	}
-
 	req.Header.Set("Content-Type", ODoHContentType)
 	req.Header.Set("Accept", ODoHContentType)
 
@@ -121,12 +121,9 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("do request: %s", err)
 	}
-
 	contentType := resp.Header.Get("Content-Type")
 	if contentType != ODoHContentType {
-		return nil, fmt.Errorf("target %s responded with an invalid Content-Type header %s, expected %s",
-			target, contentType, ODoHContentType,
-		)
+		return nil, fmt.Errorf("%s responded with an invalid Content-Type header %s, expected %s", req.URL, contentType, ODoHContentType)
 	}
 
 	bodyBytes, err = io.ReadAll(resp.Body)

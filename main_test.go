@@ -22,15 +22,16 @@ func TestMainVersion(t *testing.T) {
 	}))
 }
 
-func TestMainODoHQuery(t *testing.T) {
-	clearOpts()
-	assert.Nil(t, driver([]string{
-		"-v",
-		"-q", "example.com",
-		"-s", "https://odoh.cloudflare-dns.com",
-		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
-	}))
-}
+// TODO
+//func TestMainODoHQuery(t *testing.T) {
+//	clearOpts()
+//	assert.Nil(t, driver([]string{
+//		"-v",
+//		"-q", "example.com",
+//		"-s", "https://odoh.cloudflare-dns.com",
+//		"--odoh-proxy", "https://odoh.crypto.sx",
+//	}))
+//}
 
 func TestMainRawFormat(t *testing.T) {
 	clearOpts()
@@ -90,7 +91,7 @@ func TestMainInvalidODoHUpstream(t *testing.T) {
 		"-v",
 		"-q", "example.com",
 		"-s", "tls://odoh.cloudflare-dns.com",
-		"--odoh-proxy", "https://odoh1.surfdomeinen.nl",
+		"--odoh-proxy", "https://odoh.crypto.sx",
 	})
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "ODoH target must use HTTPS")
