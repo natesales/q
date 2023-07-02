@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -15,8 +16,20 @@ import (
 
 var existingRRs = map[string]bool{}
 
+func mustWriteln(out io.Writer, s string) {
+	if _, err := out.Write([]byte(s + "\n")); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func mustWritef(out io.Writer, format string, a ...interface{}) {
+	if _, err := out.Write([]byte(fmt.Sprintf(format, a...))); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // printPrettyRR prints a pretty RR
-func printPrettyRR(a dns.RR, doWhois bool) {
+func printPrettyRR(a dns.RR, doWhois bool, out io.Writer) {
 	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
 	rrSignature := fmt.Sprintf("%s %d %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val)
 	if ok := existingRRs[rrSignature]; ok {
@@ -40,9 +53,9 @@ func printPrettyRR(a dns.RR, doWhois bool) {
 	}
 
 	if opts.ValueOnly {
-		fmt.Println(val)
+		mustWriteln(out, val)
 	} else {
-		fmt.Printf("%s %s %s %s\n",
+		mustWritef(out, "%s %s %s %s\n",
 			color("purple", a.Header().Name),
 			color("green", ttl),
 			color("magenta", dns.TypeToString[a.Header().Rrtype]),
@@ -51,15 +64,15 @@ func printPrettyRR(a dns.RR, doWhois bool) {
 	}
 }
 
-func display(replies []*dns.Msg, server string, queryTime time.Duration) error {
+func display(replies []*dns.Msg, server string, queryTime time.Duration, out io.Writer) error {
 	for i, reply := range replies {
 		// Print answers
 		switch opts.Format {
 		case "pretty":
 			if opts.ShowQuestion {
-				fmt.Println(color("white", "Question:"))
+				mustWriteln(out, color("white", "Question:"))
 				for _, a := range reply.Question {
-					fmt.Printf("%s %s\n",
+					mustWritef(out, "%s %s\n",
 						color("purple", a.Name),
 						color("magenta", dns.TypeToString[a.Qtype]),
 					)
@@ -67,33 +80,33 @@ func display(replies []*dns.Msg, server string, queryTime time.Duration) error {
 			}
 			if opts.ShowAnswer && len(reply.Answer) > 0 {
 				if opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional {
-					fmt.Println(color("white", "Answer:"))
+					mustWriteln(out, color("white", "Answer:"))
 				}
 				for _, a := range reply.Answer {
-					printPrettyRR(a, opts.Whois)
+					printPrettyRR(a, opts.Whois, out)
 				}
 			}
 			if opts.ShowAuthority && len(reply.Ns) > 0 {
-				fmt.Println(color("white", "Authority:"))
+				mustWriteln(out, color("white", "Authority:"))
 				for _, a := range reply.Ns {
-					printPrettyRR(a, opts.Whois)
+					printPrettyRR(a, opts.Whois, out)
 				}
 			}
 			if opts.ShowAdditional && len(reply.Extra) > 0 {
-				fmt.Println(color("white", "Additional:"))
+				mustWriteln(out, color("white", "Additional:"))
 				for _, a := range reply.Extra {
-					printPrettyRR(a, opts.Whois)
+					printPrettyRR(a, opts.Whois, out)
 				}
 			}
 
 			// Print separator if there is more than one query
 			if (opts.ShowQuestion || opts.ShowAuthority || opts.ShowAdditional) && (len(replies) > 0 && i != len(replies)-1) {
-				fmt.Printf("\n──\n\n")
+				mustWritef(out, "\n──\n\n")
 			}
 
 			if opts.ShowStats {
-				fmt.Println(color("white", "Stats:"))
-				fmt.Printf("Received %s from %s in %s (%s)\n",
+				mustWriteln(out, color("white", "Stats:"))
+				mustWritef(out, "Received %s from %s in %s (%s)\n",
 					color("purple", fmt.Sprintf("%d B", reply.Len())),
 					color("green", server),
 					color("teal", queryTime.Round(100*time.Microsecond)),
@@ -141,17 +154,17 @@ func display(replies []*dns.Msg, server string, queryTime time.Duration) error {
 					}
 				}
 			}
-			fmt.Println(s)
+			mustWriteln(out, s)
 
 			if opts.ShowStats {
-				fmt.Printf(";; Received %d B\n", reply.Len())
-				fmt.Printf(";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
-				fmt.Printf(";; From %s in %s\n", server, queryTime.Round(100*time.Microsecond))
+				mustWritef(out, ";; Received %d B\n", reply.Len())
+				mustWritef(out, ";; Time %s\n", time.Now().Format("15:04:05 01-02-2006 MST"))
+				mustWritef(out, ";; From %s in %s\n", server, queryTime.Round(100*time.Microsecond))
 			}
 
 			// Print separator if there is more than one query
 			if len(replies) > 0 && i != len(replies)-1 {
-				fmt.Printf("\n--\n\n")
+				mustWritef(out, "\n--\n\n")
 			}
 		case "json", "yml", "yaml":
 			body := struct {
@@ -177,7 +190,8 @@ func display(replies []*dns.Msg, server string, queryTime time.Duration) error {
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(b))
+
+			mustWriteln(out, string(b))
 		default:
 			return fmt.Errorf("invalid output format")
 		}

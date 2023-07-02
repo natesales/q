@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"reflect"
@@ -355,7 +356,7 @@ func parseServer() (string, string, error) {
 }
 
 // driver is the "main" function for this program that accepts a flag slice for testing
-func driver(args []string) error {
+func driver(args []string, out io.Writer) error {
 	parser := flags.NewParser(&opts, flags.Default)
 	parser.Usage = `[OPTIONS] [@server] [type...] [name]
 
@@ -376,7 +377,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	if opts.ShowVersion {
-		fmt.Printf("https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
+		mustWritef(out, "https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
 		return nil
 	}
 
@@ -534,7 +535,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		if opts.Name == "" {
 			return fmt.Errorf("no name specified for AXFR")
 		}
-		_ = RecAXFR(opts.Name, server)
+		_ = RecAXFR(opts.Name, server, out)
 		return nil
 	}
 
@@ -549,12 +550,12 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	queryTime := time.Since(startTime)
 
-	return display(replies, server, queryTime)
+	return display(replies, server, queryTime, out)
 }
 
 func main() {
 	clearOpts()
-	if err := driver(os.Args); err != nil {
+	if err := driver(os.Args, os.Stdout); err != nil {
 		log.Fatal(err)
 	}
 }

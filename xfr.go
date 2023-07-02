@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -40,8 +41,8 @@ func axfr(label, server string) []dns.RR {
 }
 
 // RecAXFR performs an AXFR on the given label and all of its children and writes the zone file to disk
-func RecAXFR(label, server string) []dns.RR {
-	log.Infof("Attempting recursive AXFR for %s", label)
+func RecAXFR(label, server string, out io.Writer) []dns.RR {
+	mustWritef(out, "Attempting recursive AXFR for %s\n", label)
 
 	// Reset state
 	queried = make(map[string]bool)
@@ -57,18 +58,18 @@ func RecAXFR(label, server string) []dns.RR {
 		}
 	}
 
-	addToTree(label, dir, server)
-	log.Infof("AXFR complete, %d records saved to %s", len(all), dir)
+	addToTree(label, dir, server, out)
+	mustWritef(out, "AXFR complete, %d records saved to %s\n", len(all), dir)
 
 	return all
 }
 
-func addToTree(label, dir, server string) {
+func addToTree(label, dir, server string, out io.Writer) {
 	label = dns.Fqdn(label)
 	if queried[label] {
 		return
 	}
-	log.Printf("AXFR %s", label)
+	mustWritef(out, "AXFR %s\n", label)
 	queried[label] = true
 	rrs := axfr(label, server)
 
@@ -90,7 +91,7 @@ func addToTree(label, dir, server string) {
 	for _, rr := range rrs {
 		all = append(all, rr)
 		if _, ok := rr.(*dns.NS); ok {
-			addToTree(rr.Header().Name, dir, server)
+			addToTree(rr.Header().Name, dir, server, out)
 		}
 	}
 }
