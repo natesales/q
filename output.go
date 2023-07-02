@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	whois "github.com/natesales/bgptools-go"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/miekg/dns"
+	whois "github.com/natesales/bgptools-go"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
