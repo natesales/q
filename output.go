@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -64,7 +65,38 @@ func printPrettyRR(a dns.RR, doWhois bool, out io.Writer) {
 	}
 }
 
+func prettyPrintNSID(opt []*dns.Msg, out io.Writer) {
+	for _, r := range opt {
+		for _, o := range r.Extra {
+			if o.Header().Rrtype == dns.TypeOPT {
+				opt := o.(*dns.OPT)
+				for _, e := range opt.Option {
+					if e.Option() == dns.EDNS0NSID {
+						nsidStr, err := hex.DecodeString(e.String())
+						if err != nil {
+							log.Warnf("error decoding NSID: %s", err)
+							return
+						}
+						mustWritef(out, "%s %s\n",
+							color("white", "NSID:"),
+							color("purple", string(nsidStr)),
+						)
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
 func display(replies []*dns.Msg, server string, queryTime time.Duration, out io.Writer) error {
+	switch opts.Format {
+	case "pretty":
+		if opts.NSID {
+			prettyPrintNSID(replies, out)
+		}
+	}
+
 	for i, reply := range replies {
 		// Print answers
 		switch opts.Format {
