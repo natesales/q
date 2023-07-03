@@ -196,12 +196,12 @@ func TestMainDNSSECArg(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"-v",
-		"-q", "cloudflare.com",
+		"example.com",
 		"+dnssec",
-		"--format=raw",
+		"@9.9.9.9",
 	}, &out))
 	t.Logf("out: %s", out.String())
-	assert.Regexp(t, regexp.MustCompile(`cloudflare.com. .* RRSIG .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* RRSIG .*`), out.String())
 }
 
 func TestMainPad(t *testing.T) {
