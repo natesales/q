@@ -406,7 +406,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Add non-flag RR types
-	for _, arg := range args {
+	for _, arg := range args[1:] {
 		// Find a server by @ symbol if it isn't set by flag
 		if opts.Server == "" && strings.HasPrefix(arg, "@") {
 			opts.Server = strings.TrimPrefix(arg, "@")
