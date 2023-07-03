@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestMainQuery(t *testing.T) {
 		"-v",
 		"-q", "example.com",
 	}, &out))
-	t.Logf("output: %s", out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* TXT "v=spf1 -all"`), out.String())
 }
 
 func TestMainVersion(t *testing.T) {
@@ -24,6 +25,7 @@ func TestMainVersion(t *testing.T) {
 	assert.Nil(t, driver([]string{
 		"-V",
 	}, &out))
+	assert.Contains(t, out.String(), "https://github.com/natesales/q version dev (unknown unknown)")
 }
 
 // TODO
@@ -45,6 +47,8 @@ func TestMainRawFormat(t *testing.T) {
 		"-q", "example.com",
 		"--format=raw",
 	}, &out))
+	assert.Contains(t, out.String(), "v=spf1 -all")
+	assert.Contains(t, out.String(), "a.iana-servers.net")
 }
 
 func TestMainJSONFormat(t *testing.T) {
@@ -55,6 +59,9 @@ func TestMainJSONFormat(t *testing.T) {
 		"-q", "example.com",
 		"--format=json",
 	}, &out))
+	assert.Contains(t, out.String(), `"Preference":0,"Mx":"."`)
+	assert.Contains(t, out.String(), `"Ns":"a.iana-servers.net."`)
+	assert.Contains(t, out.String(), `"Txt":["v=spf1 -all"]`)
 }
 
 func TestMainInvalidOutputFormat(t *testing.T) {
@@ -79,6 +86,8 @@ func TestMainParseTypes(t *testing.T) {
 		"-t", "A",
 		"-t", "AAAA",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 }
 
 func TestMainInvalidTypes(t *testing.T) {
@@ -128,6 +137,7 @@ func TestMainReverseQuery(t *testing.T) {
 		"-x",
 		"-q", "1.1.1.1",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`1.1.1.1.in-addr.arpa. .* PTR one.one.one.one`), out.String())
 }
 
 func TestMainInferredQname(t *testing.T) {
@@ -137,6 +147,9 @@ func TestMainInferredQname(t *testing.T) {
 		"-v",
 		"example.com",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
 }
 
 func TestMainInferredServer(t *testing.T) {
@@ -147,6 +160,9 @@ func TestMainInferredServer(t *testing.T) {
 		"-q", "example.com",
 		"@dns.quad9.net",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
 }
 
 func TestMainInvalidReverseQuery(t *testing.T) {
@@ -180,10 +196,12 @@ func TestMainDNSSECArg(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"-v",
-		"-q", "example.com",
+		"-q", "cloudflare.com",
 		"+dnssec",
-		"--format=json",
+		"--format=raw",
 	}, &out))
+	t.Logf("out: %s", out.String())
+	assert.Regexp(t, regexp.MustCompile(`cloudflare.com. .* RRSIG .*`), out.String())
 }
 
 func TestMainPad(t *testing.T) {
@@ -195,6 +213,7 @@ func TestMainPad(t *testing.T) {
 		"--pad",
 		"--format=json",
 	}, &out))
+	assert.Contains(t, out.String(), `"Truncated":false`)
 }
 
 func TestMainChaosClass(t *testing.T) {
@@ -202,11 +221,12 @@ func TestMainChaosClass(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"-v",
-		"-q", "example.com",
+		"id.server",
 		"CH",
 		"TXT",
-		"--format=json",
+		"@9.9.9.9",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`id.server. .* TXT ".*.pch.net"`), out.String())
 }
 
 func TestMainParsePlusFlags(t *testing.T) {
@@ -221,10 +241,11 @@ func TestMainTCPQuery(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"-v",
+		"-t", "A",
 		"-q", "example.com",
 		"@tcp://1.1.1.1",
-		"--format=json",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
 func TestMainTLSQuery(t *testing.T) {
@@ -235,8 +256,8 @@ func TestMainTLSQuery(t *testing.T) {
 		"-q", "example.com",
 		"-t", "A",
 		"@tls://dns.quad9.net",
-		"--format=json",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
 func TestMainHTTPSQuery(t *testing.T) {
@@ -247,8 +268,8 @@ func TestMainHTTPSQuery(t *testing.T) {
 		"-q", "example.com",
 		"-t", "A",
 		"@https://dns.quad9.net",
-		"--format=json",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
 func TestMainQUICQuery(t *testing.T) {
@@ -259,8 +280,8 @@ func TestMainQUICQuery(t *testing.T) {
 		"-q", "example.com",
 		"-t", "A",
 		"@quic://dns.adguard.com",
-		"--format=json",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
 func TestMainInvalidServerURL(t *testing.T) {
@@ -272,6 +293,7 @@ func TestMainInvalidServerURL(t *testing.T) {
 		"@bad::server::url",
 		"--format=json",
 	}, &out))
+	assert.NotRegexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
 func TestMainInvalidTransportScheme(t *testing.T) {
@@ -283,6 +305,7 @@ func TestMainInvalidTransportScheme(t *testing.T) {
 		"@invalid://example.com",
 		"--format=json",
 	}, &out))
+	assert.NotRegexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
 func TestMainTLS12(t *testing.T) {
@@ -294,8 +317,10 @@ func TestMainTLS12(t *testing.T) {
 		"--tls-min-version=1.1",
 		"--tls-max-version=1.2",
 		"@tls://dns.quad9.net",
-		"--format=json",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
 }
 
 func TestMainNSID(t *testing.T) {
@@ -306,7 +331,7 @@ func TestMainNSID(t *testing.T) {
 		"@tls://dns.quad9.net",
 		"+nsid",
 	}, &out))
-	// TODO: Remove parentheses
+	assert.Regexp(t, regexp.MustCompile(`.*.pch.net.*`), out.String())
 }
 
 func TestMainECSv4(t *testing.T) {
@@ -319,6 +344,7 @@ func TestMainECSv4(t *testing.T) {
 		"query.script.packetframe.com",
 		"--subnet", "192.0.2.0/24",
 	}, &out))
+	assert.Contains(t, out.String(), `'subnet':'192.0.2.0/24/0'`)
 }
 
 func TestMainECSv6(t *testing.T) {
@@ -331,6 +357,7 @@ func TestMainECSv6(t *testing.T) {
 		"query.script.packetframe.com",
 		"--subnet", "2001:db8::/48",
 	}, &out))
+	assert.Contains(t, out.String(), `'subnet':'[2001:db8::]/48/0'`)
 }
 
 func TestMainHTTPUserAgent(t *testing.T) {
@@ -341,6 +368,7 @@ func TestMainHTTPUserAgent(t *testing.T) {
 		"@https://dns.quad9.net",
 		"--http-user-agent", "Example/1.0",
 	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`. .* NS a.root-servers.net.`), out.String())
 }
 
 func TestMainParseServer(t *testing.T) {
@@ -432,4 +460,6 @@ func TestMainRecAXFR(t *testing.T) {
 		"+recaxfr",
 		"@nsztm1.digi.ninja", "zonetransfer.me",
 	}, &out))
+	assert.Contains(t, out.String(), `AXFR zonetransfer.me.`)
+	assert.Contains(t, out.String(), `AXFR internal.zonetransfer.me.`)
 }
