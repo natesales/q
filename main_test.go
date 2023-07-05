@@ -163,6 +163,7 @@ func TestMainInferredServer(t *testing.T) {
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* NS .*`), out.String())
 }
 
 func TestMainInvalidReverseQuery(t *testing.T) {
@@ -321,6 +322,7 @@ func TestMainTLS12(t *testing.T) {
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* NS .*`), out.String())
 }
 
 func TestMainNSID(t *testing.T) {
