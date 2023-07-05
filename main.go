@@ -406,7 +406,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Add non-flag RR types
-	for _, arg := range args[1:] {
+	for _, arg := range args {
 		// Find a server by @ symbol if it isn't set by flag
 		if opts.Server == "" && strings.HasPrefix(arg, "@") {
 			opts.Server = strings.TrimPrefix(arg, "@")
@@ -555,7 +555,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 func main() {
 	clearOpts()
-	if err := driver(os.Args, os.Stdout); err != nil {
+	if err := driver(os.Args[1:], os.Stdout); err != nil {
 		log.Fatal(err)
 	}
 }
