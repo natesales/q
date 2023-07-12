@@ -29,6 +29,7 @@ func TestMainVersion(t *testing.T) {
 	assert.Nil(t, driver([]string{
 		"-V",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), "https://github.com/natesales/q version dev (unknown unknown)")
 }
 
@@ -228,6 +229,7 @@ func TestMainPad(t *testing.T) {
 		"--pad",
 		"--format=json",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), `"Truncated":false`)
 }
 
@@ -241,6 +243,7 @@ func TestMainChaosClass(t *testing.T) {
 		"TXT",
 		"@9.9.9.9",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`id.server. .* TXT ".*.pch.net"`), out.String())
 }
 
@@ -260,6 +263,7 @@ func TestMainTCPQuery(t *testing.T) {
 		"-q", "example.com",
 		"@tcp://1.1.1.1",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
@@ -298,6 +302,7 @@ func TestMainQUICQuery(t *testing.T) {
 		"-t", "A",
 		"@quic://dns.adguard.com",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
@@ -310,6 +315,7 @@ func TestMainInvalidServerURL(t *testing.T) {
 		"@bad::server::url",
 		"--format=json",
 	}, &out))
+	time.Sleep(delay)
 	assert.NotRegexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
@@ -322,6 +328,7 @@ func TestMainInvalidTransportScheme(t *testing.T) {
 		"@invalid://example.com",
 		"--format=json",
 	}, &out))
+	time.Sleep(delay)
 	assert.NotRegexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
@@ -335,6 +342,7 @@ func TestMainTLS12(t *testing.T) {
 		"--tls-max-version=1.2",
 		"@tls://dns.quad9.net",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
@@ -349,6 +357,7 @@ func TestMainNSID(t *testing.T) {
 		"@tls://dns.quad9.net",
 		"+nsid",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`.*.pch.net.*`), out.String())
 }
 
@@ -362,6 +371,7 @@ func TestMainECSv4(t *testing.T) {
 		"query.script.packetframe.com",
 		"--subnet", "192.0.2.0/24",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), `'subnet':'192.0.2.0/24/0'`)
 }
 
@@ -375,6 +385,7 @@ func TestMainECSv6(t *testing.T) {
 		"query.script.packetframe.com",
 		"--subnet", "2001:db8::/48",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), `'subnet':'[2001:db8::]/48/0'`)
 }
 
@@ -386,6 +397,7 @@ func TestMainHTTPUserAgent(t *testing.T) {
 		"@https://dns.quad9.net",
 		"--http-user-agent", "Example/1.0",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`. .* NS a.root-servers.net.`), out.String())
 }
 
@@ -478,6 +490,7 @@ func TestMainRecAXFR(t *testing.T) {
 		"+recaxfr",
 		"@nsztm1.digi.ninja", "zonetransfer.me",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), `AXFR zonetransfer.me.`)
 	assert.Contains(t, out.String(), `AXFR internal.zonetransfer.me.`)
 }
