@@ -5,9 +5,12 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+const delay = 500 * time.Millisecond
 
 func TestMainQuery(t *testing.T) {
 	clearOpts()
@@ -16,6 +19,7 @@ func TestMainQuery(t *testing.T) {
 		"-v",
 		"-q", "example.com",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* TXT "v=spf1 -all"`), out.String())
 }
 
@@ -47,6 +51,7 @@ func TestMainRawFormat(t *testing.T) {
 		"-q", "example.com",
 		"--format=raw",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), "v=spf1 -all")
 	assert.Contains(t, out.String(), "a.iana-servers.net")
 }
@@ -59,6 +64,7 @@ func TestMainJSONFormat(t *testing.T) {
 		"-q", "example.com",
 		"--format=json",
 	}, &out))
+	time.Sleep(delay)
 	assert.Contains(t, out.String(), `"Preference":0,"Mx":"."`)
 	assert.Contains(t, out.String(), `"Ns":"a.iana-servers.net."`)
 	assert.Contains(t, out.String(), `"Txt":["v=spf1 -all"]`)
@@ -72,6 +78,7 @@ func TestMainInvalidOutputFormat(t *testing.T) {
 		"-q", "example.com",
 		"--format=invalid",
 	}, &out)
+	time.Sleep(delay)
 	if !(err != nil && strings.Contains(err.Error(), "invalid output format")) {
 		t.Errorf("invalid output format should throw an error")
 	}
@@ -86,6 +93,7 @@ func TestMainParseTypes(t *testing.T) {
 		"-t", "A",
 		"-t", "AAAA",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 }
@@ -98,6 +106,7 @@ func TestMainInvalidTypes(t *testing.T) {
 		"-q", "example.com",
 		"-t", "INVALID",
 	}, &out)
+	time.Sleep(delay)
 	if !(err != nil && strings.Contains(err.Error(), "INVALID is not a valid RR type")) {
 		t.Errorf("expected invalid type error, got %+v", err)
 	}
@@ -112,6 +121,7 @@ func TestMainInvalidODoHUpstream(t *testing.T) {
 		"-s", "tls://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "https://odoh.crypto.sx",
 	}, &out)
+	time.Sleep(delay)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "ODoH target must use HTTPS")
 }
@@ -125,6 +135,7 @@ func TestMainInvalidODoHProxy(t *testing.T) {
 		"-s", "https://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "tls://odoh1.surfdomeinen.nl",
 	}, &out)
+	time.Sleep(delay)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "ODoH proxy must use HTTPS")
 }
@@ -137,6 +148,7 @@ func TestMainReverseQuery(t *testing.T) {
 		"-x",
 		"-q", "1.1.1.1",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`1.1.1.1.in-addr.arpa. .* PTR one.one.one.one`), out.String())
 }
 
@@ -147,6 +159,7 @@ func TestMainInferredQname(t *testing.T) {
 		"-v",
 		"example.com",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
@@ -160,6 +173,7 @@ func TestMainInferredServer(t *testing.T) {
 		"-q", "example.com",
 		"@dns.quad9.net",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
@@ -258,6 +272,7 @@ func TestMainTLSQuery(t *testing.T) {
 		"-t", "A",
 		"@tls://dns.quad9.net",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
@@ -270,6 +285,7 @@ func TestMainHTTPSQuery(t *testing.T) {
 		"-t", "A",
 		"@https://dns.quad9.net",
 	}, &out))
+	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
