@@ -424,7 +424,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		// Set qname if not set by flag
-		if opts.Name == "" && !containsAny(arg, []string{"@", "/", "\\", ".exe", "-", "+"}) && !typeFound {
+		if opts.Name == "" && !containsAny(arg, []string{"@", "/", "\\", ".exe", "+"}) && !typeFound && !strings.HasPrefix(arg, "-") {
 			opts.Name = arg
 		}
 	}
