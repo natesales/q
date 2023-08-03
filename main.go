@@ -34,6 +34,7 @@ type optsTemplate struct {
 	Timeout      time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
 	Pad          bool          `long:"pad" description:"Set EDNS0 padding"`
 	HTTP3        bool          `long:"http3" description:"Use HTTP/3 for DoH"`
+	NoIDCheck    bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
@@ -544,6 +545,9 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		reply, err := query(msg, server, protocol, tlsConfig)
 		if err != nil {
 			return err
+		}
+		if !opts.NoIDCheck && reply.Id != msg.Id {
+			return dns.ErrId
 		}
 		replies = append(replies, reply)
 	}
