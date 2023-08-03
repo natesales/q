@@ -11,6 +11,7 @@ import (
 func validQuery() *dns.Msg {
 	msg := dns.Msg{}
 	msg.RecursionDesired = true
+	msg.Id = dns.Id()
 	msg.Question = []dns.Question{{
 		Name:   "example.com.",
 		Qtype:  dns.StringToType["A"],
@@ -23,6 +24,7 @@ func validQuery() *dns.Msg {
 func invalidQuery() *dns.Msg {
 	msg := &dns.Msg{}
 	msg.RecursionDesired = true
+	msg.Id = dns.Id()
 	msg.Question = []dns.Question{{
 		Name: "invalid label!",
 	}}
@@ -49,6 +51,7 @@ func transportHarness(t *testing.T, transport Transport) {
 				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
+				assert.Equal(t, tc.Query.Id, reply.Id)
 				for _, q := range tc.Query.Question {
 					for _, a := range reply.Answer {
 						if q.Name == a.Header().Name {

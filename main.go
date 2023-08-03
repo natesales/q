@@ -547,7 +547,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			return err
 		}
 		if !opts.NoIDCheck && reply.Id != msg.Id {
-			return dns.ErrId
+			return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
 		}
 		replies = append(replies, reply)
 	}
