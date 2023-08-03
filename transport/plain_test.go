@@ -1,51 +1,34 @@
 package transport
 
 import (
+	"github.com/miekg/dns"
 	"testing"
 	"time"
 
-	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTransportPlainUDP(t *testing.T) {
-	msg := dns.Msg{}
-	msg.RecursionDesired = true
-	msg.Question = []dns.Question{{
-		Name:   "example.com.",
-		Qtype:  dns.StringToType["A"],
-		Qclass: dns.ClassINET,
-	}}
-
-	reply, err := Plain(&msg, "9.9.9.9:53", false, 5*time.Second, dns.DefaultMsgSize)
-	assert.Nil(t, err)
-	assert.Greater(t, len(reply.Answer), 0)
+func plainTransport() *Plain {
+	return &Plain{
+		Server:    "9.9.9.9:53",
+		PreferTCP: false,
+		Timeout:   5 * time.Second,
+		UDPBuffer: 1232,
+	}
 }
 
 func TestTransportPlainPreferTCP(t *testing.T) {
-	msg := dns.Msg{}
-	msg.RecursionDesired = true
-	msg.Question = []dns.Question{{
-		Name:   "example.com.",
-		Qtype:  dns.StringToType["A"],
-		Qclass: dns.ClassINET,
-	}}
-
-	reply, err := Plain(&msg, "9.9.9.9:53", true, 5*time.Second, dns.DefaultMsgSize)
+	tp := plainTransport()
+	tp.PreferTCP = true
+	reply, err := tp.Exchange(validQuery())
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
 func TestTransportPlainInvalidResolver(t *testing.T) {
-	msg := dns.Msg{}
-	msg.RecursionDesired = true
-	msg.Question = []dns.Question{{
-		Name:   "example.com.",
-		Qtype:  dns.StringToType["A"],
-		Qclass: dns.ClassINET,
-	}}
-
-	_, err := Plain(&msg, "127.127.127.127:53", false, 1*time.Second, dns.DefaultMsgSize)
+	tp := plainTransport()
+	tp.Server = "127.127.127.127:53"
+	_, err := tp.Exchange(validQuery())
 	assert.NotNil(t, err)
 }
 
@@ -67,6 +50,9 @@ func TestTransportPlainLargeResponse(t *testing.T) {
 	opt.SetDo()
 	msg.Extra = append(msg.Extra, opt)
 
-	_, err := Plain(&msg, "f.root-servers.net:53", false, 1*time.Second, dns.DefaultMsgSize)
+	tp := plainTransport()
+	tp.Server = "f.root-servers.net:53"
+	reply, err := tp.Exchange(&msg)
 	assert.Nil(t, err)
+	assert.Greater(t, len(reply.Answer), 0)
 }

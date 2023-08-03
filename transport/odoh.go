@@ -28,6 +28,7 @@ package transport
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -59,14 +60,28 @@ func buildURL(s, defaultPath string) *url.URL {
 }
 
 // ODoH makes a DNS query over ODoH
-func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
+type ODoH struct {
+	Target    string
+	Proxy     string
+	TLSConfig *tls.Config
+}
+
+func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	// Query ODoH configs on target
-	req, err := http.NewRequest(http.MethodGet, buildURL(strings.TrimSuffix(target, "/dns-query"), "/.well-known/odohconfigs").String(), nil)
+	req, err := http.NewRequest(
+		http.MethodGet,
+		buildURL(strings.TrimSuffix(o.Target, "/dns-query"), "/.well-known/odohconfigs").String(),
+		nil,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("new target configs request: %s", err)
 	}
 
-	client := http.Client{}
+	client := http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: o.TLSConfig,
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("do target configs request: %s", err)
@@ -86,7 +101,7 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 	}
 	log.Debugf("[odoh] retreived %d ODoH configs", len(odohConfigs.Configs))
 
-	packedDnsQuery, err := query.Pack()
+	packedDnsQuery, err := m.Pack()
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +113,8 @@ func ODoH(query dns.Msg, target, proxy string) (*dns.Msg, error) {
 		return nil, fmt.Errorf("encrypt query: %s", err)
 	}
 
-	t := buildURL(target, "/dns-query")
-	p := buildURL(proxy, "/proxy")
+	t := buildURL(o.Target, "/dns-query")
+	p := buildURL(o.Proxy, "/proxy")
 	qry := p.Query()
 	if qry.Get("targethost") == "" {
 		qry.Set("targethost", t.Host)

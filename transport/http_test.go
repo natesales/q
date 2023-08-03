@@ -2,39 +2,38 @@ package transport
 
 import (
 	"crypto/tls"
+	"github.com/miekg/dns"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
-func testQuery() *dns.Msg {
-	msg := dns.Msg{}
-	msg.RecursionDesired = true
-	msg.Question = []dns.Question{{
-		Name:   "example.com.",
-		Qtype:  dns.StringToType["A"],
-		Qclass: dns.ClassINET,
-	}}
-	return &msg
-}
-
-func TestTransportHTTP(t *testing.T) {
-	reply, err := HTTP(testQuery(), &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET", 2*time.Second, 2*time.Second, false, false)
-	assert.Nil(t, err)
-	assert.Greater(t, len(reply.Answer), 0)
+func httpTransport() *HTTP {
+	return &HTTP{
+		Server:    "https://cloudflare-dns.com/dns-query",
+		TLSConfig: &tls.Config{},
+		UserAgent: "",
+		Method:    http.MethodGet,
+		Timeout:   2 * time.Second,
+		HTTP3:     false,
+		NoPMTUd:   false,
+	}
 }
 
 func TestTransportHTTP3(t *testing.T) {
-	reply, err := HTTP(testQuery(), &tls.Config{}, "https://cloudflare-dns.com/dns-query", "", "GET", 2*time.Second, 2*time.Second, true, false)
+	tp := httpTransport()
+	tp.HTTP3 = true
+	reply, err := tp.Exchange(validQuery())
 	assert.Nil(t, err)
 	assert.Greater(t, len(reply.Answer), 0)
 }
 
 func TestTransportHTTPInvalidResolver(t *testing.T) {
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "https://example.com", "", "GET", 2*time.Second, 2*time.Second, false, false)
+	tp := httpTransport()
+	tp.Server = "https://example.com"
+	_, err := tp.Exchange(validQuery())
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "unpacking DNS response")
 }
@@ -46,7 +45,9 @@ func TestTransportHTTPServerError(t *testing.T) {
 		}))
 	}()
 
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8080", "", "GET", 2*time.Second, 2*time.Second, false, false)
+	tp := httpTransport()
+	tp.Server = "http://localhost:8080"
+	_, err := tp.Exchange(validQuery())
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "got status code 500")
 }
@@ -64,8 +65,11 @@ func TestTransportHTTPIDMismatch(t *testing.T) {
 			w.Write(buf)
 		}))
 	}()
-	time.Sleep(50 * time.Millisecond)
-	_, err := HTTP(&dns.Msg{}, &tls.Config{}, "http://localhost:8085", "", "GET", 2*time.Second, 2*time.Second, false, false)
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "id mismatch")
+	tp := httpTransport()
+	tp.Server = "http://localhost:8085"
+	query := validQuery()
+	reply, err := tp.Exchange(query)
+	assert.Nil(t, err)
+	assert.Equal(t, uint16(1), reply.Id)
+	assert.NotEqual(t, 1, query.Id)
 }

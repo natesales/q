@@ -15,28 +15,32 @@ import (
 )
 
 // HTTP makes a DNS query over HTTP(s)
-func HTTP(
-	m *dns.Msg, tlsConfig *tls.Config,
-	server, userAgent, method string,
-	timeout, handshakeTimeout time.Duration,
-	h3, noPMTUD bool) (*dns.Msg, error) {
+type HTTP struct {
+	Server    string
+	TLSConfig *tls.Config
+	UserAgent string
+	Method    string
+	Timeout   time.Duration
+	HTTP3     bool
+	NoPMTUd   bool
+}
+
+func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	httpClient := &http.Client{
+		Timeout: h.Timeout,
 		Transport: &http.Transport{
-			TLSClientConfig:     tlsConfig,
-			MaxConnsPerHost:     1,
-			MaxIdleConns:        1,
-			TLSHandshakeTimeout: handshakeTimeout,
-			Proxy:               http.ProxyFromEnvironment,
+			TLSClientConfig: h.TLSConfig,
+			MaxConnsPerHost: 1,
+			MaxIdleConns:    1,
+			Proxy:           http.ProxyFromEnvironment,
 		},
-		Timeout: timeout,
 	}
-	if h3 {
+	if h.HTTP3 {
 		log.Debug("Using HTTP/3")
 		httpClient.Transport = &http3.RoundTripper{
-			TLSClientConfig: tlsConfig,
+			TLSClientConfig: h.TLSConfig,
 			QuicConfig: &quic.Config{
-				HandshakeIdleTimeout:    handshakeTimeout,
-				DisablePathMTUDiscovery: noPMTUD,
+				DisablePathMTUDiscovery: h.NoPMTUd,
 			},
 		}
 	}
@@ -46,19 +50,19 @@ func HTTP(
 		return nil, fmt.Errorf("packing message: %w", err)
 	}
 
-	queryURL := server + "?dns=" + base64.RawURLEncoding.EncodeToString(buf)
-	req, err := http.NewRequest(method, queryURL, nil)
+	queryURL := h.Server + "?dns=" + base64.RawURLEncoding.EncodeToString(buf)
+	req, err := http.NewRequest(h.Method, queryURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating http request to %s: %w", queryURL, err)
 	}
 
 	req.Header.Set("Accept", "application/dns-message")
-	if userAgent != "" {
-		log.Debugf("Setting User-Agent to %s", userAgent)
-		req.Header.Set("User-Agent", userAgent)
+	if h.UserAgent != "" {
+		log.Debugf("Setting User-Agent to %s", h.UserAgent)
+		req.Header.Set("User-Agent", h.UserAgent)
 	}
 
-	log.Debugf("[http] sending %s request to %s", method, queryURL)
+	log.Debugf("[http] sending %s request to %s", h.Method, queryURL)
 	resp, err := httpClient.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -77,14 +81,9 @@ func HTTP(
 	}
 
 	response := dns.Msg{}
-	err = response.Unpack(body)
-	if err != nil {
+	if err := response.Unpack(body); err != nil {
 		return nil, fmt.Errorf("unpacking DNS response from %s: %w", queryURL, err)
 	}
 
-	if response.Id != m.Id {
-		err = dns.ErrId
-	}
-
-	return &response, err
+	return &response, nil
 }

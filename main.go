@@ -72,14 +72,9 @@ type optsTemplate struct {
 	HTTPMethod    string `long:"http-method" description:"HTTP method" default:"GET"`
 
 	// QUIC
-	QUICALPNTokens        []string      `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
-	QUICNoPMTUD           bool          `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
-	QUICDialTimeout       time.Duration `long:"quic-dial-timeout" description:"QUIC dial timeout" default:"10s"`
-	QUICOpenStreamTimeout time.Duration `long:"quic-idle-timeout" description:"QUIC stream open timeout" default:"10s"`
-	QUICNoLengthPrefix    bool          `long:"quic-no-length-prefix" description:"Don't add RFC 9250 compliant length prefix"`
-
-	HandshakeTimeout time.Duration `long:"handshake-timeout" description:"Handshake timeout" default:"10s"`
-	TCPDialTimeout   time.Duration `long:"tcp-dial-timeout" description:"TCP dial timeout" default:"5s"`
+	QUICALPNTokens     []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
+	QUICNoPMTUD        bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
+	QUICNoLengthPrefix bool     `long:"quic-no-length-prefix" description:"Don't add RFC 9250 compliant length prefix"`
 
 	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"CNAME"`
 

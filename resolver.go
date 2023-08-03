@@ -6,9 +6,8 @@ import (
 	"net"
 
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/natesales/q/transport"
+	log "github.com/sirupsen/logrus"
 )
 
 // createQuery creates a slice of DNS queries
@@ -111,32 +110,63 @@ func createQuery(
 
 // query performs a DNS query and returns the reply
 func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Msg, error) {
-	var reply *dns.Msg
-	var err error
+	var ts transport.Transport
 
 	switch protocol {
 	case "https", "http":
 		if opts.ODoHProxy != "" {
 			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
-			reply, err = transport.ODoH(msg, server, opts.ODoHProxy)
+			ts = &transport.ODoH{
+				Target:    server,
+				Proxy:     opts.ODoHProxy,
+				TLSConfig: tlsConfig,
+			}
 		} else {
 			log.Debug("Using HTTP(s) transport")
-			reply, err = transport.HTTP(&msg, tlsConfig, server, opts.HTTPUserAgent, opts.HTTPMethod, opts.Timeout, opts.HandshakeTimeout, opts.HTTP3, opts.QUICNoPMTUD)
+			ts = &transport.HTTP{
+				Server:    server,
+				TLSConfig: tlsConfig,
+				UserAgent: opts.HTTPUserAgent,
+				Method:    opts.HTTPMethod,
+				Timeout:   opts.Timeout,
+				HTTP3:     opts.HTTP3,
+				NoPMTUd:   opts.QUICNoPMTUD,
+			}
 		}
 	case "quic":
 		log.Debug("Using QUIC transport")
-		reply, err = transport.QUIC(&msg, server, tlsConfig, opts.QUICDialTimeout, opts.HandshakeTimeout, opts.QUICOpenStreamTimeout, opts.QUICNoPMTUD, !opts.QUICNoLengthPrefix)
+		ts = &transport.QUIC{
+			Server:          server,
+			TLSConfig:       tlsConfig,
+			NoPMTUD:         opts.QUICNoPMTUD,
+			AddLengthPrefix: !opts.QUICNoLengthPrefix,
+		}
 	case "tls":
 		log.Debug("Using TLS transport")
-		reply, err = transport.TLS(&msg, server, tlsConfig, opts.TCPDialTimeout)
+		ts = &transport.TLS{
+			Server:    server,
+			TLSConfig: tlsConfig,
+			Timeout:   opts.Timeout,
+		}
 	case "tcp":
 		log.Debug("Using TCP transport")
-		reply, err = transport.Plain(&msg, server, true, opts.Timeout, opts.UDPBuffer)
+		ts = &transport.Plain{
+			Server:    server,
+			PreferTCP: true,
+			Timeout:   opts.Timeout,
+			UDPBuffer: opts.UDPBuffer,
+		}
 	case "plain":
 		log.Debug("Using UDP with TCP fallback")
-		reply, err = transport.Plain(&msg, server, false, opts.Timeout, opts.UDPBuffer)
+		ts = &transport.Plain{
+			Server:    server,
+			PreferTCP: false,
+			Timeout:   opts.Timeout,
+			UDPBuffer: opts.UDPBuffer,
+		}
 	default:
 		return nil, fmt.Errorf("unknown transport protocol %s", protocol)
 	}
-	return reply, err
+
+	return ts.(transport.Transport).Exchange(&msg)
 }

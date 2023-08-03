@@ -5,12 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 )
 
 // DoQ Error Codes
@@ -25,27 +23,29 @@ const (
 	DoQErrorReserved    = 0xd098ea5e // Alternative error code used for tests.
 )
 
-var (
-	DoQALPNTokens = []string{"doq"}
-)
-
 // QUIC makes a DNS query over QUIC
-func QUIC(msg *dns.Msg,
-	server string,
-	tlsConfig *tls.Config,
-	dialTimeout, handshakeTimeout, openStreamTimeout time.Duration,
-	noPMTUD bool,
-	addLengthPrefix bool,
-) (*dns.Msg, error) {
-	log.Debugf("Dialing with QUIC ALPN tokens: %v", tlsConfig.NextProtos)
-	dialCtx, dialCancel := context.WithTimeout(context.Background(), dialTimeout)
-	defer dialCancel()
-	session, err := quic.DialAddrContext(dialCtx, server, tlsConfig, &quic.Config{
-		HandshakeIdleTimeout:    handshakeTimeout,
-		DisablePathMTUDiscovery: noPMTUD,
-	})
+type QUIC struct {
+	Server          string
+	TLSConfig       *tls.Config
+	NoPMTUD         bool
+	AddLengthPrefix bool
+}
+
+func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
+	if len(q.TLSConfig.NextProtos) == 0 {
+		log.Warn("No ALPN tokens specified, using default: \"doq\"")
+		q.TLSConfig.NextProtos = []string{"doq"}
+	}
+	log.Debugf("Dialing with QUIC ALPN tokens: %v", q.TLSConfig.NextProtos)
+	session, err := quic.DialAddr(
+		q.Server,
+		q.TLSConfig,
+		&quic.Config{
+			DisablePathMTUDiscovery: q.NoPMTUD,
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("opening quic session to %s: %v", server, err)
+		return nil, fmt.Errorf("opening quic session to %s: %v", q.Server, err)
 	}
 
 	// Clients and servers MUST NOT send the edns-tcp-keepalive EDNS(0) Option [RFC7828] in any messages sent
@@ -60,11 +60,9 @@ func QUIC(msg *dns.Msg,
 		}
 	}
 
-	openStreamCtx, openStreamCancel := context.WithTimeout(context.Background(), openStreamTimeout)
-	defer openStreamCancel()
-	stream, err := session.OpenStreamSync(openStreamCtx)
+	stream, err := session.OpenStream()
 	if err != nil {
-		return nil, fmt.Errorf("open new stream to %s: %v", server, err)
+		return nil, fmt.Errorf("open new stream to %s: %v", q.Server, err)
 	}
 
 	// When sending queries over a QUIC connection, the DNS Message ID MUST
@@ -78,7 +76,7 @@ func QUIC(msg *dns.Msg,
 		return nil, err
 	}
 
-	if addLengthPrefix {
+	if q.AddLengthPrefix {
 		// All DNS messages (queries and responses) sent over DoQ connections
 		// MUST be encoded as a 2-octet length field followed by the message
 		// content as specified in [RFC1035].
@@ -99,20 +97,20 @@ func QUIC(msg *dns.Msg,
 
 	respBuf, err := io.ReadAll(stream)
 	if err != nil {
-		return nil, fmt.Errorf("reading response from %s: %s", server, err)
+		return nil, fmt.Errorf("reading response from %s: %s", q.Server, err)
 	}
 	if len(respBuf) == 0 {
-		return nil, fmt.Errorf("empty response from %s", server)
+		return nil, fmt.Errorf("empty response from %s", q.Server)
 	}
 
 	reply := dns.Msg{}
-	if addLengthPrefix {
+	if q.AddLengthPrefix {
 		err = reply.Unpack(respBuf[2:])
 	} else {
 		err = reply.Unpack(respBuf)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("unpacking response from %s: %s", server, err)
+		return nil, fmt.Errorf("unpacking response from %s: %s", q.Server, err)
 	}
 
 	return &reply, nil
