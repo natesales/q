@@ -66,7 +66,7 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 	}
 
 	// When sending queries over a QUIC connection, the DNS Message ID MUST
-	// be set to zero.  The stream mapping for DoQ allows for unambiguous
+	// be set to zero. The stream mapping for DoQ allows for unambiguous
 	// correlation of queries and responses and so the Message ID field is
 	// not required.
 	// https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1
