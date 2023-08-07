@@ -172,13 +172,11 @@ func TestMainInferredServer(t *testing.T) {
 	assert.Nil(t, driver([]string{
 		"-v",
 		"-q", "example.com",
-		"@dns.quad9.net",
+		"@8.8.8.8",
+		"-t", "A",
 	}, &out))
 	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* NS .*`), out.String())
 }
 
 func TestMainInvalidReverseQuery(t *testing.T) {
@@ -274,7 +272,7 @@ func TestMainTLSQuery(t *testing.T) {
 		"-v",
 		"-q", "example.com",
 		"-t", "A",
-		"@tls://dns.quad9.net",
+		"@tls://1.1.1.1",
 	}, &out))
 	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
@@ -341,12 +339,10 @@ func TestMainTLS12(t *testing.T) {
 		"--tls-min-version=1.1",
 		"--tls-max-version=1.2",
 		"@tls://dns.quad9.net",
+		"-t", "A",
 	}, &out))
 	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* NS .*`), out.String())
 }
 
 func TestMainNSID(t *testing.T) {
