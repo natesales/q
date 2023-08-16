@@ -16,6 +16,7 @@ func TestMainQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-q", "example.com",
 	}, &out))
@@ -48,6 +49,7 @@ func TestMainRawFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-q", "example.com",
 		"--format=raw",
@@ -61,6 +63,7 @@ func TestMainJSONFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-q", "example.com",
 		"--format=json",
@@ -75,6 +78,7 @@ func TestMainInvalidOutputFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-q", "example.com",
 		"--format=invalid",
@@ -89,6 +93,7 @@ func TestMainParseTypes(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@https://dns.quad9.net",
 		"-v",
 		"-q", "example.com",
 		"-t", "A",
@@ -131,6 +136,7 @@ func TestMainInvalidODoHProxy(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-q", "example.com",
 		"-s", "https://odoh.cloudflare-dns.com",
@@ -145,6 +151,7 @@ func TestMainReverseQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-x",
 		"-q", "1.1.1.1",
@@ -157,6 +164,7 @@ func TestMainInferredQname(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@https://9.9.9.9",
 		"-v",
 		"example.com",
 		"A",
@@ -182,6 +190,7 @@ func TestMainInvalidReverseQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-x",
 		"example.com",
@@ -195,6 +204,7 @@ func TestMainInvalidUpstream(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-s", "127.127.127.127:1",
 		"example.com",
@@ -221,6 +231,7 @@ func TestMainPad(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"-q", "example.com",
 		"--pad",
@@ -391,6 +402,7 @@ func TestMainHTTPUserAgent(t *testing.T) {
 		"-v",
 		"@https://dns.quad9.net",
 		"--http-user-agent", "Example/1.0",
+		"-t", "NS",
 	}, &out))
 	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`. .* NS a.root-servers.net.`), out.String())

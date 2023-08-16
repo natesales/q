@@ -522,7 +522,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	// Create transport
 	txp, err := newTransport(server, protocol, tlsConfig)
 	if err != nil {
-		log.Fatalf("creating transport: %s", err)
+		return err
 	}
 
 	startTime := time.Now()
