@@ -40,13 +40,13 @@ func TestTransportHTTPInvalidResolver(t *testing.T) {
 
 func TestTransportHTTPServerError(t *testing.T) {
 	go func() {
-		http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ListenAndServe(":8084", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Server Error", http.StatusInternalServerError)
 		}))
 	}()
 
 	tp := httpTransport()
-	tp.Server = "http://localhost:8080"
+	tp.Server = "http://localhost:8084"
 	_, err := tp.Exchange(validQuery())
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "got status code 500")
@@ -65,6 +65,7 @@ func TestTransportHTTPIDMismatch(t *testing.T) {
 			w.Write(buf)
 		}))
 	}()
+
 	tp := httpTransport()
 	tp.Server = "http://localhost:8085"
 	query := validQuery()
