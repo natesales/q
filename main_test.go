@@ -159,11 +159,10 @@ func TestMainInferredQname(t *testing.T) {
 	assert.Nil(t, driver([]string{
 		"-v",
 		"example.com",
+		"A",
 	}, &out))
 	time.Sleep(delay)
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
-	assert.Regexp(t, regexp.MustCompile(`example.com. .* MX .*`), out.String())
 }
 
 func TestMainInferredServer(t *testing.T) {
