@@ -24,7 +24,7 @@ func TestMainVersion(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace",
+		"-V", "--trace",
 	}, &out))
 	assert.Contains(t, out.String(), "https://github.com/natesales/q version dev (unknown unknown)")
 }
