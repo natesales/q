@@ -47,11 +47,10 @@ Application Options:
       --pad                    Set EDNS0 padding
       --http3                  Use HTTP/3 for DoH
       --no-id-check            Disable checking of DNS response ID
+      --no-reuse-conn          Use a new connection for each query
       --recaxfr                Perform recursive AXFR
-  -f, --format=                Output format (pretty, json, yaml, raw)
-                               (default: pretty)
-      --pretty-ttls            Format TTLs in human readable format (default:
-                               true)
+  -f, --format=                Output format (pretty, json, yaml, raw) (default: pretty)
+      --pretty-ttls            Format TTLs in human readable format (default: true)
       --color                  Enable color output
       --question               Show question section
       --answer                 Show answer section (default: true)
@@ -64,8 +63,7 @@ Application Options:
       --aa                     Set AA (Authoritative Answer) flag in query
       --ad                     Set AD (Authentic Data) flag in query
       --cd                     Set CD (Checking Disabled) flag in query
-      --rd                     Set RD (Recursion Desired) flag in query
-                               (default: true)
+      --rd                     Set RD (Recursion Desired) flag in query (default: true)
       --ra                     Set RA (Recursion Available) flag in query
       --z                      Set Z (Zero) flag in query
       --t                      Set TC (Truncated) flag in query
@@ -80,8 +78,7 @@ Application Options:
       --quic-alpn-tokens=      QUIC ALPN tokens (default: doq, doq-i11)
       --quic-no-pmtud          Disable QUIC PMTU discovery
       --quic-no-length-prefix  Don't add RFC 9250 compliant length prefix
-      --default-rr-types=      Default record types (default: A, AAAA, NS, MX,
-                               TXT, CNAME)
+      --default-rr-types=      Default record types (default: A, AAAA, NS, MX, TXT, CNAME)
       --udp-buffer=            Set EDNS0 UDP size in query (default: 1232)
   -v, --verbose                Show verbose log messages
       --trace                  Show trace log messages

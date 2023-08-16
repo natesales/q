@@ -64,6 +64,9 @@ type ODoH struct {
 	Target    string
 	Proxy     string
 	TLSConfig *tls.Config
+	ReuseConn bool
+
+	conn *http.Client
 }
 
 func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
@@ -77,12 +80,14 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		return nil, fmt.Errorf("new target configs request: %s", err)
 	}
 
-	client := http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: o.TLSConfig,
-		},
+	if o.conn == nil || !o.ReuseConn {
+		o.conn = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: o.TLSConfig,
+			},
+		}
 	}
-	resp, err := client.Do(req)
+	resp, err := o.conn.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("do target configs request: %s", err)
 	}
@@ -132,7 +137,7 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	req.Header.Set("Content-Type", ODoHContentType)
 	req.Header.Set("Accept", ODoHContentType)
 
-	resp, err = client.Do(req)
+	resp, err = o.conn.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("do request: %s", err)
 	}
@@ -161,4 +166,9 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		err = fmt.Errorf("unpack message: %s", err)
 	}
 	return msg, err
+}
+
+func (o *ODoH) Close() error {
+	o.conn.CloseIdleConnections()
+	return nil
 }

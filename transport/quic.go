@@ -31,6 +31,13 @@ type QUIC struct {
 	TLSConfig       *tls.Config
 	NoPMTUD         bool
 	AddLengthPrefix bool
+	ReuseConn       bool
+
+	conn *quic.Connection
+}
+
+func (q *QUIC) connection() quic.Connection {
+	return *q.conn
 }
 
 // setServerName sets the TLS config server name to the QUIC server
@@ -43,22 +50,25 @@ func (q *QUIC) setServerName() {
 }
 
 func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
-	q.setServerName()
-	if len(q.TLSConfig.NextProtos) == 0 {
-		log.Warn("No ALPN tokens specified, using default: \"doq\"")
-		q.TLSConfig.NextProtos = []string{"doq"}
-	}
-	log.Debugf("Dialing with QUIC ALPN tokens: %v", q.TLSConfig.NextProtos)
-	session, err := quic.DialAddr(
-		context.Background(),
-		q.Server,
-		q.TLSConfig,
-		&quic.Config{
-			DisablePathMTUDiscovery: q.NoPMTUD,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("opening quic session to %s: %v", q.Server, err)
+	if q.conn == nil || !q.ReuseConn {
+		q.setServerName()
+		if len(q.TLSConfig.NextProtos) == 0 {
+			log.Warn("No ALPN tokens specified, using default: \"doq\"")
+			q.TLSConfig.NextProtos = []string{"doq"}
+		}
+		log.Debugf("Dialing with QUIC ALPN tokens: %v", q.TLSConfig.NextProtos)
+		conn, err := quic.DialAddr(
+			context.Background(),
+			q.Server,
+			q.TLSConfig,
+			&quic.Config{
+				DisablePathMTUDiscovery: q.NoPMTUD,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("opening quic session to %s: %v", q.Server, err)
+		}
+		q.conn = &conn
 	}
 
 	// Clients and servers MUST NOT send the edns-tcp-keepalive EDNS(0) Option [RFC7828] in any messages sent
@@ -67,13 +77,14 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 	if opt := msg.IsEdns0(); opt != nil {
 		for _, option := range opt.Option {
 			if option.Option() == dns.EDNS0TCPKEEPALIVE {
-				_ = session.CloseWithError(DoQProtocolError, "") // Already closing the connection, so we don't care about the error
+				_ = q.connection().CloseWithError(DoQProtocolError, "") // Already closing the connection, so we don't care about the error
+				q.conn = nil
 				return nil, fmt.Errorf("EDNS0 TCP keepalive option is set")
 			}
 		}
 	}
 
-	stream, err := session.OpenStream()
+	stream, err := q.connection().OpenStream()
 	if err != nil {
 		return nil, fmt.Errorf("open new stream to %s: %v", q.Server, err)
 	}
@@ -136,4 +147,8 @@ func addPrefix(b []byte) (m []byte) {
 	copy(m[2:], b)
 
 	return m
+}
+
+func (q *QUIC) Close() error {
+	return q.connection().CloseWithError(DoQNoError, "")
 }

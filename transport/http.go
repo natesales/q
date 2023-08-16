@@ -23,25 +23,30 @@ type HTTP struct {
 	Timeout   time.Duration
 	HTTP3     bool
 	NoPMTUd   bool
+	ReuseConn bool
+
+	conn *http.Client
 }
 
 func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
-	httpClient := &http.Client{
-		Timeout: h.Timeout,
-		Transport: &http.Transport{
-			TLSClientConfig: h.TLSConfig,
-			MaxConnsPerHost: 1,
-			MaxIdleConns:    1,
-			Proxy:           http.ProxyFromEnvironment,
-		},
-	}
-	if h.HTTP3 {
-		log.Debug("Using HTTP/3")
-		httpClient.Transport = &http3.RoundTripper{
-			TLSClientConfig: h.TLSConfig,
-			QuicConfig: &quic.Config{
-				DisablePathMTUDiscovery: h.NoPMTUd,
+	if h.conn == nil || !h.ReuseConn {
+		h.conn = &http.Client{
+			Timeout: h.Timeout,
+			Transport: &http.Transport{
+				TLSClientConfig: h.TLSConfig,
+				MaxConnsPerHost: 1,
+				MaxIdleConns:    1,
+				Proxy:           http.ProxyFromEnvironment,
 			},
+		}
+		if h.HTTP3 {
+			log.Debug("Using HTTP/3")
+			h.conn.Transport = &http3.RoundTripper{
+				TLSClientConfig: h.TLSConfig,
+				QuicConfig: &quic.Config{
+					DisablePathMTUDiscovery: h.NoPMTUd,
+				},
+			}
 		}
 	}
 
@@ -63,7 +68,7 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	}
 
 	log.Debugf("[http] sending %s request to %s", h.Method, queryURL)
-	resp, err := httpClient.Do(req)
+	resp, err := h.conn.Do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
@@ -86,4 +91,9 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	}
 
 	return &response, nil
+}
+
+func (h *HTTP) Close() error {
+	h.conn.CloseIdleConnections()
+	return nil
 }

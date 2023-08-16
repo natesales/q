@@ -35,6 +35,7 @@ type optsTemplate struct {
 	Pad          bool          `long:"pad" description:"Set EDNS0 padding"`
 	HTTP3        bool          `long:"http3" description:"Use HTTP/3 for DoH"`
 	NoIDCheck    bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
+	NoReuseConn  bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
@@ -539,10 +540,16 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		return nil
 	}
 
+	// Create transport
+	txp, err := newTransport(server, protocol, tlsConfig)
+	if err != nil {
+		log.Fatalf("creating transport: %s", err)
+	}
+
 	startTime := time.Now()
 	var replies []*dns.Msg
 	for _, msg := range msgs {
-		reply, err := query(msg, server, protocol, tlsConfig)
+		reply, err := (*txp).Exchange(&msg)
 		if err != nil {
 			return err
 		}

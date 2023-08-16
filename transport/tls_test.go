@@ -6,7 +6,8 @@ import (
 
 func tlsTransport() *TLS {
 	return &TLS{
-		Server:  "dns.quad9.net:853",
-		Timeout: 1 * time.Second,
+		Server:    "dns.quad9.net:853",
+		Timeout:   1 * time.Second,
+		ReuseConn: false,
 	}
 }

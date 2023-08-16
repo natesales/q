@@ -32,3 +32,8 @@ func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
 
 	return reply, err
 }
+
+// Close is a no-op for the plain transport
+func (p *Plain) Close() error {
+	return nil
+}

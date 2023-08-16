@@ -108,8 +108,8 @@ func createQuery(
 	return queries
 }
 
-// query performs a DNS query and returns the reply
-func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Msg, error) {
+// newTransport creates a new transport based on local options
+func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Transport, error) {
 	var ts transport.Transport
 
 	switch protocol {
@@ -120,6 +120,7 @@ func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Ms
 				Target:    server,
 				Proxy:     opts.ODoHProxy,
 				TLSConfig: tlsConfig,
+				ReuseConn: !opts.NoReuseConn,
 			}
 		} else {
 			log.Debug("Using HTTP(s) transport")
@@ -131,6 +132,7 @@ func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Ms
 				Timeout:   opts.Timeout,
 				HTTP3:     opts.HTTP3,
 				NoPMTUd:   opts.QUICNoPMTUD,
+				ReuseConn: !opts.NoReuseConn,
 			}
 		}
 	case "quic":
@@ -140,6 +142,7 @@ func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Ms
 			TLSConfig:       tlsConfig,
 			NoPMTUD:         opts.QUICNoPMTUD,
 			AddLengthPrefix: !opts.QUICNoLengthPrefix,
+			ReuseConn:       !opts.NoReuseConn,
 		}
 	case "tls":
 		log.Debug("Using TLS transport")
@@ -147,6 +150,7 @@ func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Ms
 			Server:    server,
 			TLSConfig: tlsConfig,
 			Timeout:   opts.Timeout,
+			ReuseConn: !opts.NoReuseConn,
 		}
 	case "tcp":
 		log.Debug("Using TCP transport")
@@ -168,5 +172,5 @@ func query(msg dns.Msg, server, protocol string, tlsConfig *tls.Config) (*dns.Ms
 		return nil, fmt.Errorf("unknown transport protocol %s", protocol)
 	}
 
-	return ts.(transport.Transport).Exchange(&msg)
+	return &ts, nil
 }

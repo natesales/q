@@ -32,6 +32,7 @@ func invalidQuery() *dns.Msg {
 }
 
 func transportHarness(t *testing.T, transport Transport) {
+	defer transport.Close()
 	for _, tc := range []struct {
 		// Name is the name of the test
 		Name string
@@ -81,7 +82,30 @@ func TestTransportHTTP(t *testing.T) {
 	transportHarness(t, httpTransport())
 }
 
+func TestTransportReuseTLS(t *testing.T) {
+	transport := tlsTransport()
+	transport.ReuseConn = true
+	transportHarness(t, transport)
+}
+
+func TestTransportReuseQUIC(t *testing.T) {
+	transport := quicTransport()
+	transport.ReuseConn = true
+	transportHarness(t, transport)
+}
+
+func TestTransportReuseHTTP(t *testing.T) {
+	transport := httpTransport()
+	transport.ReuseConn = true
+	transportHarness(t, transport)
+}
+
 // TODO: Enable test
 //func TestTransportODoH(t *testing.T) {
 //	transportHarness(t, odohTransport())
+//}
+//func TestTransportReuseODoH(t *testing.T) {
+//	transport := odohTransport()
+//	transport.ReuseConn = true
+//	reuseTransportHarness(t, transport)
 //}
