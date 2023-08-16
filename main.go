@@ -421,10 +421,10 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 		// Set qname if not set by flag
 		if opts.Name == "" &&
-			!containsAny(arg, []string{"@", "/", "\\", "+"}) &&
-			!typeFound &&
-			!strings.HasSuffix(arg, ".exe") &&
-			!strings.HasPrefix(arg, "-") {
+			!containsAny(arg, []string{"@", "/", "\\", "+"}) && // Not a server, path, or flag
+			!typeFound && // Not a RR type
+			!strings.HasSuffix(arg, ".exe") && // Not an executable
+			!strings.HasPrefix(arg, "-") { // Not a flag
 			opts.Name = arg
 		}
 	}
