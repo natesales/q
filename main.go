@@ -350,6 +350,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		log.SetLevel(log.DebugLevel)
 	} else if opts.Trace {
 		log.SetLevel(log.TraceLevel)
+		opts.ShowAll = true
 	}
 
 	if opts.ShowVersion {
