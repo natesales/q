@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const delay = 500 * time.Millisecond
+const delay = 0
 
 func TestMainQuery(t *testing.T) {
 	clearOpts()
