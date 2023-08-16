@@ -31,6 +31,10 @@ var colors = map[string]string{
 
 // color returns a color formatted string
 func color(color string, args ...interface{}) string {
+	if _, ok := colors[color]; !ok {
+		panic("invalid color: " + color)
+	}
+
 	if opts.Color {
 		return fmt.Sprintf(colors[color], fmt.Sprint(args...))
 	} else {
@@ -164,6 +168,43 @@ func display(replies []*dns.Msg, server string, queryTime time.Duration, out io.
 					color("green", server),
 					color("teal", queryTime.Round(100*time.Microsecond)),
 					color("magenta", time.Now().Format("15:04:05 01-02-2006 MST")),
+				)
+
+				flags := ""
+				if reply.MsgHdr.Response {
+					flags = "qr"
+				}
+				if reply.MsgHdr.Authoritative {
+					flags = "aa"
+				}
+				if reply.MsgHdr.Truncated {
+					flags = "tc"
+				}
+				if reply.MsgHdr.RecursionDesired {
+					flags = "rd"
+				}
+				if reply.MsgHdr.RecursionAvailable {
+					flags = "ra"
+				}
+				if reply.MsgHdr.Zero {
+					flags = "z"
+				}
+				if reply.MsgHdr.AuthenticatedData {
+					flags = "ad"
+				}
+				if reply.MsgHdr.CheckingDisabled {
+					flags = "cd"
+				}
+
+				mustWritef(out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Query %s Ans %s Auth %s Add)\n",
+					color("magenta", dns.OpcodeToString[reply.MsgHdr.Opcode]),
+					color("teal", fmt.Sprintf("%s", dns.RcodeToString[reply.MsgHdr.Rcode])),
+					color("green", fmt.Sprintf("%d", reply.MsgHdr.Id)),
+					color("purple", flags),
+					color("purple", fmt.Sprintf("%d", len(reply.Question))),
+					color("green", fmt.Sprintf("%d", len(reply.Answer))),
+					color("teal", fmt.Sprintf("%d", len(reply.Ns))),
+					color("magenta", fmt.Sprintf("%d", len(reply.Extra))),
 				)
 			}
 		case "raw":
