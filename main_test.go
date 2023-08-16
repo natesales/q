@@ -477,6 +477,7 @@ func TestMainShowAll(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
+		"@9.9.9.9",
 		"-v",
 		"+all",
 		"example.com",
