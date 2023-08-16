@@ -490,3 +490,19 @@ func TestMainRecAXFR(t *testing.T) {
 	assert.Contains(t, out.String(), `AXFR zonetransfer.me.`)
 	assert.Contains(t, out.String(), `AXFR internal.zonetransfer.me.`)
 }
+
+func TestMainShowAll(t *testing.T) {
+	clearOpts()
+	var out bytes.Buffer
+	assert.Nil(t, driver([]string{
+		"-v",
+		"+all",
+		"example.com",
+		"A",
+	}, &out))
+	time.Sleep(delay)
+	assert.Contains(t, out.String(), "example.com.")
+	assert.Contains(t, out.String(), "Question:")
+	assert.Contains(t, out.String(), "Answer:")
+	assert.Contains(t, out.String(), "Stats:")
+}
