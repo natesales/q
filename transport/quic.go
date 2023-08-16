@@ -1,10 +1,12 @@
 package transport
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
 
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go"
@@ -31,13 +33,24 @@ type QUIC struct {
 	AddLengthPrefix bool
 }
 
+// setServerName sets the TLS config server name to the QUIC server
+func (q *QUIC) setServerName() {
+	host, _, err := net.SplitHostPort(q.Server)
+	if err != nil {
+		log.Fatalf("invalid QUIC server address: %s", err)
+	}
+	q.TLSConfig.ServerName = host
+}
+
 func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
+	q.setServerName()
 	if len(q.TLSConfig.NextProtos) == 0 {
 		log.Warn("No ALPN tokens specified, using default: \"doq\"")
 		q.TLSConfig.NextProtos = []string{"doq"}
 	}
 	log.Debugf("Dialing with QUIC ALPN tokens: %v", q.TLSConfig.NextProtos)
 	session, err := quic.DialAddr(
+		context.Background(),
 		q.Server,
 		q.TLSConfig,
 		&quic.Config{
