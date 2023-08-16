@@ -25,19 +25,16 @@ jobs:
           go-version: 1.21
       - uses: actions/checkout@v2
       - run: go build -v ./...
-
-      - name: Install gopherbadger
-        run: go get github.com/jpoles1/gopherbadger && go install github.com/jpoles1/gopherbadger
+#      - run: go install github.com/jpoles1/gopherbadger@latest
 
       - name: Test
         uses: robherley/go-test-action@v0.1.0
-        with:
-          omitPie: true
-          testArguments: "-v -covermode atomic -coverprofile=cover.out ./..."
-
-# TODO: Gopherbadger
-#      - name: Run test
-#        run: gopherbadger -style=for-the-badge -covercmd "go test -v -covermode atomic -coverprofile=cover.out ./... && go tool cover -func=cover.out"
+#        with:
+#          omitPie: true
+#          testArguments: "-v -covermode atomic -coverprofile=cover.out ./..."
+#
+#      - name: Generate coverage badge
+#        run: gopherbadger -style=for-the-badge -covercmd "go tool cover -func=cover.out"
 #
 #      - name: Commit coverage badge
 #        uses: EndBug/add-and-commit@v7
