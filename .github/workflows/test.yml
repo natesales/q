@@ -20,38 +20,39 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - uses: actions/setup-go@v2
         with:
           go-version: 1.21
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Build
-        run: go build -v ./...
+      - uses: actions/checkout@v2
+      - run: go build -v ./...
 
       - name: Install gopherbadger
         run: go get github.com/jpoles1/gopherbadger && go install github.com/jpoles1/gopherbadger
 
-      - name: Run test
-        run: gopherbadger -style=for-the-badge -covercmd "go test -v -covermode atomic -coverprofile=cover.out ./... && go tool cover -func=cover.out"
-
-      - name: Commit coverage badge
-        uses: EndBug/add-and-commit@v7
+      - name: Test
+        uses: robherley/go-test-action@v0.1.0
         with:
-          message: "ci: update coverage"
-          add: "coverage_badge.png"
-          author_name: "github-actions[bot]"
-          author_email: "github-actions[bot]@users.noreply.github.com"
+          omitPie: true
+          testArguments: "-v -covermode atomic -coverprofile=cover.out ./..."
 
-      - name: Update usage in README
-        run: ./update-usage-readme.sh
-
-      - name: Commit README update
-        uses: EndBug/add-and-commit@v7
-        with:
-          message: "ci: update binary usage in README"
-          add: "README.md"
-          author_name: "github-actions[bot]"
-          author_email: "github-actions[bot]@users.noreply.github.com"
+# TODO: Gopherbadger
+#      - name: Run test
+#        run: gopherbadger -style=for-the-badge -covercmd "go test -v -covermode atomic -coverprofile=cover.out ./... && go tool cover -func=cover.out"
+#
+#      - name: Commit coverage badge
+#        uses: EndBug/add-and-commit@v7
+#        with:
+#          message: "ci: update coverage"
+#          add: "coverage_badge.png"
+#          author_name: "github-actions[bot]"
+#          author_email: "github-actions[bot]@users.noreply.github.com"
+#
+#      - run: ./update-usage-readme.sh
+#
+#      - name: Commit README update
+#        uses: EndBug/add-and-commit@v7
+#        with:
+#          message: "ci: update binary usage in README"
+#          add: "README.md"
+#          author_name: "github-actions[bot]"
+#          author_email: "github-actions[bot]@users.noreply.github.com"
