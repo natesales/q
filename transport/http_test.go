@@ -39,7 +39,7 @@ func TestTransportHTTPInvalidResolver(t *testing.T) {
 }
 
 func TestTransportHTTPServerError(t *testing.T) {
-	listen := ":53807"
+	listen := ":5380"
 	go func() {
 		http.ListenAndServe(listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Server Error", http.StatusInternalServerError)
@@ -54,7 +54,7 @@ func TestTransportHTTPServerError(t *testing.T) {
 }
 
 func TestTransportHTTPIDMismatch(t *testing.T) {
-	listen := ":53808"
+	listen := ":5381"
 	go func() {
 		http.ListenAndServe(listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			msg := dns.Msg{}
