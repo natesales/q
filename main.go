@@ -95,18 +95,6 @@ var (
 	date    = "unknown"
 )
 
-// ANSI colors
-var colors = map[string]string{
-	"black":   "\033[1;30m%s\033[0m",
-	"red":     "\033[1;31m%s\033[0m",
-	"green":   "\033[1;32m%s\033[0m",
-	"yellow":  "\033[1;33m%s\033[0m",
-	"purple":  "\033[1;34m%s\033[0m",
-	"magenta": "\033[1;35m%s\033[0m",
-	"teal":    "\033[1;36m%s\033[0m",
-	"white":   "\033[1;37m%s\033[0m",
-}
-
 var tlsCipherSuiteToInt = map[string]uint16{
 	// TLS 1.0 - 1.2
 	"TLS_RSA_WITH_RC4_128_SHA":                      tls.TLS_RSA_WITH_RC4_128_SHA,
@@ -149,15 +137,6 @@ func parseTLSCipherSuites(cipherSuites []string) []uint16 {
 		}
 	}
 	return cipherSuiteInts
-}
-
-// color returns a color formatted string
-func color(color string, args ...interface{}) string {
-	if opts.Color {
-		return fmt.Sprintf(colors[color], fmt.Sprint(args...))
-	} else {
-		return fmt.Sprint(args...)
-	}
 }
 
 // clearOpts sets the default values for the CLI options
