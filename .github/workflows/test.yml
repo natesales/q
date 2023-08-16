@@ -25,31 +25,40 @@ jobs:
           go-version: 1.21
       - uses: actions/checkout@v2
       - run: go build -v ./...
-#      - run: go install github.com/jpoles1/gopherbadger@latest
+      - run: go install github.com/jpoles1/gopherbadger@latest
+      - run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
 
-      - name: Test
-        uses: robherley/go-test-action@v0.1.0
-#        with:
-#          omitPie: true
-#          testArguments: "-v -covermode atomic -coverprofile=cover.out ./..."
-#
-#      - name: Generate coverage badge
-#        run: gopherbadger -style=for-the-badge -covercmd "go tool cover -func=cover.out"
-#
-#      - name: Commit coverage badge
-#        uses: EndBug/add-and-commit@v7
-#        with:
-#          message: "ci: update coverage"
-#          add: "coverage_badge.png"
-#          author_name: "github-actions[bot]"
-#          author_email: "github-actions[bot]@users.noreply.github.com"
-#
-#      - run: ./update-usage-readme.sh
-#
-#      - name: Commit README update
-#        uses: EndBug/add-and-commit@v7
-#        with:
-#          message: "ci: update binary usage in README"
-#          add: "README.md"
-#          author_name: "github-actions[bot]"
-#          author_email: "github-actions[bot]@users.noreply.github.com"
+      # Run tests with nice formatting. Save the original log in /tmp/gotest.log
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          go test -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
+
+      - name: Upload original test log
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-log
+          path: /tmp/gotest.log
+          if-no-files-found: error
+
+      - name: Generate coverage badge
+        run: gopherbadger -style=for-the-badge -covercmd "go tool cover -func=cover.out"
+
+      - name: Commit coverage badge
+        uses: EndBug/add-and-commit@v7
+        with:
+          message: "ci: update coverage"
+          add: "coverage_badge.png"
+          author_name: "github-actions[bot]"
+          author_email: "github-actions[bot]@users.noreply.github.com"
+
+      - run: ./update-usage-readme.sh
+
+      - name: Commit README update
+        uses: EndBug/add-and-commit@v7
+        with:
+          message: "ci: update binary usage in README"
+          add: "README.md"
+          author_name: "github-actions[bot]"
+          author_email: "github-actions[bot]@users.noreply.github.com"
