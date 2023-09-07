@@ -4,10 +4,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/miekg/dns"
-	"github.com/natesales/q/transport"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/natesales/q/transport"
 )
 
 // createQuery creates a slice of DNS queries
@@ -106,6 +108,62 @@ func createQuery(
 		queries = append(queries, req)
 	}
 	return queries
+}
+
+// exchangeAll exchanges multiple DNS queries
+func exchangeAll(queries []dns.Msg, txp *transport.Transport, isQUIC, sequential bool) ([]*dns.Msg, error) {
+	var replies []*dns.Msg
+
+	if sequential {
+		for _, msg := range queries {
+			reply, err := (*txp).Exchange(&msg)
+			if err != nil {
+				return nil, err
+			}
+
+			// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
+			if !isQUIC && !opts.NoIDCheck && reply.Id != msg.Id {
+				return nil, fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+			}
+
+			replies = append(replies, reply)
+		}
+	} else {
+		var wg sync.WaitGroup
+		var lock sync.Mutex
+
+		for _, msg := range queries {
+			var errC chan error
+
+			wg.Add(1)
+			go func(m *dns.Msg) {
+				defer wg.Done()
+				reply, err := (*txp).Exchange(m)
+				if err != nil {
+					errC <- err
+					return
+				}
+
+				// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
+				if !isQUIC && !opts.NoIDCheck && reply.Id != msg.Id {
+					errC <- fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+					return
+				}
+
+				lock.Lock()
+				replies = append(replies, reply)
+				lock.Unlock()
+			}(&msg)
+
+			select {
+			case err := <-errC:
+				return nil, err
+			}
+		}
+		wg.Wait()
+	}
+
+	return replies, nil
 }
 
 // newTransport creates a new transport based on local options
