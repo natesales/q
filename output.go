@@ -66,7 +66,7 @@ func printPrettyRR(a dns.RR, doWhois bool, out io.Writer) {
 
 	ttl := fmt.Sprintf("%d", a.Header().Ttl)
 	if opts.PrettyTTLs {
-		ttl = fmt.Sprintf("%s", time.Duration(a.Header().Ttl)*time.Second)
+		ttl = (time.Duration(a.Header().Ttl) * time.Second).String()
 	}
 
 	if doWhois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
@@ -115,11 +115,8 @@ func prettyPrintNSID(opt []*dns.Msg, out io.Writer) {
 }
 
 func display(replies []*dns.Msg, server string, queryTime time.Duration, out io.Writer) error {
-	switch opts.Format {
-	case "pretty":
-		if opts.NSID {
-			prettyPrintNSID(replies, out)
-		}
+	if opts.NSID && opts.Format == "pretty" {
+		prettyPrintNSID(replies, out)
 	}
 
 	for i, reply := range replies {
@@ -198,7 +195,7 @@ func display(replies []*dns.Msg, server string, queryTime time.Duration, out io.
 
 				mustWritef(out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Query %s Ans %s Auth %s Add)\n",
 					color("magenta", dns.OpcodeToString[reply.MsgHdr.Opcode]),
-					color("teal", fmt.Sprintf("%s", dns.RcodeToString[reply.MsgHdr.Rcode])),
+					color("teal", dns.RcodeToString[reply.MsgHdr.Rcode]),
 					color("green", fmt.Sprintf("%d", reply.MsgHdr.Id)),
 					color("purple", flags),
 					color("purple", fmt.Sprintf("%d", len(reply.Question))),

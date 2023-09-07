@@ -416,8 +416,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			rrTypes[dns.StringToType["NS"]] = true
 		} else {
 			for _, defaultRRType := range opts.DefaultRRTypes {
-				rrType, _ := dns.StringToType[defaultRRType]
-				rrTypes[rrType] = true
+				rrTypes[dns.StringToType[defaultRRType]] = true
 			}
 		}
 	}

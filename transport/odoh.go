@@ -104,7 +104,7 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if len(odohConfigs.Configs) == 0 {
 		return nil, errors.New("target provided no valid ODoH configs")
 	}
-	log.Debugf("[odoh] retreived %d ODoH configs", len(odohConfigs.Configs))
+	log.Debugf("[odoh] retrieved %d ODoH configs", len(odohConfigs.Configs))
 
 	packedDnsQuery, err := m.Pack()
 	if err != nil {

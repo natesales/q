@@ -32,9 +32,7 @@ func axfr(label, server string) []dns.RR {
 			log.Warnf("AXFR section error (%s): %s", label, env.Error)
 			continue
 		}
-		for _, rr := range env.RR {
-			rrs = append(rrs, rr)
-		}
+		rrs = append(rrs, env.RR...)
 	}
 
 	return rrs

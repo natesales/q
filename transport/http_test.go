@@ -42,9 +42,11 @@ func TestTransportHTTPInvalidResolver(t *testing.T) {
 func TestTransportHTTPServerError(t *testing.T) {
 	listen := ":5380"
 	go func() {
-		http.ListenAndServe(listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := http.ListenAndServe(listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Server Error", http.StatusInternalServerError)
-		}))
+		})); err != nil {
+			t.Errorf("error starting HTTP server: %s", err)
+		}
 	}()
 
 	tp := httpTransport()
@@ -57,7 +59,7 @@ func TestTransportHTTPServerError(t *testing.T) {
 func TestTransportHTTPIDMismatch(t *testing.T) {
 	listen := ":5381"
 	go func() {
-		http.ListenAndServe(listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := http.ListenAndServe(listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			msg := dns.Msg{}
 			msg.Id = 1
 			buf, err := msg.Pack()
@@ -65,8 +67,12 @@ func TestTransportHTTPIDMismatch(t *testing.T) {
 				t.Errorf("error packing DNS message: %s", err)
 				return
 			}
-			w.Write(buf)
-		}))
+			if _, err := w.Write(buf); err != nil {
+				t.Errorf("error writing DNS message: %s", err)
+			}
+		})); err != nil {
+			t.Errorf("error starting HTTP server: %s", err)
+		}
 	}()
 
 	tp := httpTransport()
