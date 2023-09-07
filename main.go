@@ -36,7 +36,6 @@ type optsTemplate struct {
 	HTTP3        bool          `long:"http3" description:"Use HTTP/3 for DoH"`
 	NoIDCheck    bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
 	NoReuseConn  bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
-	Sequential   bool          `long:"sequential" description:"Don't send queries concurrently"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
@@ -528,9 +527,18 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	startTime := time.Now()
-	replies, err := exchangeAll(msgs, txp, protocol == "quic", opts.Sequential)
-	if err != nil {
-		return err
+	var replies []*dns.Msg
+	for _, msg := range msgs {
+		reply, err := (*txp).Exchange(&msg)
+		if err != nil {
+			return err
+		}
+
+		// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
+		if protocol != "quic" && !opts.NoIDCheck && reply.Id != msg.Id {
+			return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+		}
+		replies = append(replies, reply)
 	}
 	queryTime := time.Since(startTime)
 

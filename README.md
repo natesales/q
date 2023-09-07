@@ -48,7 +48,6 @@ Application Options:
       --http3                  Use HTTP/3 for DoH
       --no-id-check            Disable checking of DNS response ID
       --no-reuse-conn          Use a new connection for each query
-      --sequential             Don't send queries concurrently
       --recaxfr                Perform recursive AXFR
   -f, --format=                Output format (pretty, json, yaml, raw) (default: pretty)
       --pretty-ttls            Format TTLs in human readable format (default: true)
