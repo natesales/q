@@ -48,7 +48,10 @@ func RecAXFR(label, server string, out io.Writer) []dns.RR {
 	queried = make(map[string]bool)
 	all = make([]dns.RR, 0)
 
-	dir := fmt.Sprintf("%s_%s_recaxfr", strings.TrimPrefix(label, "."), strings.ReplaceAll(time.Now().Format(time.UnixDate), " ", "-"))
+	dir := fmt.Sprintf("%s_%s_recaxfr",
+		strings.TrimPrefix(label, "."),
+		strings.ReplaceAll(time.Now().Format(time.UnixDate), " ", "-"),
+	)
 
 	// Create recursive AXFR directory if it doesn't exist
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
