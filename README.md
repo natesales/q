@@ -14,7 +14,7 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 ### Examples
 
 ```
-q example.com                            Lookup default records for a domain 
+q example.com                            Lookup default records for a domain
 q example.com MX SOA                     ...or specify a list of types
 
 q example.com MX @9.9.9.9                Query a specific server

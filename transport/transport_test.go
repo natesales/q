@@ -47,7 +47,7 @@ func transportHarness(t *testing.T, transport Transport) {
 		{Name: "InvalidQuery", ShouldError: true, Query: invalidQuery()},
 	} {
 		t.Run("TransportHarness"+tc.Name, func(t *testing.T) {
-			reply, err := transport.(Transport).Exchange(tc.Query)
+			reply, err := transport.Exchange(tc.Query)
 			if tc.ShouldError {
 				assert.NotNil(t, err)
 			} else {

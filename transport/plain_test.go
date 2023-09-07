@@ -1,9 +1,10 @@
 package transport
 
 import (
-	"github.com/miekg/dns"
 	"testing"
 	"time"
+
+	"github.com/miekg/dns"
 
 	"github.com/stretchr/testify/assert"
 )

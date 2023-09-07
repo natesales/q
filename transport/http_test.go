@@ -2,10 +2,11 @@ package transport
 
 import (
 	"crypto/tls"
-	"github.com/miekg/dns"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/miekg/dns"
 
 	"github.com/stretchr/testify/assert"
 )
