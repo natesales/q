@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -471,6 +473,14 @@ func TestMainRecAXFR(t *testing.T) {
 	}, &out))
 	assert.Contains(t, out.String(), `AXFR zonetransfer.me.`)
 	assert.Contains(t, out.String(), `AXFR internal.zonetransfer.me.`)
+
+	// Remove zonetransfer files
+	files, err := filepath.Glob("zonetransfer.me*")
+	assert.Nil(t, err)
+	for _, f := range files {
+		err := os.RemoveAll(f)
+		assert.Nil(t, err)
+	}
 }
 
 func TestMainShowAll(t *testing.T) {
