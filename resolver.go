@@ -181,7 +181,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 				ReuseConn: !opts.NoReuseConn,
 			}
 		} else {
-			log.Debug("Using HTTP(s) transport")
+			log.Debugf("Using HTTP(s) transport: %s", server)
 			ts = &transport.HTTP{
 				Server:    server,
 				TLSConfig: tlsConfig,
@@ -194,7 +194,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			}
 		}
 	case "quic":
-		log.Debug("Using QUIC transport")
+		log.Debugf("Using QUIC transport: %s", server)
 		ts = &transport.QUIC{
 			Server:          server,
 			TLSConfig:       tlsConfig,
@@ -203,7 +203,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			ReuseConn:       !opts.NoReuseConn,
 		}
 	case "tls":
-		log.Debug("Using TLS transport")
+		log.Debugf("Using TLS transport: %s", server)
 		ts = &transport.TLS{
 			Server:    server,
 			TLSConfig: tlsConfig,
@@ -211,7 +211,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			ReuseConn: !opts.NoReuseConn,
 		}
 	case "tcp":
-		log.Debug("Using TCP transport")
+		log.Debugf("Using TCP transport: %s", server)
 		ts = &transport.Plain{
 			Server:    server,
 			PreferTCP: true,
@@ -219,7 +219,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			UDPBuffer: opts.UDPBuffer,
 		}
 	case "plain":
-		log.Debug("Using UDP with TCP fallback")
+		log.Debugf("Using UDP with TCP fallback: %s", server)
 		ts = &transport.Plain{
 			Server:    server,
 			PreferTCP: false,
