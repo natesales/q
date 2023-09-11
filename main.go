@@ -137,6 +137,25 @@ func parsePlusFlags(args []string) {
 	}
 }
 
+func txtConcat(m *dns.Msg) {
+	var answers []dns.RR
+	for _, answer := range m.Answer {
+		if answer.Header().Rrtype == dns.TypeTXT {
+			txt := answer.(*dns.TXT)
+
+			// Concat TXT responses if requested
+			if opts.TXTConcat {
+				log.Debugf("Concatenating TXT response: %+v", txt.Txt)
+				txt.Txt = []string{strings.Join(txt.Txt, "")}
+			}
+			answers = append(answers, txt)
+		} else {
+			answers = append(answers, answer)
+		}
+	}
+	m.Answer = answers
+}
+
 // parseServer parses opts.Server into a protocol and host:port
 func parseServer() (string, string, error) {
 	var scheme, host, port, scopeId string
@@ -481,6 +500,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		replies = append(replies, reply)
 	}
 	queryTime := time.Since(startTime)
+
+	// Process TXT parsing
+	if opts.TXTConcat {
+		for _, reply := range replies {
+			txtConcat(reply)
+		}
+	}
 
 	if opts.NSID && opts.Format == "pretty" {
 		output.PrettyPrintNSID(replies, out)

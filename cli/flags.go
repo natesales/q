@@ -18,6 +18,7 @@ type Flags struct {
 	HTTP3        bool          `long:"http3" description:"Use HTTP/3 for DoH"`
 	NoIDCheck    bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
 	NoReuseConn  bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
+	TXTConcat    bool          `long:"txtconcat" description:"Concatenate TXT responses"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
