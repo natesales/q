@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
@@ -114,7 +115,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 	var ts transport.Transport
 
 	switch protocol {
-	case "https", "http":
+	case transport.TypeHTTP, "https":
 		if opts.ODoHProxy != "" {
 			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
 			ts = &transport.ODoH{
@@ -136,7 +137,31 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 				ReuseConn: !opts.NoReuseConn,
 			}
 		}
-	case "quic":
+	case transport.TypeDNSCrypt:
+		log.Debugf("Using DNSCrypt transport: %s", server)
+		if strings.HasPrefix(server, "sdns://") {
+			log.Traceln("Using provided DNS stamp for DNSCrypt")
+			ts = &transport.DNSCrypt{
+				ServerStamp: server,
+				TCP:         opts.DNSCryptTCP,
+				Timeout:     opts.Timeout,
+				UDPSize:     opts.DNSCryptUDPSize,
+				ReuseConn:   !opts.NoReuseConn,
+			}
+		} else {
+			log.Traceln("Using manual DNSCrypt configuration")
+			ts = &transport.DNSCrypt{
+				TCP:          opts.DNSCryptTCP,
+				Timeout:      opts.Timeout,
+				UDPSize:      opts.DNSCryptUDPSize,
+				ReuseConn:    !opts.NoReuseConn,
+				Server:       server,
+				PublicKey:    opts.DNSCryptPublicKey,
+				ProviderName: opts.DNSCryptProvider,
+			}
+		}
+
+	case transport.TypeQUIC:
 		log.Debugf("Using QUIC transport: %s", server)
 		ts = &transport.QUIC{
 			Server:          server,
@@ -145,7 +170,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			AddLengthPrefix: !opts.QUICNoLengthPrefix,
 			ReuseConn:       !opts.NoReuseConn,
 		}
-	case "tls":
+	case transport.TypeTLS:
 		log.Debugf("Using TLS transport: %s", server)
 		ts = &transport.TLS{
 			Server:    server,
@@ -153,7 +178,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			Timeout:   opts.Timeout,
 			ReuseConn: !opts.NoReuseConn,
 		}
-	case "tcp":
+	case transport.TypeTCP:
 		log.Debugf("Using TCP transport: %s", server)
 		ts = &transport.Plain{
 			Server:    server,
@@ -161,7 +186,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			Timeout:   opts.Timeout,
 			UDPBuffer: opts.UDPBuffer,
 		}
-	case "plain":
+	case transport.TypePlain:
 		log.Debugf("Using UDP with TCP fallback: %s", server)
 		ts = &transport.Plain{
 			Server:    server,

@@ -7,6 +7,15 @@ type Transport interface {
 	Close() error
 }
 
+const (
+	TypePlain    = "plain"
+	TypeTCP      = "tcp"
+	TypeTLS      = "tls"
+	TypeHTTP     = "http"
+	TypeQUIC     = "quic"
+	TypeDNSCrypt = "dnscrypt"
+)
+
 // Interface guards
 var (
 	_ Transport = (*Plain)(nil)
@@ -14,4 +23,5 @@ var (
 	_ Transport = (*HTTP)(nil)
 	_ Transport = (*ODoH)(nil)
 	_ Transport = (*QUIC)(nil)
+	_ Transport = (*DNSCrypt)(nil)
 )

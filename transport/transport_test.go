@@ -82,6 +82,10 @@ func TestTransportHTTP(t *testing.T) {
 	transportHarness(t, httpTransport())
 }
 
+func TestTransportDNSCrypt(t *testing.T) {
+	transportHarness(t, dnscryptTransport())
+}
+
 func TestTransportReuseTLS(t *testing.T) {
 	transport := tlsTransport()
 	transport.ReuseConn = true
@@ -96,6 +100,12 @@ func TestTransportReuseQUIC(t *testing.T) {
 
 func TestTransportReuseHTTP(t *testing.T) {
 	transport := httpTransport()
+	transport.ReuseConn = true
+	transportHarness(t, transport)
+}
+
+func TestTransportReuseDNSCrypt(t *testing.T) {
+	transport := dnscryptTransport()
 	transport.ReuseConn = true
 	transportHarness(t, transport)
 }

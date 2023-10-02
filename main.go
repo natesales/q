@@ -11,16 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/natesales/q/output"
-
-	"github.com/natesales/q/util"
-
 	"github.com/jedisct1/go-dnsstamps"
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/natesales/q/cli"
+	"github.com/natesales/q/output"
+	"github.com/natesales/q/transport"
+	"github.com/natesales/q/util"
 )
 
 const defaultServerVar = "Q_DEFAULT_SERVER"
@@ -176,15 +175,20 @@ func parseServer() (string, string, error) {
 
 		switch parsedStamp.Proto {
 		case dnsstamps.StampProtoTypePlain:
-			scheme = "plain"
+			scheme = transport.TypePlain
 		case dnsstamps.StampProtoTypeTLS:
-			scheme = "tls"
+			scheme = transport.TypeTLS
 		case dnsstamps.StampProtoTypeDoH:
-			scheme = "https"
+			scheme = transport.TypeHTTP
+		case dnsstamps.StampProtoTypeDNSCrypt:
+			// DNS stamp parsing happens again in the DNSCrypt transport
+			return transport.TypeDNSCrypt, opts.Server, nil
 		default:
 			return "", "", fmt.Errorf("unsupported protocol %s in DNS stamp", parsedStamp.Proto.String())
 		}
+		log.Tracef("DNS stamp parsed as %s", scheme)
 
+		// TODO: This might be a source of problems...we might want to be using parsedStamp.ServerAddrStr
 		host = parsedStamp.ProviderName
 	} else { // Not DNS stamp
 		// Server without port or protocol

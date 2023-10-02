@@ -79,6 +79,10 @@ Application Options:
       --quic-alpn-tokens=      QUIC ALPN tokens (default: doq, doq-i11)
       --quic-no-pmtud          Disable QUIC PMTU discovery
       --quic-no-length-prefix  Don't add RFC 9250 compliant length prefix
+      --dnscrypt-tcp           Use TCP for DNSCrypt (default UDP)
+      --dnscrypt-udp-size=     Maximum size of a DNS response this client can sent or receive (default: 0)
+      --dnscrypt-key=          DNSCrypt public key
+      --dnscrypt-provider=     DNSCrypt provider name
       --default-rr-types=      Default record types (default: A, AAAA, NS, MX, TXT, CNAME)
       --udp-buffer=            Set EDNS0 UDP size in query (default: 1232)
   -v, --verbose                Show verbose log messages
@@ -100,6 +104,7 @@ Help Options:
 - DNS over HTTPS ([RFC 8484](https://tools.ietf.org/html/rfc8484))
 - DNS over QUIC ([RFC 9250](https://tools.ietf.org/html/rfc9250))
 - Oblivious DNS over HTTPS ([RFC 9230](https://tools.ietf.org/html/rfc9230))
+- DNSCrypt v2 ([draft-dennis-dprive-dnscrypt](https://dnscrypt.github.io/dnscrypt-protocol/draft-denis-dprive-dnscrypt.html))
 
 ### Installation
 

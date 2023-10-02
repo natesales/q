@@ -61,6 +61,12 @@ type Flags struct {
 	QUICNoPMTUD        bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
 	QUICNoLengthPrefix bool     `long:"quic-no-length-prefix" description:"Don't add RFC 9250 compliant length prefix"`
 
+	// DNSCrypt
+	DNSCryptTCP       bool   `long:"dnscrypt-tcp" description:"Use TCP for DNSCrypt (default UDP)"`
+	DNSCryptUDPSize   int    `long:"dnscrypt-udp-size" description:"Maximum size of a DNS response this client can sent or receive" default:"0"`
+	DNSCryptPublicKey string `long:"dnscrypt-key" description:"DNSCrypt public key"`
+	DNSCryptProvider  string `long:"dnscrypt-provider" description:"DNSCrypt provider name"`
+
 	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"CNAME"`
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`

@@ -284,6 +284,32 @@ func TestMainQUICQuery(t *testing.T) {
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
+func TestMainDNSCryptStampQuery(t *testing.T) {
+	clearOpts()
+	var out bytes.Buffer
+	assert.Nil(t, driver([]string{
+		"-v", "--trace",
+		"-q", "example.com",
+		"-t", "A",
+		"@sdns://AQMAAAAAAAAAETk0LjE0MC4xNC4xNDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+}
+
+func TestMainDNSCryptManualQuery(t *testing.T) {
+	clearOpts()
+	var out bytes.Buffer
+	assert.Nil(t, driver([]string{
+		"-v", "--trace",
+		"-q", "example.com",
+		"-t", "A",
+		"@dnscrypt://94.140.14.14:5443",
+		"--dnscrypt-key", "d12b47f252dcf2c2bbf8991086eaf79ce4495d8b16c8a0c4322e52ca3f390873",
+		"--dnscrypt-provider", "2.dnscrypt.default.ns1.adguard.com",
+	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+}
+
 func TestMainInvalidServerURL(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
