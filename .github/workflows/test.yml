@@ -32,7 +32,7 @@ jobs:
       - name: Run tests
         run: |
           set -euo pipefail
-          go test -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
+          go test -p 1 -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
 
       - name: Upload original test log
         uses: actions/upload-artifact@v2
