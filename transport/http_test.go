@@ -48,6 +48,7 @@ func TestTransportHTTPServerError(t *testing.T) {
 			t.Errorf("error starting HTTP server: %s", err)
 		}
 	}()
+	time.Sleep(50 * time.Millisecond) // Wait for server to start
 
 	tp := httpTransport()
 	tp.Server = "http://localhost" + listen
@@ -74,6 +75,7 @@ func TestTransportHTTPIDMismatch(t *testing.T) {
 			t.Errorf("error starting HTTP server: %s", err)
 		}
 	}()
+	time.Sleep(50 * time.Millisecond) // Wait for server to start
 
 	tp := httpTransport()
 	tp.Server = "http://localhost" + listen
