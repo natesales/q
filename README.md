@@ -13,7 +13,7 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 
 ### Examples
 
-```
+```text
 q example.com                            Lookup default records for a domain
 q example.com MX SOA                     ...or specify a list of types
 
@@ -26,7 +26,8 @@ q example.com MX --format=json           ...or as JSON (or YAML)
 ```
 
 ### Usage
-```
+
+```text
 Usage:
   q [OPTIONS] [@server] [type...] [name]
 
@@ -129,6 +130,7 @@ go install -ldflags="-s -w -X main.version=release"
 ### Server Selection
 
 `q` will use a server from the following sources, in order:
+
 1. `@server` argument (e.g. `@9.9.9.9` or `@https://dns.google/dns-query`)
 2. `Q_DEFAULT_SERVER` environment variable
 3. `/etc/resolv.conf`

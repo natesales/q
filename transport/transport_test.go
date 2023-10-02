@@ -111,11 +111,11 @@ func TestTransportReuseDNSCrypt(t *testing.T) {
 }
 
 // TODO: Enable test
-//func TestTransportODoH(t *testing.T) {
-//	transportHarness(t, odohTransport())
-//}
-//func TestTransportReuseODoH(t *testing.T) {
-//	transport := odohTransport()
-//	transport.ReuseConn = true
-//	reuseTransportHarness(t, transport)
-//}
+// func TestTransportODoH(t *testing.T) {
+// 	transportHarness(t, odohTransport())
+// }
+// func TestTransportReuseODoH(t *testing.T) {
+// 	transport := odohTransport()
+// 	transport.ReuseConn = true
+// 	reuseTransportHarness(t, transport)
+// }

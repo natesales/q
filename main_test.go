@@ -31,15 +31,15 @@ func TestMainVersion(t *testing.T) {
 }
 
 // TODO
-//func TestMainODoHQuery(t *testing.T) {
-//	clearOpts()
-//	assert.Nil(t, driver([]string{
-//		"-v", "--trace", "--all",
-//		"-q", "example.com",
-//		"-s", "https://odoh.cloudflare-dns.com",
-//		"--odoh-proxy", "https://odoh.crypto.sx",
-//	}, &out))
-//}
+// func TestMainODoHQuery(t *testing.T) {
+// 	clearOpts()
+// 	assert.Nil(t, driver([]string{
+// 		"-v", "--trace", "--all",
+// 		"-q", "example.com",
+// 		"-s", "https://odoh.cloudflare-dns.com",
+// 		"--odoh-proxy", "https://odoh.crypto.sx",
+// 	}, &out))
+// }
 
 func TestMainRawFormat(t *testing.T) {
 	clearOpts()

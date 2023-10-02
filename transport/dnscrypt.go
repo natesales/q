@@ -1,9 +1,10 @@
 package transport
 
 import (
+	"time"
+
 	"github.com/jedisct1/go-dnsstamps"
 	log "github.com/sirupsen/logrus"
-	"time"
 
 	"github.com/ameshkov/dnscrypt/v2"
 	"github.com/miekg/dns"

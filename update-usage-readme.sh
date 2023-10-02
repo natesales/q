@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cat README.md | sed '/# Usage/q' > README.tmp.md
-echo '```' >> README.tmp.md
+printf '\n```text\n' >> README.tmp.md
 go build && ./q -h | cat | sed -z '$ s/\n$//' >> README.tmp.md
 printf '```\n\n### Demo\n' >> README.tmp.md
 cat README.md | sed '1,/### Demo/d' >> README.tmp.md

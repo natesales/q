@@ -57,7 +57,7 @@ type Flags struct {
 	HTTPMethod    string `long:"http-method" description:"HTTP method" default:"GET"`
 
 	// QUIC
-	QUICALPNTokens     []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
+	QUICALPNTokens     []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"` //nolint:golint,staticcheck
 	QUICNoPMTUD        bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
 	QUICNoLengthPrefix bool     `long:"quic-no-length-prefix" description:"Don't add RFC 9250 compliant length prefix"`
 
@@ -67,7 +67,7 @@ type Flags struct {
 	DNSCryptPublicKey string `long:"dnscrypt-key" description:"DNSCrypt public key"`
 	DNSCryptProvider  string `long:"dnscrypt-provider" description:"DNSCrypt provider name"`
 
-	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"CNAME"`
+	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"CNAME"` //nolint:golint,staticcheck
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`

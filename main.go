@@ -195,9 +195,11 @@ func parseServer() (string, string, error) {
 		host = strings.ReplaceAll(opts.Server, scheme+"://", "")
 
 		// Remove port from host
-		if strings.Contains(host, "[") && !strings.Contains(host, "]") || !strings.Contains(host, "[") && strings.Contains(host, "]") {
+		switch {
+		case strings.Contains(host, "[") && !strings.Contains(host, "]") ||
+			!strings.Contains(host, "[") && strings.Contains(host, "]"):
 			return "", "", fmt.Errorf("invalid IPv6 bracket notation")
-		} else if strings.Contains(host, "[") && strings.Contains(host, "]") { // IPv6 in bracket notation
+		case strings.Contains(host, "[") && strings.Contains(host, "]"): // IPv6 in bracket notation
 			portSuffix := strings.Split(host, "]:")
 			if len(portSuffix) > 1 { // With explicit port
 				port = portSuffix[1]
@@ -216,12 +218,12 @@ func parseServer() (string, string, error) {
 
 			host = "[" + host + "]"
 			log.Tracef("host contains ], treating as v6 with port. host: %s port: %s", host, port)
-		} else if strings.Contains(host, ".") && strings.Contains(host, ":") { // IPv4 or hostname with port
+		case strings.Contains(host, ".") && strings.Contains(host, ":"): // IPv4 or hostname with port
 			parts := strings.Split(host, ":")
 			host = parts[0]
 			port = parts[1]
 			log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
-		} else if strings.Contains(host, ":") { // IPv6 no port
+		case strings.Contains(host, ":"): // IPv6 no port
 			// Remove IPv6 scope ID
 			if strings.Contains(host, "%") {
 				parts := strings.Split(host, "%")
@@ -231,7 +233,7 @@ func parseServer() (string, string, error) {
 
 			host = "[" + host + "]"
 			log.Tracef("host contains :, treating as v6 without port. host %s", host)
-		} else {
+		default:
 			log.Tracef("no cases matched for host %s port %s", host, port)
 		}
 	}
