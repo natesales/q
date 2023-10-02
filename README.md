@@ -152,53 +152,42 @@ The generated file may be used by Wireshark to decipher the captured traffic.
 
 ### Feature Comparison
 
-#### DNS Transport Protocols
-
-| Protocol                          |  q  | doggo | dog | kdig | dig | drill |
-|:----------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| RFC 1034 UDP/TCP                  |  +  |   +   |  +  |  +   |  +  |   +   |
-| RFC 7858 DNS over TLS             |  +  |   +   |  +  |  +   |  -  |   -   |
-| RFC 8484 DNS over HTTPS           |  +  |   +   |  +  |  +   |  -  |   -   |
-| RFC 9250 DNS over QUIC            |  +  |   +   |  -  |  -   |  -  |   -   |
-| RFC 9230 Oblivious DNS over HTTPS |  +  |   -   |  -  |  -   |  -  |   -   |
-
-#### Output Formats
-
-| Format          |  q  | doggo | dog | kdig | dig | drill |
-|:----------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| Raw (dig-style) |  +  |   -   |  +  |  +   |  +  |   +   |
-| Pretty colors   |  +  |   +   |  +  |  -   |  -  |   -   |
-| JSON            |  +  |   +   |  +  |  -   |  -  |   -   |
-| YAML            |  +  |   -   |  -  |  -   |  +  |   -   |
-
-#### Output Flags
-
-| Option                    |  q  | doggo | dog | kdig | dig | drill |
-|:--------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| Toggle question section   |  +  |   -   |  -  |  +   |  +  |   -   |
-| Toggle answer section     |  +  |   -   |  -  |  +   |  +  |   -   |
-| Toggle authority section  |  +  |   -   |  -  |  +   |  +  |   -   |
-| Toggle additional section |  +  |   -   |  -  |  +   |  +  |   -   |
-| Show query time           |  +  |   -   |  -  |  +   |  +  |   -   |
-
-#### Query Flags
-
-| Flag |  q  | doggo | dog | kdig | dig | drill |
-|:-----|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| AA   |  +  |   -   |  +  |  +   |  +  |   +   |
-| AD   |  +  |   -   |  +  |  +   |  +  |   +   |
-| CD   |  +  |   -   |  +  |  +   |  +  |   +   |
-| RD   |  +  |   -   |  -  |  +   |  +  |   +   |
-| Z    |  +  |   -   |  -  |  +   |  +  |   -   |
-| DO   |  +  |   -   |  +  |  +   |  +  |   +   |
-| TC   |  +  |   -   |  -  |  +   |  +  |   +   |
-
-#### Protocol Tweaks
-
-| Flag                          |  q  | doggo | dog | kdig | dig | drill |
-|:------------------------------|:---:|:-----:|:---:|:----:|:---:|:-----:|
-| HTTP Method                   |  +  |   -   |  -  |  -   |  -  |   -   |
-| QUIC ALPN Tokens              |  +  |   -   |  -  |  -   |  -  |   -   |
-| QUIC toggle PMTU discovery    |  +  |   -   |  -  |  -   |  -  |   -   |
-| QUIC timeouts (dial and idle) |  +  |   -   |  -  |  -   |  -  |   -   |
-| TLS handshake timeout         |  +  |   -   |  -  |  -   |  -  |   -   |
+| Protocol                      | q | doggo | dog | kdig | dig | drill |
+|:------------------------------|:-:|:-----:|:---:|:----:|:---:|:-----:|
+| **Transport Protocols**       |   |       |     |      |     |       |
+| UDP/TCP                       | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ✅   |
+| DNS over TLS                  | ✅ |   ✅   |  ✅  |  ✅   |  ❌  |   ❌   |
+| DNS over HTTPS                | ✅ |   ✅   |  ✅  |  ✅   |  ❌  |   ❌   |
+| DNS over QUIC                 | ✅ |   ✅   |  ❌  |  ❌   |  ❌  |   ❌   |
+| Oblivious DNS over HTTPS      | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| DNSCrypt v2                   | ✅ |   ✅   |  ❌  |  ❌   |  ❌  |   ❌   |
+| **Features**                  |   |       |     |      |     |       |
+| Recursive AXFR                | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| IP Whois                      | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| Resolve PTRs from A/AAAAs     | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| Server from DNS Stamp         | ✅ |   ✅   |  ❌  |  ❌   |  ❌  |   ❌   |
+| **Output Formats**            |   |       |     |      |     |       |
+| Raw (dig-style)               | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
+| Pretty colors                 | ✅ |   ✅   |  ✅  |  ❌   |  ❌  |   ❌   |
+| JSON                          | ✅ |   ✅   |  ✅  |  ❌   |  ❌  |   ❌   |
+| YAML                          | ✅ |   ❌   |  ❌  |  ❌   |  ✅  |   ❌   |
+| **Output Control**            |   |       |     |      |     |       |
+| Toggle question section       | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| Toggle answer section         | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| Toggle authority section      | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| Toggle additional section     | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| Show query time               | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| **Query Flags**               |   |       |     |      |     |       |
+| AA                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
+| AD                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
+| CD                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
+| RD                            | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ✅   |
+| Z                             | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| DO                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
+| TC                            | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ✅   |
+| **Protocol Tweaks**           |   |       |     |      |     |       |
+| HTTP Method                   | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| QUIC ALPN Tokens              | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| QUIC toggle PMTU discovery    | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| QUIC timeouts (dial and idle) | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| TLS handshake timeout         | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
