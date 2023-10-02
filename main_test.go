@@ -353,6 +353,7 @@ func TestMainNSID(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"-v", "--trace", "--all",
+		"@9.9.9.9",
 		"+nsid",
 	}, &out))
 	assert.Regexp(t, regexp.MustCompile(`.*.pch.net.*`), out.String())
