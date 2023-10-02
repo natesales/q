@@ -151,7 +151,7 @@ func (p Printer) PrintPretty(i int, reply *dns.Msg) {
 			flags = "cd"
 		}
 
-		util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Query %s Ans %s Auth %s Add)\n",
+		util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Q %s A %s N %s E)\n",
 			util.Color("magenta", dns.OpcodeToString[reply.MsgHdr.Opcode]),
 			util.Color("teal", dns.RcodeToString[reply.MsgHdr.Rcode]),
 			util.Color("green", fmt.Sprintf("%d", reply.MsgHdr.Id)),
