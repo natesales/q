@@ -38,8 +38,44 @@ func PrettyPrintNSID(opt []*dns.Msg, out io.Writer) {
 	}
 }
 
+// ptr resolves an IP address (not an arpa FQDN) to its PTR record
+func (p Printer) ptr(ip string) (string, error) {
+	// Initialize ptrCache if it doesn't exist
+	if p.ptrCache == nil {
+		p.ptrCache = make(map[string]string)
+	}
+
+	// Return the result from cache if we already have it
+	if ptr, ok := p.ptrCache[ip]; ok {
+		return ptr, nil
+	}
+
+	// Create PTR query
+	qname, err := dns.ReverseAddr(ip)
+	if err != nil {
+		log.Fatalf("error reversing PTR record: %s", err)
+	}
+	msg := dns.Msg{}
+	msg.SetQuestion(qname, dns.TypePTR)
+
+	// Resolve qname and cache result
+	resp, err := (*p.Transport).Exchange(&msg)
+	if err != nil {
+		return "", err
+	}
+
+	// Cache and return
+	if len(resp.Answer) > 0 {
+		p.ptrCache[ip] = resp.Answer[0].(*dns.PTR).Ptr
+		return resp.Answer[0].(*dns.PTR).Ptr, nil
+	}
+
+	// No value
+	return "", fmt.Errorf("no PTR record found for %s", ip)
+}
+
 // printPrettyRR prints a pretty RR
-func (p Printer) printPrettyRR(a dns.RR, doWhois bool) {
+func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 	// Initialize existingRRs map if it doesn't exist
 	if p.existingRRs == nil {
 		p.existingRRs = make(map[string]bool)
@@ -58,12 +94,25 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois bool) {
 		ttl = (time.Duration(a.Header().Ttl) * time.Second).String()
 	}
 
+	// Copy val now before modifying it with a suffix
+	valCopy := val
+
+	// Handle whois
 	if doWhois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
 		resp, err := whois.Query(valCopy)
 		if err != nil {
 			log.Warnf("bgp.tools query: %s", err)
 		} else {
 			val += util.Color(util.ColorTeal, fmt.Sprintf(" (AS%d %s)", resp.AS, resp.ASName))
+		}
+	}
+
+	// Handle PTR resolution
+	if doResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
+		if ptr, err := p.ptr(valCopy); err == nil {
+			val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", ptr))
+		} else {
+			log.Warnf("PTR resolution: %s", err)
 		}
 	}
 
@@ -94,19 +143,19 @@ func (p Printer) PrintPretty(i int, reply *dns.Msg) {
 			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
 		}
 		for _, a := range reply.Answer {
-			p.printPrettyRR(a, p.Opts.Whois)
+			p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
 		}
 	}
 	if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
 		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Authority:"))
 		for _, a := range reply.Ns {
-			p.printPrettyRR(a, p.Opts.Whois)
+			p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
 		}
 	}
 	if p.Opts.ShowAdditional && len(reply.Extra) > 0 {
 		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Additional:"))
 		for _, a := range reply.Extra {
-			p.printPrettyRR(a, p.Opts.Whois)
+			p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
 		}
 	}
 

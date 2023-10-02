@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/natesales/q/cli"
+	"github.com/natesales/q/transport"
 )
 
 type Printer struct {
@@ -14,5 +15,9 @@ type Printer struct {
 	Server     string
 	NumReplies int
 
+	// Transport is used to resolve IP addresses in A/AAAA records to their PTR records
+	Transport *transport.Transport
+
+	ptrCache    map[string]string // IP -> PTR value
 	existingRRs map[string]bool
 }

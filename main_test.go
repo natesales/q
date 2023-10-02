@@ -513,3 +513,14 @@ func TestMainShowAll(t *testing.T) {
 	assert.Contains(t, out.String(), "Answer:")
 	assert.Contains(t, out.String(), "Stats:")
 }
+
+func TestMainResolveIPs(t *testing.T) {
+	clearOpts()
+	var out bytes.Buffer
+	assert.Nil(t, driver([]string{
+		"core1.fmt2.he.net",
+		"A", "AAAA",
+		"-R",
+	}, &out))
+	assert.Regexp(t, regexp.MustCompile(`core1.fmt2.he.net. .* A .* \(core1.fmt2.he.net.\)`), out.String())
+}

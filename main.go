@@ -524,6 +524,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		Opts:       &opts,
 		QueryTime:  queryTime,
 		NumReplies: len(replies),
+		Transport:  txp,
 	}
 	for i, reply := range replies {
 		switch opts.Format {
