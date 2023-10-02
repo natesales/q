@@ -34,6 +34,7 @@ type Flags struct {
 	ShowAll        bool   `long:"all" description:"Show all sections and statistics"`
 	Whois          bool   `short:"w" description:"Resolve ASN/ASName for A and AAAA records"`
 	ValueOnly      bool   `short:"r" long:"value" description:"Show record values only"`
+	ResolveIPs     bool   `short:"R" long:"resolve-ips" description:"Resolve PTR records for IP addresses in A and AAAA records"`
 
 	// Header flags
 	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`
