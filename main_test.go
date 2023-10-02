@@ -15,7 +15,6 @@ func TestMainQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 	}, &out))
@@ -46,7 +45,6 @@ func TestMainRawFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 		"--format=raw",
@@ -59,7 +57,6 @@ func TestMainJSONFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 		"--format=json",
@@ -73,7 +70,6 @@ func TestMainInvalidOutputFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 		"--format=invalid",
@@ -87,7 +83,6 @@ func TestMainParseTypes(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@https://dns.quad9.net",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 		"-t", "A",
@@ -127,7 +122,6 @@ func TestMainInvalidODoHProxy(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 		"-s", "https://odoh.cloudflare-dns.com",
@@ -141,7 +135,6 @@ func TestMainReverseQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-x",
 		"-q", "1.1.1.1",
@@ -153,7 +146,6 @@ func TestMainInferredQname(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@https://9.9.9.9",
 		"-v", "--trace", "--all",
 		"example.com",
 		"A",
@@ -177,7 +169,6 @@ func TestMainInvalidReverseQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-x",
 		"example.com",
@@ -191,7 +182,6 @@ func TestMainInvalidUpstream(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-s", "127.127.127.127:1",
 		"example.com",
@@ -218,7 +208,6 @@ func TestMainPad(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"@9.9.9.9",
 		"-v", "--trace", "--all",
 		"-q", "example.com",
 		"--pad",
@@ -338,7 +327,6 @@ func TestMainNSID(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"-v", "--trace", "--all",
-		"@tls://dns.quad9.net",
 		"+nsid",
 	}, &out))
 	assert.Regexp(t, regexp.MustCompile(`.*.pch.net.*`), out.String())
