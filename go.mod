@@ -1,6 +1,6 @@
 module github.com/natesales/q
 
-go 1.18
+go 1.21
 
 require (
 	github.com/cloudflare/odoh-go v1.0.0
