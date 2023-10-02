@@ -20,10 +20,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
           go-version: 1.21
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: go build -v ./...
       - run: go install github.com/jpoles1/gopherbadger@latest
       - run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
@@ -35,7 +35,7 @@ jobs:
           go test -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
 
       - name: Upload original test log
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: test-log
