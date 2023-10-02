@@ -51,6 +51,17 @@ publishers:
 brews:
   - name: q
     homepage: https://github.com/natesales/repo
-    tap:
+    repository:
       owner: natesales
       name: repo
+dockers:
+  - image_templates:
+      - "ghcr.io/natesales/q:{{ .Version }}"
+      - "ghcr.io/natesales/q:latest"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=GPL-3.0-only
