@@ -10,16 +10,27 @@ import (
 
 var UseColor = true
 
+const (
+	ColorBlack   = "black"
+	ColorRed     = "red"
+	ColorGreen   = "green"
+	ColorYellow  = "yellow"
+	ColorPurple  = "purple"
+	ColorMagenta = "magenta"
+	ColorTeal    = "teal"
+	ColorWhite   = "white"
+)
+
 // ANSI colors
 var colors = map[string]string{
-	"black":   "\033[1;30m%s\033[0m",
-	"red":     "\033[1;31m%s\033[0m",
-	"green":   "\033[1;32m%s\033[0m",
-	"yellow":  "\033[1;33m%s\033[0m",
-	"purple":  "\033[1;34m%s\033[0m",
-	"magenta": "\033[1;35m%s\033[0m",
-	"teal":    "\033[1;36m%s\033[0m",
-	"white":   "\033[1;37m%s\033[0m",
+	ColorBlack:   "\033[1;30m%s\033[0m",
+	ColorRed:     "\033[1;31m%s\033[0m",
+	ColorGreen:   "\033[1;32m%s\033[0m",
+	ColorYellow:  "\033[1;33m%s\033[0m",
+	ColorPurple:  "\033[1;34m%s\033[0m",
+	ColorMagenta: "\033[1;35m%s\033[0m",
+	ColorTeal:    "\033[1;36m%s\033[0m",
+	ColorWhite:   "\033[1;37m%s\033[0m",
 }
 
 // Color returns a color formatted string
