@@ -454,13 +454,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// TLS secret logging
-	if klf := os.Getenv("SSLKEYLOGFILE"); klf != "" {
-		log.Warnf("SSLKEYLOGFILE is set! TLS master secrets will be logged.")
-		keyLog, err := os.OpenFile(klf, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	if opts.TLSKeyLogFile != "" {
+		log.Warnf("TLS secret logging enabled")
+		keyLogFile, err := os.OpenFile(opts.TLSKeyLogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 		if err != nil {
-			return fmt.Errorf("unable to open SSLKEYLOGFILE: %s %s", klf, err)
+			return fmt.Errorf("unable to open TLS key log file: %s", err)
 		}
-		tlsConfig.KeyLogWriter = keyLog
+		tlsConfig.KeyLogWriter = keyLogFile
 	}
 
 	var rrTypesSlice []uint16

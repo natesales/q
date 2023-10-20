@@ -78,6 +78,7 @@ Application Options:
       --tls-cipher-suites=     TLS cipher suites
       --tls-client-cert=       TLS client certificate file
       --tls-client-key=        TLS client key file
+      --tls-key-log-file=      TLS key log file [$SSLKEYLOGFILE]
       --http-user-agent=       HTTP user agent
       --http-method=           HTTP method (default: GET)
       --quic-alpn-tokens=      QUIC ALPN tokens (default: doq, doq-i11)

@@ -54,6 +54,7 @@ type Flags struct {
 	TLSCipherSuites      []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
 	TLSClientCertificate string   `long:"tls-client-cert" description:"TLS client certificate file"`
 	TLSClientKey         string   `long:"tls-client-key" description:"TLS client key file"`
+	TLSKeyLogFile        string   `long:"tls-key-log-file" env:"SSLKEYLOGFILE" description:"TLS key log file"`
 
 	// HTTP
 	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent" default:""`
