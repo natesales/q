@@ -19,6 +19,7 @@ type Flags struct {
 	NoIDCheck    bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
 	NoReuseConn  bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
 	TXTConcat    bool          `long:"txtconcat" description:"Concatenate TXT responses"`
+	ID           int           `long:"qid" description:"Set query ID (-1 for random)" default:"-1"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 

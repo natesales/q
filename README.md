@@ -50,6 +50,7 @@ Application Options:
       --no-id-check            Disable checking of DNS response ID
       --no-reuse-conn          Use a new connection for each query
       --txtconcat              Concatenate TXT responses
+      --qid=                   Set query ID (-1 for random) (default: -1)
       --recaxfr                Perform recursive AXFR
   -f, --format=                Output format (pretty, json, yaml, raw) (default: pretty)
       --pretty-ttls            Format TTLs in human readable format (default: true)

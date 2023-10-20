@@ -493,6 +493,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.UDPBuffer,
 		opts.ClientSubnet,
 		opts.Pad,
+		opts.ID,
 	)
 
 	server, transportType, err := parseServer()

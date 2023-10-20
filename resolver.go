@@ -22,6 +22,7 @@ func createQuery(
 	udpBuffer uint16,
 	clientSubnet string,
 	pad bool,
+	id int,
 ) []dns.Msg {
 	var queries []dns.Msg
 
@@ -29,7 +30,11 @@ func createQuery(
 	for _, qType := range rrTypes {
 		req := dns.Msg{}
 
-		req.Id = dns.Id()
+		if id != -1 {
+			req.Id = uint16(id)
+		} else {
+			req.Id = dns.Id()
+		}
 		req.Authoritative = aaFlag
 		req.AuthenticatedData = adFlag
 		req.CheckingDisabled = cdFlag
