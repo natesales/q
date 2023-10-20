@@ -111,11 +111,11 @@ func createQuery(
 }
 
 // newTransport creates a new transport based on local options
-func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Transport, error) {
+func newTransport(server string, transportType transport.Type, tlsConfig *tls.Config) (*transport.Transport, error) {
 	var ts transport.Transport
 
-	switch protocol {
-	case transport.TypeHTTP, "https":
+	switch transportType {
+	case transport.TypeHTTP:
 		if opts.ODoHProxy != "" {
 			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
 			ts = &transport.ODoH{
@@ -160,7 +160,6 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 				ProviderName: opts.DNSCryptProvider,
 			}
 		}
-
 	case transport.TypeQUIC:
 		log.Debugf("Using QUIC transport: %s", server)
 		ts = &transport.QUIC{
@@ -195,7 +194,7 @@ func newTransport(server, protocol string, tlsConfig *tls.Config) (*transport.Tr
 			UDPBuffer: opts.UDPBuffer,
 		}
 	default:
-		return nil, fmt.Errorf("unknown transport protocol %s", protocol)
+		return nil, fmt.Errorf("unknown transport protocol %s", transportType)
 	}
 
 	return &ts, nil

@@ -7,13 +7,15 @@ type Transport interface {
 	Close() error
 }
 
+type Type string
+
 const (
-	TypePlain    = "plain"
-	TypeTCP      = "tcp"
-	TypeTLS      = "tls"
-	TypeHTTP     = "http"
-	TypeQUIC     = "quic"
-	TypeDNSCrypt = "dnscrypt"
+	TypePlain    Type = "plain"
+	TypeTCP      Type = "tcp"
+	TypeTLS      Type = "tls"
+	TypeHTTP     Type = "http"
+	TypeQUIC     Type = "quic"
+	TypeDNSCrypt Type = "dnscrypt"
 )
 
 // Interface guards

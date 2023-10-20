@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -155,15 +156,21 @@ func txtConcat(m *dns.Msg) {
 	m.Answer = answers
 }
 
-// parseServer parses opts.Server into a protocol and host:port
-func parseServer() (string, string, error) {
-	var scheme, host, port, scopeId string
+// parseServer parses opts.Server and returns the server address and transport type
+func parseServer() (string, transport.Type, error) {
+	var txp transport.Type
+	var host, port, scopeId string
+	var isHTTPS bool
 
 	// Set default protocol
 	if !strings.Contains(opts.Server, "://") {
-		scheme = "plain"
+		txp = transport.TypePlain
 	} else {
-		scheme = strings.Split(opts.Server, "://")[0]
+		txp = transport.Type(strings.Split(opts.Server, "://")[0])
+		if txp == "https" {
+			isHTTPS = true
+			txp = transport.TypeHTTP
+		}
 	}
 
 	// Parse DNS stamp
@@ -175,24 +182,25 @@ func parseServer() (string, string, error) {
 
 		switch parsedStamp.Proto {
 		case dnsstamps.StampProtoTypePlain:
-			scheme = transport.TypePlain
+			txp = transport.TypePlain
 		case dnsstamps.StampProtoTypeTLS:
-			scheme = transport.TypeTLS
+			txp = transport.TypeTLS
 		case dnsstamps.StampProtoTypeDoH:
-			scheme = transport.TypeHTTP
+			isHTTPS = true // Default to DoH (HTTPS)
+			txp = transport.TypeHTTP
 		case dnsstamps.StampProtoTypeDNSCrypt:
 			// DNS stamp parsing happens again in the DNSCrypt transport
-			return transport.TypeDNSCrypt, opts.Server, nil
+			return opts.Server, transport.TypeDNSCrypt, nil
 		default:
 			return "", "", fmt.Errorf("unsupported protocol %s in DNS stamp", parsedStamp.Proto.String())
 		}
-		log.Tracef("DNS stamp parsed as %s", scheme)
+		log.Tracef("DNS stamp parsed as %s", txp)
 
 		// TODO: This might be a source of problems...we might want to be using parsedStamp.ServerAddrStr
 		host = parsedStamp.ProviderName
 	} else { // Not DNS stamp
-		// Server without port or protocol
-		host = strings.ReplaceAll(opts.Server, scheme+"://", "")
+		// Remove anything before and including the first ://
+		host = regexp.MustCompile(`^.*://`).ReplaceAllString(opts.Server, "")
 
 		// Remove port from host
 		switch {
@@ -223,7 +231,7 @@ func parseServer() (string, string, error) {
 			host = parts[0]
 			port = parts[1]
 			log.Tracef("host contains . and :, treating as (v4 or host) with explicit port. host %s port %s", host, port)
-		case strings.Contains(host, ":"): // IPv6 no port
+		case strings.Contains(host, ":") && !strings.Contains(host, "/"): // IPv6 no port
 			// Remove IPv6 scope ID
 			if strings.Contains(host, "%") {
 				parts := strings.Split(host, "%")
@@ -243,20 +251,24 @@ func parseServer() (string, string, error) {
 		if !strings.HasPrefix(opts.ODoHProxy, "https://") {
 			return "", "", fmt.Errorf("ODoH proxy must use HTTPS")
 		}
-		if scheme != "https" {
+		if !strings.HasPrefix(opts.Server, "https://") {
 			return "", "", fmt.Errorf("ODoH target must use HTTPS")
 		}
 	}
 
 	if port == "" {
-		switch scheme {
-		case "quic":
+		switch txp {
+		case transport.TypeQUIC:
 			port = "853"
-		case "tls":
+		case transport.TypeTLS:
 			port = "853"
-		case "https":
-			port = "443"
-		default:
+		case transport.TypeHTTP:
+			if isHTTPS {
+				port = "443"
+			} else {
+				port = "80"
+			}
+		case transport.TypePlain:
 			port = "53"
 		}
 		log.Tracef("Setting port to %s", port)
@@ -264,8 +276,13 @@ func parseServer() (string, string, error) {
 		log.Tracef("Port is %s, not overriding", port)
 	}
 
-	fqdn := scheme + "://" + host
-	if scheme != "https" {
+	urlScheme := string(txp)
+	if isHTTPS {
+		urlScheme = "https"
+	}
+
+	fqdn := urlScheme + "://" + host
+	if txp != transport.TypeHTTP {
 		fqdn += ":" + port
 	}
 	log.Tracef("checking FQDN %s", fqdn)
@@ -276,7 +293,7 @@ func parseServer() (string, string, error) {
 
 	server := host + ":" + port
 
-	if scheme == "https" {
+	if txp == transport.TypeHTTP {
 		port = strings.Split(port, "/")[0]
 		u.Host += ":" + port
 		server = u.String()
@@ -293,7 +310,7 @@ func parseServer() (string, string, error) {
 		server = strings.Replace(server, "]", "%"+scopeId+"]", 1)
 	}
 
-	return scheme, server, nil
+	return server, txp, nil
 }
 
 // driver is the "main" function for this program that accepts a flag slice for testing
@@ -444,13 +461,23 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		CipherSuites:       parseTLSCipherSuites(opts.TLSCipherSuites),
 	}
 
-	if klf := os.Getenv("SSLKEYLOGFILE"); klf != "" {
-		log.Warnf("SSLKEYLOGFILE is set! TLS master secrets will be logged.")
-		keyLog, err := os.OpenFile(klf, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	// TLS client certificate authentication
+	if opts.TLSClientCertificate != "" {
+		cert, err := tls.LoadX509KeyPair(opts.TLSClientCertificate, opts.TLSClientKey)
 		if err != nil {
-			return fmt.Errorf("unable to open SSLKEYLOGFILE: %s %s", klf, err)
+			return fmt.Errorf("unable to load client certificate: %s", err)
 		}
-		tlsConfig.KeyLogWriter = keyLog
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// TLS secret logging
+	if opts.TLSKeyLogFile != "" {
+		log.Warnf("TLS secret logging enabled")
+		keyLogFile, err := os.OpenFile(opts.TLSKeyLogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		if err != nil {
+			return fmt.Errorf("unable to open TLS key log file: %s", err)
+		}
+		tlsConfig.KeyLogWriter = keyLogFile
 	}
 
 	var rrTypesSlice []uint16
@@ -468,13 +495,15 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.Pad,
 	)
 
-	protocol, server, err := parseServer()
+	server, transportType, err := parseServer()
 	if err != nil {
 		return err
 	}
 
-	if protocol == "quic" {
+	if transportType == transport.TypeQUIC {
 		tlsConfig.NextProtos = opts.QUICALPNTokens
+		// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
+		opts.NoIDCheck = true
 	}
 
 	if opts.RecAXFR {
@@ -486,7 +515,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Create transport
-	txp, err := newTransport(server, protocol, tlsConfig)
+	txp, err := newTransport(server, transportType, tlsConfig)
 	if err != nil {
 		return err
 	}
@@ -499,8 +528,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			return err
 		}
 
-		// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
-		if protocol != "quic" && !opts.NoIDCheck && reply.Id != msg.Id {
+		if !opts.NoIDCheck && reply.Id != msg.Id {
 			return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
 		}
 		replies = append(replies, reply)

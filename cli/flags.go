@@ -33,7 +33,7 @@ type Flags struct {
 	ShowStats      bool   `short:"S" long:"stats" description:"Show time statistics"`
 	ShowAll        bool   `long:"all" description:"Show all sections and statistics"`
 	Whois          bool   `short:"w" description:"Resolve ASN/ASName for A and AAAA records"`
-	ValueOnly      bool   `short:"r" long:"value" description:"Show record values only"`
+	ValueOnly      bool   `short:"r" long:"short" description:"Show record values only"`
 	ResolveIPs     bool   `short:"R" long:"resolve-ips" description:"Resolve PTR records for IP addresses in A and AAAA records"`
 
 	// Header flags
@@ -45,13 +45,16 @@ type Flags struct {
 	Zero                bool `long:"z" description:"Set Z (Zero) flag in query"`
 	Truncated           bool `long:"t" description:"Set TC (Truncated) flag in query"`
 
-	// TCP parameters
-	TLSNoVerify     bool     `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
-	TLSServerName   string   `long:"tls-server-name" description:"TLS server name for host verification"`
-	TLSMinVersion   string   `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
-	TLSMaxVersion   string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
-	TLSNextProtos   []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
-	TLSCipherSuites []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
+	// TLS parameters
+	TLSNoVerify          bool     `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
+	TLSServerName        string   `long:"tls-server-name" description:"TLS server name for host verification"`
+	TLSMinVersion        string   `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
+	TLSMaxVersion        string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+	TLSNextProtos        []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
+	TLSCipherSuites      []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
+	TLSClientCertificate string   `long:"tls-client-cert" description:"TLS client certificate file"`
+	TLSClientKey         string   `long:"tls-client-key" description:"TLS client key file"`
+	TLSKeyLogFile        string   `long:"tls-key-log-file" env:"SSLKEYLOGFILE" description:"TLS key log file"`
 
 	// HTTP
 	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent" default:""`
