@@ -53,6 +53,7 @@ type Flags struct {
 	TLSMaxVersion        string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
 	TLSNextProtos        []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
 	TLSCipherSuites      []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
+	TLSCurvePreferences  []string `long:"tls-curve-preferences" description:"TLS curve preferences"`
 	TLSClientCertificate string   `long:"tls-client-cert" description:"TLS client certificate file"`
 	TLSClientKey         string   `long:"tls-client-key" description:"TLS client key file"`
 	TLSKeyLogFile        string   `long:"tls-key-log-file" env:"SSLKEYLOGFILE" description:"TLS key log file"`

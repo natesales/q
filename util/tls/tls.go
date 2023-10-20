@@ -38,6 +38,13 @@ var cipherSuiteToInt = map[string]uint16{
 	"TLS_CHACHA20_POLY1305_SHA256": tls.TLS_CHACHA20_POLY1305_SHA256,
 }
 
+var curveToInt = map[string]tls.CurveID{
+	"P256":   tls.CurveP256,
+	"P384":   tls.CurveP384,
+	"P521":   tls.CurveP521,
+	"X25519": tls.X25519,
+}
+
 // ParseCipherSuites converts a slice of cipher suite names to a slice of cipher suite ints
 func ParseCipherSuites(cipherSuites []string) []uint16 {
 	var cipherSuiteInts []uint16
@@ -49,6 +56,19 @@ func ParseCipherSuites(cipherSuites []string) []uint16 {
 		}
 	}
 	return cipherSuiteInts
+}
+
+// ParseCurves parses a slice of curves into their IDs
+func ParseCurves(curves []string) []tls.CurveID {
+	var curveIDs []tls.CurveID
+	for _, curve := range curves {
+		if curveID, ok := curveToInt[curve]; ok {
+			curveIDs = append(curveIDs, curveID)
+		} else {
+			log.Fatalf("Unknown TLS curve: %s", curve)
+		}
+	}
+	return curveIDs
 }
 
 // Version returns a TLS version number by given protocol string with a fallback

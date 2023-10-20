@@ -400,6 +400,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		MaxVersion:         tlsutil.Version(opts.TLSMaxVersion, tls.VersionTLS13),
 		NextProtos:         opts.TLSNextProtos,
 		CipherSuites:       tlsutil.ParseCipherSuites(opts.TLSCipherSuites),
+		CurvePreferences:   tlsutil.ParseCurves(opts.TLSCurvePreferences),
 	}
 
 	// TLS client certificate authentication
