@@ -128,6 +128,42 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 	}
 }
 
+func (p Printer) printSection(rrs []dns.RR) {
+	for _, a := range rrs {
+		p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
+	}
+}
+
+// flags returns a string of flags from a dns.Msg
+func flags(m *dns.Msg) string {
+	out := ""
+	if m.MsgHdr.Response {
+		out += "qr "
+	}
+	if m.MsgHdr.Authoritative {
+		out += "aa "
+	}
+	if m.MsgHdr.Truncated {
+		out += "tc "
+	}
+	if m.MsgHdr.RecursionDesired {
+		out += "rd "
+	}
+	if m.MsgHdr.RecursionAvailable {
+		out += "ra "
+	}
+	if m.MsgHdr.Zero {
+		out += "z "
+	}
+	if m.MsgHdr.AuthenticatedData {
+		out += "ad "
+	}
+	if m.MsgHdr.CheckingDisabled {
+		out += "cd "
+	}
+	return strings.TrimSuffix(out, " ")
+}
+
 func (p Printer) PrintPretty(i int, reply *dns.Msg) {
 	if p.Opts.ShowQuestion {
 		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
@@ -142,21 +178,15 @@ func (p Printer) PrintPretty(i int, reply *dns.Msg) {
 		if p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional {
 			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
 		}
-		for _, a := range reply.Answer {
-			p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
-		}
+		p.printSection(reply.Answer)
 	}
 	if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
 		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Authority:"))
-		for _, a := range reply.Ns {
-			p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
-		}
+		p.printSection(reply.Ns)
 	}
 	if p.Opts.ShowAdditional && len(reply.Extra) > 0 {
 		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Additional:"))
-		for _, a := range reply.Extra {
-			p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
-		}
+		p.printSection(reply.Extra)
 	}
 
 	// Print separator if there is more than one query
@@ -174,37 +204,11 @@ func (p Printer) PrintPretty(i int, reply *dns.Msg) {
 			util.Color(util.ColorMagenta, time.Now().Format("15:04:05 01-02-2006 MST")),
 		)
 
-		flags := ""
-		if reply.MsgHdr.Response {
-			flags = "qr"
-		}
-		if reply.MsgHdr.Authoritative {
-			flags = "aa"
-		}
-		if reply.MsgHdr.Truncated {
-			flags = "tc"
-		}
-		if reply.MsgHdr.RecursionDesired {
-			flags = "rd"
-		}
-		if reply.MsgHdr.RecursionAvailable {
-			flags = "ra"
-		}
-		if reply.MsgHdr.Zero {
-			flags = "z"
-		}
-		if reply.MsgHdr.AuthenticatedData {
-			flags = "ad"
-		}
-		if reply.MsgHdr.CheckingDisabled {
-			flags = "cd"
-		}
-
 		util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Q %s A %s N %s E)\n",
 			util.Color(util.ColorMagenta, dns.OpcodeToString[reply.MsgHdr.Opcode]),
 			util.Color(util.ColorTeal, dns.RcodeToString[reply.MsgHdr.Rcode]),
 			util.Color(util.ColorGreen, fmt.Sprintf("%d", reply.MsgHdr.Id)),
-			util.Color(util.ColorPurple, flags),
+			util.Color(util.ColorPurple, flags(reply)),
 			util.Color(util.ColorPurple, fmt.Sprintf("%d", len(reply.Question))),
 			util.Color(util.ColorGreen, fmt.Sprintf("%d", len(reply.Answer))),
 			util.Color(util.ColorTeal, fmt.Sprintf("%d", len(reply.Ns))),
