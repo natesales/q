@@ -67,7 +67,7 @@ func (p Printer) ptr(ip string) (string, error) {
 	// Cache and return
 	if len(resp.Answer) > 0 {
 		p.ptrCache[ip] = resp.Answer[0].(*dns.PTR).Ptr
-		return resp.Answer[0].(*dns.PTR).Ptr, nil
+		return p.ptrCache[ip], nil
 	}
 
 	// No value
