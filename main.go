@@ -21,6 +21,7 @@ import (
 	"github.com/natesales/q/output"
 	"github.com/natesales/q/transport"
 	"github.com/natesales/q/util"
+	tlsutil "github.com/natesales/q/util/tls"
 )
 
 const defaultServerVar = "Q_DEFAULT_SERVER"
@@ -33,50 +34,6 @@ var (
 	commit  = "unknown"
 	date    = "unknown"
 )
-
-var tlsCipherSuiteToInt = map[string]uint16{
-	// TLS 1.0 - 1.2
-	"TLS_RSA_WITH_RC4_128_SHA":                      tls.TLS_RSA_WITH_RC4_128_SHA,
-	"TLS_RSA_WITH_3DES_EDE_CBC_SHA":                 tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-	"TLS_RSA_WITH_AES_128_CBC_SHA":                  tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-	"TLS_RSA_WITH_AES_256_CBC_SHA":                  tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-	"TLS_RSA_WITH_AES_128_CBC_SHA256":               tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
-	"TLS_RSA_WITH_AES_128_GCM_SHA256":               tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-	"TLS_RSA_WITH_AES_256_GCM_SHA384":               tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-	"TLS_ECDHE_ECDSA_WITH_RC4_128_SHA":              tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-	"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA":          tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-	"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA":          tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-	"TLS_ECDHE_RSA_WITH_RC4_128_SHA":                tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
-	"TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":           tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-	"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA":            tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA":            tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256":       tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-	"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256":         tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-	"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":         tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256":       tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-	"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384":         tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384":       tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-	"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256":   tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-	"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256": tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-
-	// TLS 1.3
-	"TLS_AES_128_GCM_SHA256":       tls.TLS_AES_128_GCM_SHA256,
-	"TLS_AES_256_GCM_SHA384":       tls.TLS_AES_256_GCM_SHA384,
-	"TLS_CHACHA20_POLY1305_SHA256": tls.TLS_CHACHA20_POLY1305_SHA256,
-}
-
-// parseTLSCipherSuites converts a slice of cipher suite names to a slice of cipher suite ints
-func parseTLSCipherSuites(cipherSuites []string) []uint16 {
-	var cipherSuiteInts []uint16
-	for _, cipherSuite := range cipherSuites {
-		if cipherSuiteInt, ok := tlsCipherSuiteToInt[cipherSuite]; ok {
-			cipherSuiteInts = append(cipherSuiteInts, cipherSuiteInt)
-		} else {
-			log.Fatalf("Unknown TLS cipher suite: %s", cipherSuite)
-		}
-	}
-	return cipherSuiteInts
-}
 
 // clearOpts sets the default values for the CLI options
 func clearOpts() {
@@ -96,22 +53,6 @@ func clearOpts() {
 		opts.Color = false
 	}
 	util.UseColor = opts.Color
-}
-
-// tlsVersion returns a TLS version number by given protocol string
-func tlsVersion(version string, fallback uint16) uint16 {
-	switch version {
-	case "1.0":
-		return tls.VersionTLS10
-	case "1.1":
-		return tls.VersionTLS11
-	case "1.2":
-		return tls.VersionTLS12
-	case "1.3":
-		return tls.VersionTLS13
-	default:
-		return fallback
-	}
 }
 
 // parsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
@@ -455,10 +396,10 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: opts.TLSNoVerify,
 		ServerName:         opts.TLSServerName,
-		MinVersion:         tlsVersion(opts.TLSMinVersion, tls.VersionTLS10),
-		MaxVersion:         tlsVersion(opts.TLSMaxVersion, tls.VersionTLS13),
+		MinVersion:         tlsutil.Version(opts.TLSMinVersion, tls.VersionTLS10),
+		MaxVersion:         tlsutil.Version(opts.TLSMaxVersion, tls.VersionTLS13),
 		NextProtos:         opts.TLSNextProtos,
-		CipherSuites:       parseTLSCipherSuites(opts.TLSCipherSuites),
+		CipherSuites:       tlsutil.ParseCipherSuites(opts.TLSCipherSuites),
 	}
 
 	// TLS client certificate authentication
@@ -496,17 +437,21 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.ID,
 	)
 
+	// Parse server address and transport type
 	server, transportType, err := parseServer()
 	if err != nil {
 		return err
 	}
+	log.Debugf("Using server %s with transport %s", server, transportType)
 
+	// QUIC specific overrides
 	if transportType == transport.TypeQUIC {
 		tlsConfig.NextProtos = opts.QUICALPNTokens
 		// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
 		opts.NoIDCheck = true
 	}
 
+	// Recursive zone transfer
 	if opts.RecAXFR {
 		if opts.Name == "" {
 			return fmt.Errorf("no name specified for AXFR")
