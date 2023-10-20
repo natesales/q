@@ -445,6 +445,11 @@ func TestMainParseServer(t *testing.T) {
 			Type:         transport.TypeHTTP,
 			ExpectedHost: "https://1.1.1.1:443/dns-query",
 		},
+		{ // TCP with no port
+			Server:       "tcp://dns.quad9.net",
+			Type:         transport.TypeTCP,
+			ExpectedHost: "dns.quad9.net:53",
+		},
 		{ // HTTPS with IPv6 address
 			Server:       "https://2a09::",
 			Type:         transport.TypeHTTP,

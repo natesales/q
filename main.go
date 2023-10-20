@@ -268,7 +268,7 @@ func parseServer() (string, transport.Type, error) {
 			} else {
 				port = "80"
 			}
-		case transport.TypePlain:
+		case transport.TypePlain, transport.TypeTCP:
 			port = "53"
 		}
 		log.Tracef("Setting port to %s", port)
