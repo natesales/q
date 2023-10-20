@@ -444,6 +444,16 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		CipherSuites:       parseTLSCipherSuites(opts.TLSCipherSuites),
 	}
 
+	// TLS client certificate authentication
+	if opts.TLSClientCertificate != "" {
+		cert, err := tls.LoadX509KeyPair(opts.TLSClientCertificate, opts.TLSClientKey)
+		if err != nil {
+			return fmt.Errorf("unable to load client certificate: %s", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// TLS secret logging
 	if klf := os.Getenv("SSLKEYLOGFILE"); klf != "" {
 		log.Warnf("SSLKEYLOGFILE is set! TLS master secrets will be logged.")
 		keyLog, err := os.OpenFile(klf, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
