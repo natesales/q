@@ -492,9 +492,7 @@ func TestMainParseServer(t *testing.T) {
 		},
 	} {
 		t.Run(tc.Server, func(t *testing.T) {
-			clearOpts()
-			opts.Server = tc.Server
-			server, transportType, err := parseServer()
+			server, transportType, err := parseServer(tc.Server)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.ExpectedHost, server)
 			assert.Equal(t, tc.Type, transportType)

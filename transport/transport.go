@@ -18,6 +18,9 @@ const (
 	TypeDNSCrypt Type = "dnscrypt"
 )
 
+// Types is a list of all supported transports
+var Types = []Type{TypePlain, TypeTCP, TypeTLS, TypeHTTP, TypeQUIC, TypeDNSCrypt}
+
 // Interface guards
 var (
 	_ Transport = (*Plain)(nil)
