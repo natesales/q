@@ -31,6 +31,9 @@ func (p Printer) PrintStructured(i int, reply *dns.Msg) {
 		b, err = json.Marshal(body)
 	} else { // yaml
 		b, err = yaml.Marshal(body)
+		if i != 0 {
+			b = append([]byte("---\n"), b[:len(b)-1]...) // -1 to remove trailing newline
+		}
 	}
 	if err != nil {
 		log.Fatalf("error marshaling output: %s", err)
