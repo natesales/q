@@ -42,6 +42,7 @@ func clearOpts() {
 	opts.RecursionDesired = true
 	opts.ShowAnswer = true
 	opts.PrettyTTLs = true
+	opts.ShortTTLs = true
 
 	// Enable color output if stdout is a terminal
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {

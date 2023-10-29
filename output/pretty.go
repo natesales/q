@@ -92,6 +92,10 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 	ttl := fmt.Sprintf("%d", a.Header().Ttl)
 	if p.Opts.PrettyTTLs {
 		ttl = (time.Duration(a.Header().Ttl) * time.Second).String()
+		if p.Opts.ShortTTLs {
+			ttl = strings.ReplaceAll(ttl, "0s", "")
+			ttl = strings.ReplaceAll(ttl, "0m", "")
+		}
 	}
 
 	// Copy val now before modifying it with a suffix
