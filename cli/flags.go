@@ -24,7 +24,7 @@ type Flags struct {
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
 	// Output
-	Format         string `short:"f" long:"format" description:"Output format (pretty, json, yaml, raw)" default:"pretty"`
+	Format         string `short:"f" long:"format" description:"Output format (pretty, column, json, yaml, raw)" default:"pretty"`
 	PrettyTTLs     bool   `long:"pretty-ttls" description:"Format TTLs in human readable format (default: true)"`
 	ShortTTLs      bool   `long:"short-ttls" description:"Remove zero components of pretty TTLs. (24h0m0s->24h) (default: true)"`
 	Color          bool   `long:"color" description:"Enable color output"`

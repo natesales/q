@@ -20,4 +20,8 @@ type Printer struct {
 
 	ptrCache    map[string]string // IP -> PTR value
 	existingRRs map[string]bool
+
+	// Longest string lengths for column formatting
+	longestTTL    int
+	longestRRType int
 }

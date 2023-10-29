@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,8 +19,7 @@ func PrettyPrintNSID(opt []*dns.Msg, out io.Writer) {
 	for _, r := range opt {
 		for _, o := range r.Extra {
 			if o.Header().Rrtype == dns.TypeOPT {
-				opt := o.(*dns.OPT)
-				for _, e := range opt.Option {
+				for _, e := range o.(*dns.OPT).Option {
 					if e.Option() == dns.EDNS0NSID {
 						nsidStr, err := hex.DecodeString(e.String())
 						if err != nil {
@@ -74,8 +74,8 @@ func (p Printer) ptr(ip string) (string, error) {
 	return "", fmt.Errorf("no PTR record found for %s", ip)
 }
 
-// printPrettyRR prints a pretty RR
-func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
+// parseRR converts an RR into a pretty string and returns the qname, ttl, type, value, and whether to skip printing it because it's a duplicate
+func (p Printer) parseRR(a dns.RR) (string, string, string, string, bool) {
 	// Initialize existingRRs map if it doesn't exist
 	if p.existingRRs == nil {
 		p.existingRRs = make(map[string]bool)
@@ -83,8 +83,9 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 
 	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
 	rrSignature := fmt.Sprintf("%s %d %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val)
+	// Skip if we've already printed this RR
 	if ok := p.existingRRs[rrSignature]; ok {
-		return
+		return "", "", "", "", true
 	} else {
 		p.existingRRs[rrSignature] = true
 	}
@@ -102,7 +103,7 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 	valCopy := val
 
 	// Handle whois
-	if doWhois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
+	if p.Opts.Whois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
 		resp, err := whois.Query(valCopy)
 		if err != nil {
 			log.Warnf("bgp.tools query: %s", err)
@@ -112,7 +113,7 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 	}
 
 	// Handle PTR resolution
-	if doResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
+	if p.Opts.ResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
 		if ptr, err := p.ptr(valCopy); err == nil {
 			val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", ptr))
 		} else {
@@ -120,22 +121,82 @@ func (p Printer) printPrettyRR(a dns.RR, doWhois, doResolveIPs bool) {
 		}
 	}
 
-	if p.Opts.ValueOnly {
-		util.MustWriteln(p.Out, val)
-	} else {
-		util.MustWritef(p.Out, "%s %s %s %s\n",
-			util.Color(util.ColorPurple, a.Header().Name),
-			util.Color(util.ColorGreen, ttl),
-			util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]),
-			val,
-		)
+	return util.Color(util.ColorPurple, a.Header().Name), util.Color(util.ColorGreen, ttl), util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]), val, false
+}
+
+// sortToPrint sorts a slice of slices of strings by the second element of each slice
+func sortToPrint(s [][]string) [][]string {
+	if len(s) <= 1 {
+		return s
 	}
+
+	mid := len(s) / 2
+	left := sortToPrint(s[:mid])
+	right := sortToPrint(s[mid:])
+
+	var result [][]string
+
+	for len(left) > 0 && len(right) > 0 {
+		if left[0][2] < right[0][2] {
+			result = append(result, left[0])
+			left = left[1:]
+		} else {
+			result = append(result, right[0])
+			right = right[1:]
+		}
+	}
+
+	for len(left) > 0 {
+		result = append(result, left[0])
+		left = left[1:]
+	}
+
+	for len(right) > 0 {
+		result = append(result, right[0])
+		right = right[1:]
+	}
+
+	return result
 }
 
 func (p Printer) printSection(rrs []dns.RR) {
+	var toPrint [][]string
+
 	for _, a := range rrs {
-		p.printPrettyRR(a, p.Opts.Whois, p.Opts.ResolveIPs)
+		name, ttl, rrType, val, skip := p.parseRR(a)
+		if skip {
+			return
+		}
+
+		if p.Opts.ValueOnly {
+			util.MustWriteln(p.Out, val)
+			continue
+		}
+
+		if len(ttl) > p.longestTTL {
+			p.longestTTL = len(ttl)
+		}
+		if len(rrType) > p.longestRRType {
+			p.longestRRType = len(rrType)
+		}
+
+		toPrint = append(toPrint, []string{name, ttl, rrType, val})
 	}
+
+	// Sort by record type
+	toPrint = sortToPrint(toPrint)
+
+	for _, a := range toPrint {
+		util.MustWritef(p.Out, "%s %"+strconv.Itoa(p.longestTTL)+"s %-"+strconv.Itoa(p.longestRRType)+"s %s\n", a[0], a[1], a[2], a[3])
+	}
+}
+
+func (p Printer) PrintColumn(replies []*dns.Msg) {
+	var answers []dns.RR
+	for _, r := range replies {
+		answers = append(answers, r.Answer...)
+	}
+	p.printSection(answers)
 }
 
 // flags returns a string of flags from a dns.Msg

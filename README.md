@@ -52,7 +52,7 @@ Application Options:
       --txtconcat              Concatenate TXT responses
       --qid=                   Set query ID (-1 for random) (default: -1)
       --recaxfr                Perform recursive AXFR
-  -f, --format=                Output format (pretty, json, yaml, raw) (default: pretty)
+  -f, --format=                Output format (pretty, column, json, yaml, raw) (default: pretty)
       --pretty-ttls            Format TTLs in human readable format (default: true)
       --short-ttls             Remove zero components of pretty TTLs. (24h0m0s->24h) (default: true)
       --color                  Enable color output
