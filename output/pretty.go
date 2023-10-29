@@ -187,7 +187,11 @@ func (p Printer) printSection(rrs []dns.RR) {
 	toPrint = sortToPrint(toPrint)
 
 	for _, a := range toPrint {
-		util.MustWritef(p.Out, "%s %"+strconv.Itoa(p.longestTTL)+"s %-"+strconv.Itoa(p.longestRRType)+"s %s\n", a[0], a[1], a[2], a[3])
+		if p.Opts.Format == "column" {
+			util.MustWritef(p.Out, "%"+strconv.Itoa(p.longestRRType)+"s %-"+strconv.Itoa(p.longestTTL)+"s %s\n", a[2], a[1], a[3])
+		} else {
+			util.MustWritef(p.Out, "%s %s %s %s\n", a[0], a[1], a[2], a[3])
+		}
 	}
 }
 
