@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -124,38 +125,40 @@ func (p Printer) parseRR(a dns.RR) (string, string, string, string, bool) {
 	return util.Color(util.ColorPurple, a.Header().Name), util.Color(util.ColorGreen, ttl), util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]), val, false
 }
 
-// sortToPrint sorts a slice of slices of strings by the second element of each slice
+// sortSlices sorts a slice of slices of strings by the nth element of each slice
+func sortSlices(s [][]string, n int) [][]string {
+	sort.Slice(s, func(i, j int) bool {
+		return s[i][n] < s[j][n]
+	})
+	return s
+}
+
+// sortToPrint sorts a slice of records first by record type, then by value
 func sortToPrint(s [][]string) [][]string {
-	if len(s) <= 1 {
-		return s
+	// Organize by record type
+	records := make(map[string][][]string)
+	for _, record := range s {
+		rrType := record[2]
+		records[rrType] = append(records[rrType], record)
 	}
 
-	mid := len(s) / 2
-	left := sortToPrint(s[:mid])
-	right := sortToPrint(s[mid:])
+	// Sort each record type
+	for rrType, recs := range records {
+		records[rrType] = sortSlices(recs, 3)
+	}
 
+	// Sort record types
+	var sortedTypes []string
+	for rrType := range records {
+		sortedTypes = append(sortedTypes, rrType)
+	}
+	sort.Strings(sortedTypes)
+
+	// Build final result
 	var result [][]string
-
-	for len(left) > 0 && len(right) > 0 {
-		if left[0][2] < right[0][2] {
-			result = append(result, left[0])
-			left = left[1:]
-		} else {
-			result = append(result, right[0])
-			right = right[1:]
-		}
+	for _, rrType := range sortedTypes {
+		result = append(result, records[rrType]...)
 	}
-
-	for len(left) > 0 {
-		result = append(result, left[0])
-		left = left[1:]
-	}
-
-	for len(right) > 0 {
-		result = append(result, right[0])
-		right = right[1:]
-	}
-
 	return result
 }
 
