@@ -167,9 +167,13 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		}
 	case transport.TypeQUIC:
 		log.Debugf("Using QUIC transport: %s", server)
+
+		tc := tlsConfig.Clone()
+		tlsConfig.NextProtos = opts.QUICALPNTokens
+
 		ts = &transport.QUIC{
 			Server:          server,
-			TLSConfig:       tlsConfig,
+			TLSConfig:       tc,
 			NoPMTUD:         opts.QUICNoPMTUD,
 			AddLengthPrefix: !opts.QUICNoLengthPrefix,
 			ReuseConn:       !opts.NoReuseConn,

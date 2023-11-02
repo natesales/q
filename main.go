@@ -426,13 +426,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	log.Debugf("Using server %s with transport %s", server, transportType)
 
-	// QUIC specific overrides
-	if transportType == transport.TypeQUIC {
-		tlsConfig.NextProtos = opts.QUICALPNTokens
-		// Skip ID check if QUIC (https://datatracker.ietf.org/doc/html/rfc9250#section-4.2.1)
-		opts.NoIDCheck = true
-	}
-
 	// Recursive zone transfer
 	if opts.RecAXFR {
 		if opts.Name == "" {
@@ -456,7 +449,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			return err
 		}
 
-		if !opts.NoIDCheck && reply.Id != msg.Id {
+		if transportType != transport.TypeQUIC && !opts.NoIDCheck && reply.Id != msg.Id {
 			return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
 		}
 		replies = append(replies, reply)
