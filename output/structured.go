@@ -11,29 +11,32 @@ import (
 	"github.com/natesales/q/util"
 )
 
-func (p Printer) PrintStructured(i int, reply *dns.Msg) {
-	body := struct {
-		Server    string
-		QueryTime int64
-		Answers   []dns.RR
-		ID        uint16
-		Truncated bool
-	}{
-		Server:    p.Server,
-		QueryTime: int64(p.QueryTime.Round(time.Millisecond)),
-		Answers:   reply.Answer,
-		ID:        reply.Id,
-		Truncated: reply.Truncated,
+type reply struct {
+	Server    string
+	QueryTime int64
+	Answers   []dns.RR
+	ID        uint16
+	Truncated bool
+}
+
+func (p Printer) PrintStructured(replies []*dns.Msg) {
+	out := make([]reply, len(replies))
+	for _, r := range replies {
+		out = append(out, reply{
+			Server:    p.Server,
+			QueryTime: int64(p.QueryTime.Round(time.Millisecond)),
+			Answers:   r.Answer,
+			ID:        r.Id,
+			Truncated: r.Truncated,
+		})
 	}
+
 	var b []byte
 	var err error
 	if p.Opts.Format == "json" {
-		b, err = json.Marshal(body)
+		b, err = json.Marshal(out)
 	} else { // yaml
-		b, err = yaml.Marshal(body)
-		if i != 0 {
-			b = append([]byte("---\n"), b[:len(b)-1]...) // -1 to remove trailing newline
-		}
+		b, err = yaml.Marshal(out)
 	}
 	if err != nil {
 		log.Fatalf("error marshaling output: %s", err)

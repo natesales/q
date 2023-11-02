@@ -475,21 +475,18 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		NumReplies: len(replies),
 		Transport:  txp,
 	}
-	if opts.Format == "column" {
+
+	switch opts.Format {
+	case "pretty":
+		printer.PrintPretty(replies)
+	case "column":
 		printer.PrintColumn(replies)
-	} else {
-		for i, reply := range replies {
-			switch opts.Format {
-			case "pretty":
-				printer.PrintPretty(i, reply)
-			case "raw":
-				printer.PrintRaw(i, reply)
-			case "json", "yml", "yaml":
-				printer.PrintStructured(i, reply)
-			default:
-				return fmt.Errorf("invalid output format")
-			}
-		}
+	case "raw":
+		printer.PrintRaw(replies)
+	case "json", "yml", "yaml":
+		printer.PrintStructured(replies)
+	default:
+		return fmt.Errorf("invalid output format")
 	}
 
 	return nil

@@ -236,55 +236,57 @@ func flags(m *dns.Msg) string {
 	return strings.TrimSuffix(out, " ")
 }
 
-func (p Printer) PrintPretty(i int, reply *dns.Msg) {
-	if p.Opts.ShowQuestion {
-		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
-		for _, a := range reply.Question {
-			util.MustWritef(p.Out, "%s %s\n",
-				util.Color(util.ColorPurple, a.Name),
-				util.Color(util.ColorMagenta, dns.TypeToString[a.Qtype]),
+func (p Printer) PrintPretty(replies []*dns.Msg) {
+	for i, reply := range replies {
+		if p.Opts.ShowQuestion {
+			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
+			for _, a := range reply.Question {
+				util.MustWritef(p.Out, "%s %s\n",
+					util.Color(util.ColorPurple, a.Name),
+					util.Color(util.ColorMagenta, dns.TypeToString[a.Qtype]),
+				)
+			}
+		}
+		if p.Opts.ShowAnswer && len(reply.Answer) > 0 {
+			if p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional {
+				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
+			}
+			p.printSection(reply.Answer)
+		}
+		if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
+			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Authority:"))
+			p.printSection(reply.Ns)
+		}
+		if p.Opts.ShowAdditional && len(reply.Extra) > 0 {
+			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Additional:"))
+			p.printSection(reply.Extra)
+		}
+
+		// Print separator if there is more than one query
+		if (p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional) &&
+			(p.NumReplies > 0 && i != p.NumReplies-1) {
+			util.MustWritef(p.Out, "\n──\n\n")
+		}
+
+		if p.Opts.ShowStats {
+			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Stats:"))
+			util.MustWritef(p.Out, "Received %s from %s in %s (%s)\n",
+				util.Color(util.ColorPurple, fmt.Sprintf("%d B", reply.Len())),
+				util.Color(util.ColorGreen, p.Server),
+				util.Color(util.ColorTeal, p.QueryTime.Round(100*time.Microsecond)),
+				util.Color(util.ColorMagenta, time.Now().Format("15:04:05 01-02-2006 MST")),
+			)
+
+			util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Q %s A %s N %s E)\n",
+				util.Color(util.ColorMagenta, dns.OpcodeToString[reply.MsgHdr.Opcode]),
+				util.Color(util.ColorTeal, dns.RcodeToString[reply.MsgHdr.Rcode]),
+				util.Color(util.ColorGreen, fmt.Sprintf("%d", reply.MsgHdr.Id)),
+				util.Color(util.ColorPurple, flags(reply)),
+				util.Color(util.ColorPurple, fmt.Sprintf("%d", len(reply.Question))),
+				util.Color(util.ColorGreen, fmt.Sprintf("%d", len(reply.Answer))),
+				util.Color(util.ColorTeal, fmt.Sprintf("%d", len(reply.Ns))),
+				util.Color(util.ColorMagenta, fmt.Sprintf("%d", len(reply.Extra))),
 			)
 		}
-	}
-	if p.Opts.ShowAnswer && len(reply.Answer) > 0 {
-		if p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional {
-			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
-		}
-		p.printSection(reply.Answer)
-	}
-	if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
-		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Authority:"))
-		p.printSection(reply.Ns)
-	}
-	if p.Opts.ShowAdditional && len(reply.Extra) > 0 {
-		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Additional:"))
-		p.printSection(reply.Extra)
-	}
-
-	// Print separator if there is more than one query
-	if (p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional) &&
-		(p.NumReplies > 0 && i != p.NumReplies-1) {
-		util.MustWritef(p.Out, "\n──\n\n")
-	}
-
-	if p.Opts.ShowStats {
-		util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Stats:"))
-		util.MustWritef(p.Out, "Received %s from %s in %s (%s)\n",
-			util.Color(util.ColorPurple, fmt.Sprintf("%d B", reply.Len())),
-			util.Color(util.ColorGreen, p.Server),
-			util.Color(util.ColorTeal, p.QueryTime.Round(100*time.Microsecond)),
-			util.Color(util.ColorMagenta, time.Now().Format("15:04:05 01-02-2006 MST")),
-		)
-
-		util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Q %s A %s N %s E)\n",
-			util.Color(util.ColorMagenta, dns.OpcodeToString[reply.MsgHdr.Opcode]),
-			util.Color(util.ColorTeal, dns.RcodeToString[reply.MsgHdr.Rcode]),
-			util.Color(util.ColorGreen, fmt.Sprintf("%d", reply.MsgHdr.Id)),
-			util.Color(util.ColorPurple, flags(reply)),
-			util.Color(util.ColorPurple, fmt.Sprintf("%d", len(reply.Question))),
-			util.Color(util.ColorGreen, fmt.Sprintf("%d", len(reply.Answer))),
-			util.Color(util.ColorTeal, fmt.Sprintf("%d", len(reply.Ns))),
-			util.Color(util.ColorMagenta, fmt.Sprintf("%d", len(reply.Extra))),
-		)
 	}
 }
