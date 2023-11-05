@@ -516,8 +516,7 @@ func TestMainRecAXFR(t *testing.T) {
 	files, err := filepath.Glob("zonetransfer.me*")
 	assert.Nil(t, err)
 	for _, f := range files {
-		err := os.RemoveAll(f)
-		assert.Nil(t, err)
+		assert.Nil(t, os.RemoveAll(f))
 	}
 }
 
