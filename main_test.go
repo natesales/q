@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/natesales/q/cli"
 	"github.com/natesales/q/transport"
 )
 
@@ -233,7 +234,7 @@ func TestMainChaosClass(t *testing.T) {
 
 func TestMainParsePlusFlags(t *testing.T) {
 	clearOpts()
-	parsePlusFlags([]string{"+dnssec", "+nord"})
+	cli.ParsePlusFlags(&opts, []string{"+dnssec", "+nord"})
 	assert.True(t, opts.DNSSEC)
 	assert.False(t, opts.RecursionDesired)
 }
