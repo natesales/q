@@ -1,6 +1,15 @@
 package cli
 
-import "time"
+import (
+	"fmt"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
+)
 
 type Flags struct {
 	Name         string        `short:"q" long:"qname" description:"Query name"`
@@ -80,4 +89,46 @@ type Flags struct {
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
 	Trace       bool   `long:"trace" description:"Show trace log messages"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
+}
+
+// ParsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
+func ParsePlusFlags(opts *Flags, args []string) {
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "+") && len(arg) > 3 {
+			state := arg[1:3] != "no"
+			flag := strings.ToLower(arg[3:])
+			if state {
+				flag = strings.ToLower(arg[1:])
+			}
+
+			v := reflect.Indirect(reflect.ValueOf(opts))
+			vT := v.Type()
+			for i := 0; i < v.NumField(); i++ {
+				fieldTag := vT.Field(i).Tag.Get("long")
+				if vT.Field(i).Type == reflect.TypeOf(true) && fieldTag == flag {
+					reflect.ValueOf(opts).Elem().Field(i).SetBool(state)
+					break
+				}
+			}
+		}
+	}
+}
+
+// ParseRRTypes parses a list of RR types in string format ("A", "AAAA", etc.) or integer format (1, 28, etc.)
+func ParseRRTypes(t []string) (map[uint16]bool, error) {
+	rrTypes := make(map[uint16]bool, len(t))
+	for _, rrType := range t {
+		typeCode, ok := dns.StringToType[strings.ToUpper(rrType)]
+		if ok {
+			rrTypes[typeCode] = true
+		} else {
+			typeCode, err := strconv.Atoi(rrType)
+			if err != nil {
+				return nil, fmt.Errorf("%s is not a valid RR type", rrType)
+			}
+			log.Debugf("using RR type %d as integer", typeCode)
+			rrTypes[uint16(typeCode)] = true
+		}
+	}
+	return rrTypes, nil
 }

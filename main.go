@@ -6,10 +6,8 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"reflect"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -55,29 +53,6 @@ func clearOpts() {
 		opts.Color = false
 	}
 	util.UseColor = opts.Color
-}
-
-// parsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
-func parsePlusFlags(args []string) {
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "+") && len(arg) > 3 {
-			state := arg[1:3] != "no"
-			flag := strings.ToLower(arg[3:])
-			if state {
-				flag = strings.ToLower(arg[1:])
-			}
-
-			v := reflect.ValueOf(opts)
-			vT := v.Type()
-			for i := 0; i < v.NumField(); i++ {
-				fieldTag := vT.Field(i).Tag.Get("long")
-				if vT.Field(i).Type == reflect.TypeOf(true) && fieldTag == flag {
-					reflect.ValueOf(&opts).Elem().Field(i).SetBool(state)
-					break
-				}
-			}
-		}
-	}
 }
 
 func txtConcat(m *dns.Msg) {
@@ -238,7 +213,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 		os.Exit(1)
 	}
-	parsePlusFlags(args)
+	cli.ParsePlusFlags(&opts, args)
 	util.UseColor = opts.Color
 
 	if opts.Verbose {
@@ -262,19 +237,9 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Parse requested RR types
-	rrTypes := make(map[uint16]bool)
-	for _, rrType := range opts.Types {
-		typeCode, ok := dns.StringToType[strings.ToUpper(rrType)]
-		if ok {
-			rrTypes[typeCode] = true
-		} else {
-			typeCode, err := strconv.Atoi(rrType)
-			if err != nil {
-				return fmt.Errorf("%s is not a valid RR type", rrType)
-			}
-			log.Debugf("using RR type %d as integer", typeCode)
-			rrTypes[uint16(typeCode)] = true
-		}
+	rrTypes, err := cli.ParseRRTypes(opts.Types)
+	if err != nil {
+		return err
 	}
 
 	// Add non-flag RR types
