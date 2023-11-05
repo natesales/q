@@ -94,9 +94,9 @@ type Flags struct {
 // ParsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
 func ParsePlusFlags(opts *Flags, args []string) {
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "+") && len(arg) > 3 {
-			state := arg[1:3] != "no"
+		if len(arg) > 3 && arg[0] == '+' {
 			flag := strings.ToLower(arg[3:])
+			state := arg[1:3] != "no"
 			if state {
 				flag = strings.ToLower(arg[1:])
 			}
