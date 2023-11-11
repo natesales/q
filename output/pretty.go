@@ -103,8 +103,8 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	if opts.PrettyTTLs {
 		ttl = (time.Duration(a.Header().Ttl) * time.Second).String()
 		if opts.ShortTTLs {
-			ttl = strings.ReplaceAll(ttl, "0s", "")
-			ttl = strings.ReplaceAll(ttl, "0m", "")
+			ttl = strings.ReplaceAll(ttl, "m0s", "")
+			ttl = strings.ReplaceAll(ttl, "h0m", "")
 		}
 	}
 
