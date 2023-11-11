@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"regexp"
@@ -234,6 +236,25 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.ShowAuthority = true
 		opts.ShowAdditional = true
 		opts.ShowStats = true
+	}
+
+	// Set bootstrap resolver
+	if opts.BootstrapServer != "" {
+		// Add port if not specified
+		rePortSuffix := regexp.MustCompile(`:\d+$`)
+		if !rePortSuffix.MatchString(opts.BootstrapServer) {
+			opts.BootstrapServer += ":53"
+		}
+
+		net.DefaultResolver = &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{Timeout: opts.BootstrapTimeout}
+				return d.DialContext(ctx, network, opts.BootstrapServer)
+			},
+		}
+
+		log.Debugf("Using bootstrap resolver %s", opts.BootstrapServer)
 	}
 
 	// Parse requested RR types

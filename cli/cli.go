@@ -12,23 +12,25 @@ import (
 )
 
 type Flags struct {
-	Name         string        `short:"q" long:"qname" description:"Query name"`
-	Server       []string      `short:"s" long:"server" description:"DNS server(s)"`
-	Types        []string      `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
-	Reverse      bool          `short:"x" long:"reverse" description:"Reverse lookup"`
-	DNSSEC       bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
-	NSID         bool          `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
-	ClientSubnet string        `long:"subnet" description:"Set EDNS0 client subnet"`
-	Chaos        bool          `short:"c" long:"chaos" description:"Use CHAOS query class"`
-	Class        uint16        `short:"C" description:"Set query class (default: IN 0x01)" default:"1"`
-	ODoHProxy    string        `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
-	Timeout      time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
-	Pad          bool          `long:"pad" description:"Set EDNS0 padding"`
-	HTTP3        bool          `long:"http3" description:"Use HTTP/3 for DoH"`
-	NoIDCheck    bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
-	NoReuseConn  bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
-	TXTConcat    bool          `long:"txtconcat" description:"Concatenate TXT responses"`
-	ID           int           `long:"qid" description:"Set query ID (-1 for random)" default:"-1"`
+	Name             string        `short:"q" long:"qname" description:"Query name"`
+	Server           []string      `short:"s" long:"server" description:"DNS server(s)"`
+	Types            []string      `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
+	Reverse          bool          `short:"x" long:"reverse" description:"Reverse lookup"`
+	DNSSEC           bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
+	NSID             bool          `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
+	ClientSubnet     string        `long:"subnet" description:"Set EDNS0 client subnet"`
+	Chaos            bool          `short:"c" long:"chaos" description:"Use CHAOS query class"`
+	Class            uint16        `short:"C" description:"Set query class (default: IN 0x01)" default:"1"`
+	ODoHProxy        string        `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
+	Timeout          time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
+	Pad              bool          `long:"pad" description:"Set EDNS0 padding"`
+	HTTP3            bool          `long:"http3" description:"Use HTTP/3 for DoH"`
+	NoIDCheck        bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
+	NoReuseConn      bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
+	TXTConcat        bool          `long:"txtconcat" description:"Concatenate TXT responses"`
+	ID               int           `long:"qid" description:"Set query ID (-1 for random)" default:"-1"`
+	BootstrapServer  string        `short:"b" long:"bootstrap-server" description:"DNS server to use for bootstrapping"`
+	BootstrapTimeout time.Duration `long:"bootstrap-timeout" description:"Bootstrapping timeout" default:"5s"`
 
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
