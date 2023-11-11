@@ -3,7 +3,6 @@ package output
 import (
 	"encoding/hex"
 	"fmt"
-
 	"sort"
 	"strconv"
 	"strings"
@@ -103,8 +102,8 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	if opts.PrettyTTLs {
 		ttl = (time.Duration(a.Header().Ttl) * time.Second).String()
 		if opts.ShortTTLs {
-			ttl = strings.ReplaceAll(ttl, "m0s", "")
-			ttl = strings.ReplaceAll(ttl, "h0m", "")
+			ttl = strings.ReplaceAll(ttl, "m0s", "m")
+			ttl = strings.ReplaceAll(ttl, "h0m", "h")
 		}
 	}
 
