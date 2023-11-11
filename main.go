@@ -45,7 +45,7 @@ func clearOpts() {
 	opts.ShortTTLs = true
 
 	// Enable color output if stdout is a terminal
-	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
+	if fileInfo, err := os.Stdout.Stat(); err != nil && (fileInfo.Mode()&os.ModeCharDevice) != 0 {
 		opts.Color = true
 	}
 
