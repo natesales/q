@@ -13,7 +13,7 @@ import (
 
 type Flags struct {
 	Name         string        `short:"q" long:"qname" description:"Query name"`
-	Server       string        `short:"s" long:"server" description:"DNS server"`
+	Server       []string      `short:"s" long:"server" description:"DNS server(s)"`
 	Types        []string      `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
 	Reverse      bool          `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC       bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`

@@ -19,16 +19,18 @@ type reply struct {
 	Truncated bool
 }
 
-func (p Printer) PrintStructured(replies []*dns.Msg) {
-	out := make([]reply, len(replies))
-	for _, r := range replies {
-		out = append(out, reply{
-			Server:    p.Server,
-			QueryTime: int64(p.QueryTime.Round(time.Millisecond)),
-			Answers:   r.Answer,
-			ID:        r.Id,
-			Truncated: r.Truncated,
-		})
+func (p Printer) PrintStructured(entries []*Entry) {
+	out := make([]reply, 0)
+	for _, entry := range entries {
+		for _, r := range entry.Replies {
+			out = append(out, reply{
+				Server:    entry.Server,
+				QueryTime: int64(entry.Time.Round(time.Millisecond)),
+				Answers:   r.Answer,
+				ID:        r.Id,
+				Truncated: r.Truncated,
+			})
+		}
 	}
 
 	var b []byte

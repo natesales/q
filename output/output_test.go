@@ -2,6 +2,7 @@ package output
 
 import (
 	"strings"
+	"time"
 
 	"github.com/miekg/dns"
 )
@@ -30,4 +31,15 @@ example.com. 86400 IN TXT "v=spf1 -all"
 	}
 
 	return msgs
+}
+
+var entries = []*Entry{
+	{
+		Replies:     replies(),
+		Server:      "192.0.2.10",
+		Time:        time.Second * 2,
+		Txp:         nil,
+		PTRs:        nil,
+		existingRRs: nil,
+	},
 }

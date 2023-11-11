@@ -3,7 +3,7 @@ package output
 import (
 	"encoding/hex"
 	"fmt"
-	"io"
+
 	"sort"
 	"strconv"
 	"strings"
@@ -13,25 +13,34 @@ import (
 	whois "github.com/natesales/bgptools-go"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/natesales/q/cli"
 	"github.com/natesales/q/util"
 )
 
-func PrettyPrintNSID(opt []*dns.Msg, out io.Writer) {
-	for _, r := range opt {
-		for _, o := range r.Extra {
-			if o.Header().Rrtype == dns.TypeOPT {
-				for _, e := range o.(*dns.OPT).Option {
-					if e.Option() == dns.EDNS0NSID {
-						nsidStr, err := hex.DecodeString(e.String())
-						if err != nil {
-							log.Warnf("error decoding NSID: %s", err)
+// PrettyPrintNSID prints the NSID from a slice of entries
+func (p Printer) PrettyPrintNSID(entries []*Entry) {
+	for _, entry := range entries {
+		for _, r := range entry.Replies {
+			for _, o := range r.Extra {
+				if o.Header().Rrtype == dns.TypeOPT {
+					for _, e := range o.(*dns.OPT).Option {
+						if e.Option() == dns.EDNS0NSID {
+							nsidStr, err := hex.DecodeString(e.String())
+							if err != nil {
+								log.Warnf("error decoding NSID: %s", err)
+								return
+							}
+							var suffix string
+							if len(entries) > 1 {
+								suffix = fmt.Sprintf(" (%s)", entry.Server)
+							}
+							util.MustWritef(p.Out, "%s %s%s\n",
+								util.Color(util.ColorWhite, "NSID:"),
+								util.Color(util.ColorPurple, string(nsidStr)),
+								suffix,
+							)
 							return
 						}
-						util.MustWritef(out, "%s %s\n",
-							util.Color(util.ColorWhite, "NSID:"),
-							util.Color(util.ColorPurple, string(nsidStr)),
-						)
-						return
 					}
 				}
 			}
@@ -40,14 +49,14 @@ func PrettyPrintNSID(opt []*dns.Msg, out io.Writer) {
 }
 
 // ptr resolves an IP address (not an arpa FQDN) to its PTR record
-func (p Printer) ptr(ip string) (string, error) {
+func (e *Entry) ptr(ip string) (string, error) {
 	// Initialize ptrCache if it doesn't exist
-	if p.ptrCache == nil {
-		p.ptrCache = make(map[string]string)
+	if e.PTRs == nil {
+		e.PTRs = make(map[string]string)
 	}
 
 	// Return the result from cache if we already have it
-	if ptr, ok := p.ptrCache[ip]; ok {
+	if ptr, ok := e.PTRs[ip]; ok {
 		return ptr, nil
 	}
 
@@ -60,15 +69,15 @@ func (p Printer) ptr(ip string) (string, error) {
 	msg.SetQuestion(qname, dns.TypePTR)
 
 	// Resolve qname and cache result
-	resp, err := (*p.Transport).Exchange(&msg)
+	resp, err := (*e.Txp).Exchange(&msg)
 	if err != nil {
 		return "", err
 	}
 
 	// Cache and return
 	if len(resp.Answer) > 0 {
-		p.ptrCache[ip] = resp.Answer[0].(*dns.PTR).Ptr
-		return p.ptrCache[ip], nil
+		e.PTRs[ip] = resp.Answer[0].(*dns.PTR).Ptr
+		return e.PTRs[ip], nil
 	}
 
 	// No value
@@ -76,25 +85,24 @@ func (p Printer) ptr(ip string) (string, error) {
 }
 
 // parseRR converts an RR into a pretty string and returns the qname, ttl, type, value, and whether to skip printing it because it's a duplicate
-func (p Printer) parseRR(a dns.RR) (string, string, string, string, bool) {
+func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	// Initialize existingRRs map if it doesn't exist
-	if p.existingRRs == nil {
-		p.existingRRs = make(map[string]bool)
+	if e.existingRRs == nil {
+		e.existingRRs = make(map[string]bool)
 	}
 
 	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
-	rrSignature := fmt.Sprintf("%s %d %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val)
+	rrSignature := fmt.Sprintf("%s %d %s %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val, e.Server)
 	// Skip if we've already printed this RR
-	if ok := p.existingRRs[rrSignature]; ok {
-		return "", "", "", "", true
-	} else {
-		p.existingRRs[rrSignature] = true
+	if ok := e.existingRRs[rrSignature]; ok {
+		return nil
 	}
+	e.existingRRs[rrSignature] = true
 
 	ttl := fmt.Sprintf("%d", a.Header().Ttl)
-	if p.Opts.PrettyTTLs {
+	if opts.PrettyTTLs {
 		ttl = (time.Duration(a.Header().Ttl) * time.Second).String()
-		if p.Opts.ShortTTLs {
+		if opts.ShortTTLs {
 			ttl = strings.ReplaceAll(ttl, "0s", "")
 			ttl = strings.ReplaceAll(ttl, "0m", "")
 		}
@@ -104,7 +112,7 @@ func (p Printer) parseRR(a dns.RR) (string, string, string, string, bool) {
 	valCopy := val
 
 	// Handle whois
-	if p.Opts.Whois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
+	if opts.Whois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
 		resp, err := whois.Query(valCopy)
 		if err != nil {
 			log.Warnf("bgp.tools query: %s", err)
@@ -114,15 +122,25 @@ func (p Printer) parseRR(a dns.RR) (string, string, string, string, bool) {
 	}
 
 	// Handle PTR resolution
-	if p.Opts.ResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		if ptr, err := p.ptr(valCopy); err == nil {
+	if opts.ResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
+		if ptr, err := e.ptr(valCopy); err == nil {
 			val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", ptr))
 		} else {
 			log.Warnf("PTR resolution: %s", err)
 		}
 	}
 
-	return util.Color(util.ColorPurple, a.Header().Name), util.Color(util.ColorGreen, ttl), util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]), val, false
+	// Server suffix
+	if len(opts.Server) > 1 {
+		val += util.Color(util.ColorTeal, fmt.Sprintf(" (%s)", e.Server))
+	}
+
+	return &RR{
+		util.Color(util.ColorPurple, a.Header().Name),
+		util.Color(util.ColorGreen, ttl),
+		util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]),
+		val,
+	}
 }
 
 // sortSlices sorts a slice of slices of strings by the nth element of each slice
@@ -162,28 +180,39 @@ func sortToPrint(s [][]string) [][]string {
 	return result
 }
 
-func (p Printer) printSection(rrs []dns.RR) {
+type RR struct {
+	Name, TTL, Type, Value string
+}
+
+func toRRs(rrs []dns.RR, e *Entry, p *Printer) []RR {
+	var out []RR
+	for _, rr := range rrs {
+		if rr := e.parseRR(rr, p.Opts); rr != nil {
+			out = append(out, *rr)
+		}
+	}
+
+	return out
+}
+
+// printSection prints a slice of RRs
+func (p Printer) printSection(rrs []RR) {
 	var toPrint [][]string
 
 	for _, a := range rrs {
-		name, ttl, rrType, val, skip := p.parseRR(a)
-		if skip {
-			return
-		}
-
 		if p.Opts.ValueOnly {
-			util.MustWriteln(p.Out, val)
+			util.MustWriteln(p.Out, a.Value)
 			continue
 		}
 
-		if len(ttl) > p.longestTTL {
-			p.longestTTL = len(ttl)
+		if len(a.TTL) > p.longestTTL {
+			p.longestTTL = len(a.TTL)
 		}
-		if len(rrType) > p.longestRRType {
-			p.longestRRType = len(rrType)
+		if len(a.Type) > p.longestRRType {
+			p.longestRRType = len(a.Type)
 		}
 
-		toPrint = append(toPrint, []string{name, ttl, rrType, val})
+		toPrint = append(toPrint, []string{a.Name, a.TTL, a.Type, a.Value})
 	}
 
 	// Sort by record type
@@ -198,11 +227,16 @@ func (p Printer) printSection(rrs []dns.RR) {
 	}
 }
 
-func (p Printer) PrintColumn(replies []*dns.Msg) {
-	var answers []dns.RR
-	for _, r := range replies {
-		answers = append(answers, r.Answer...)
+// PrintColumn prints an entry slice in column format
+func (p Printer) PrintColumn(entries []*Entry) {
+	var answers []RR
+	for _, e := range entries {
+		for _, r := range e.Replies {
+			rrs := toRRs(r.Answer, e, &p)
+			answers = append(answers, rrs...)
+		}
 	}
+
 	p.printSection(answers)
 }
 
@@ -236,57 +270,59 @@ func flags(m *dns.Msg) string {
 	return strings.TrimSuffix(out, " ")
 }
 
-func (p Printer) PrintPretty(replies []*dns.Msg) {
-	for i, reply := range replies {
-		if p.Opts.ShowQuestion {
-			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
-			for _, a := range reply.Question {
-				util.MustWritef(p.Out, "%s %s\n",
-					util.Color(util.ColorPurple, a.Name),
-					util.Color(util.ColorMagenta, dns.TypeToString[a.Qtype]),
+func (p Printer) PrintPretty(entries []*Entry) {
+	for _, entry := range entries {
+		for i, reply := range entry.Replies {
+			if p.Opts.ShowQuestion {
+				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
+				for _, a := range reply.Question {
+					util.MustWritef(p.Out, "%s %s\n",
+						util.Color(util.ColorPurple, a.Name),
+						util.Color(util.ColorMagenta, dns.TypeToString[a.Qtype]),
+					)
+				}
+			}
+			if p.Opts.ShowAnswer && len(reply.Answer) > 0 {
+				if p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional {
+					util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
+				}
+				p.printSection(toRRs(reply.Answer, entry, &p))
+			}
+			if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
+				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Authority:"))
+				p.printSection(toRRs(reply.Ns, entry, &p))
+			}
+			if p.Opts.ShowAdditional && len(reply.Extra) > 0 {
+				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Additional:"))
+				p.printSection(toRRs(reply.Extra, entry, &p))
+			}
+
+			// Print separator if there is more than one query
+			if (p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional) &&
+				(len(entry.Replies) > 0 && i != len(entry.Replies)-1) {
+				util.MustWritef(p.Out, "\n──\n\n")
+			}
+
+			if p.Opts.ShowStats {
+				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Stats:"))
+				util.MustWritef(p.Out, "Received %s from %s in %s (%s)\n",
+					util.Color(util.ColorPurple, fmt.Sprintf("%d B", reply.Len())),
+					util.Color(util.ColorGreen, entry.Server),
+					util.Color(util.ColorTeal, entry.Time.Round(100*time.Microsecond)),
+					util.Color(util.ColorMagenta, time.Now().Format("15:04:05 01-02-2006 MST")),
+				)
+
+				util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Q %s A %s N %s E)\n",
+					util.Color(util.ColorMagenta, dns.OpcodeToString[reply.MsgHdr.Opcode]),
+					util.Color(util.ColorTeal, dns.RcodeToString[reply.MsgHdr.Rcode]),
+					util.Color(util.ColorGreen, fmt.Sprintf("%d", reply.MsgHdr.Id)),
+					util.Color(util.ColorPurple, flags(reply)),
+					util.Color(util.ColorPurple, fmt.Sprintf("%d", len(reply.Question))),
+					util.Color(util.ColorGreen, fmt.Sprintf("%d", len(reply.Answer))),
+					util.Color(util.ColorTeal, fmt.Sprintf("%d", len(reply.Ns))),
+					util.Color(util.ColorMagenta, fmt.Sprintf("%d", len(reply.Extra))),
 				)
 			}
-		}
-		if p.Opts.ShowAnswer && len(reply.Answer) > 0 {
-			if p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional {
-				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
-			}
-			p.printSection(reply.Answer)
-		}
-		if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
-			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Authority:"))
-			p.printSection(reply.Ns)
-		}
-		if p.Opts.ShowAdditional && len(reply.Extra) > 0 {
-			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Additional:"))
-			p.printSection(reply.Extra)
-		}
-
-		// Print separator if there is more than one query
-		if (p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional) &&
-			(p.NumReplies > 0 && i != p.NumReplies-1) {
-			util.MustWritef(p.Out, "\n──\n\n")
-		}
-
-		if p.Opts.ShowStats {
-			util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Stats:"))
-			util.MustWritef(p.Out, "Received %s from %s in %s (%s)\n",
-				util.Color(util.ColorPurple, fmt.Sprintf("%d B", reply.Len())),
-				util.Color(util.ColorGreen, p.Server),
-				util.Color(util.ColorTeal, p.QueryTime.Round(100*time.Microsecond)),
-				util.Color(util.ColorMagenta, time.Now().Format("15:04:05 01-02-2006 MST")),
-			)
-
-			util.MustWritef(p.Out, "Opcode: %s Status: %s ID %s: Flags: %s (%s Q %s A %s N %s E)\n",
-				util.Color(util.ColorMagenta, dns.OpcodeToString[reply.MsgHdr.Opcode]),
-				util.Color(util.ColorTeal, dns.RcodeToString[reply.MsgHdr.Rcode]),
-				util.Color(util.ColorGreen, fmt.Sprintf("%d", reply.MsgHdr.Id)),
-				util.Color(util.ColorPurple, flags(reply)),
-				util.Color(util.ColorPurple, fmt.Sprintf("%d", len(reply.Question))),
-				util.Color(util.ColorGreen, fmt.Sprintf("%d", len(reply.Answer))),
-				util.Color(util.ColorTeal, fmt.Sprintf("%d", len(reply.Ns))),
-				util.Color(util.ColorMagenta, fmt.Sprintf("%d", len(reply.Extra))),
-			)
 		}
 	}
 }

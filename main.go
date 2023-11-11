@@ -245,8 +245,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	// Add non-flag RR types
 	for _, arg := range args {
 		// Find a server by @ symbol if it isn't set by flag
-		if opts.Server == "" && strings.HasPrefix(arg, "@") {
-			opts.Server = strings.TrimPrefix(arg, "@")
+		if strings.HasPrefix(arg, "@") {
+			opts.Server = append(opts.Server, strings.TrimPrefix(arg, "@"))
 		}
 
 		// Parse chaos class
@@ -301,22 +301,24 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Set default DNS server
-	if opts.Server == "" {
+	if len(opts.Server) == 0 {
+		opts.Server = make([]string, 1)
+
 		if os.Getenv(defaultServerVar) != "" {
-			opts.Server = os.Getenv(defaultServerVar)
+			opts.Server[0] = os.Getenv(defaultServerVar)
 			log.Debugf("Using %s from %s environment variable", opts.Server, defaultServerVar)
 		} else {
 			log.Debugf("No server specified or %s set, using /etc/resolv.conf", defaultServerVar)
 			conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 			if err != nil {
-				opts.Server = "https://cloudflare-dns.com/dns-query"
+				opts.Server[0] = "https://cloudflare-dns.com/dns-query"
 				log.Debugf("no server set, using %s", opts.Server)
 			} else {
 				if len(conf.Servers) == 0 {
-					opts.Server = "https://cloudflare-dns.com/dns-query"
+					opts.Server[0] = "https://cloudflare-dns.com/dns-query"
 					log.Debugf("no server set, using %s", opts.Server)
 				} else {
-					opts.Server = conf.Servers[0]
+					opts.Server[0] = conf.Servers[0]
 					log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
 				}
 			}
@@ -328,10 +330,14 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		if !strings.HasPrefix(opts.ODoHProxy, "https://") {
 			return fmt.Errorf("ODoH proxy must use HTTPS")
 		}
-		if !strings.HasPrefix(opts.Server, "https://") {
-			return fmt.Errorf("ODoH target must use HTTPS")
+		for _, server := range opts.Server {
+			if !strings.HasPrefix(server, "https://") {
+				return fmt.Errorf("ODoH target must use HTTPS")
+			}
 		}
 	}
+
+	log.Debugf("Server(s): %s", opts.Server)
 
 	if opts.Chaos {
 		log.Debug("Flag set, using chaos class")
@@ -374,72 +380,77 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	msgs := createQuery(opts, rrTypesSlice)
 
-	// Parse server address and transport type
-	server, transportType, err := parseServer(opts.Server)
-	if err != nil {
-		return err
-	}
-	log.Debugf("Using server %s with transport %s", server, transportType)
-
-	// Recursive zone transfer
-	if opts.RecAXFR {
-		if opts.Name == "" {
-			return fmt.Errorf("no name specified for AXFR")
+	var entries []*output.Entry
+	for _, serverStr := range opts.Server {
+		// Parse server address and transport type
+		server, transportType, err := parseServer(serverStr)
+		if err != nil {
+			return err
 		}
-		_ = RecAXFR(opts.Name, server, out)
-		return nil
-	}
+		log.Debugf("Using server %s with transport %s", server, transportType)
 
-	// Create transport
-	txp, err := newTransport(server, transportType, tlsConfig)
-	if err != nil {
-		return err
-	}
+		// Recursive zone transfer
+		if opts.RecAXFR {
+			if opts.Name == "" {
+				return fmt.Errorf("no name specified for AXFR")
+			}
+			_ = RecAXFR(opts.Name, server, out)
+			return nil
+		}
 
-	startTime := time.Now()
-	var replies []*dns.Msg
-	for _, msg := range msgs {
-		reply, err := (*txp).Exchange(&msg)
+		// Create transport
+		txp, err := newTransport(server, transportType, tlsConfig)
 		if err != nil {
 			return err
 		}
 
-		if transportType != transport.TypeQUIC && !opts.NoIDCheck && reply.Id != msg.Id {
-			return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
-		}
-		replies = append(replies, reply)
-	}
-	queryTime := time.Since(startTime)
+		startTime := time.Now()
+		var replies []*dns.Msg
+		for _, msg := range msgs {
+			reply, err := (*txp).Exchange(&msg)
+			if err != nil {
+				return err
+			}
 
-	// Process TXT parsing
-	if opts.TXTConcat {
-		for _, reply := range replies {
-			txtConcat(reply)
+			if transportType != transport.TypeQUIC && !opts.NoIDCheck && reply.Id != msg.Id {
+				return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+			}
+			replies = append(replies, reply)
 		}
-	}
 
-	if opts.NSID && opts.Format == "pretty" {
-		output.PrettyPrintNSID(replies, out)
+		// Process TXT parsing
+		if opts.TXTConcat {
+			for _, reply := range replies {
+				txtConcat(reply)
+			}
+		}
+
+		entries = append(entries, &output.Entry{
+			Replies: replies,
+			Server:  server,
+			Txp:     txp,
+			Time:    time.Since(startTime),
+		})
 	}
 
 	printer := output.Printer{
-		Server:     server,
-		Out:        out,
-		Opts:       &opts,
-		QueryTime:  queryTime,
-		NumReplies: len(replies),
-		Transport:  txp,
+		Out:  out,
+		Opts: &opts,
+	}
+
+	if opts.NSID && opts.Format == "pretty" {
+		printer.PrettyPrintNSID(entries)
 	}
 
 	switch opts.Format {
 	case "pretty":
-		printer.PrintPretty(replies)
+		printer.PrintPretty(entries)
 	case "column":
-		printer.PrintColumn(replies)
+		printer.PrintColumn(entries)
 	case "raw":
-		printer.PrintRaw(replies)
+		printer.PrintRaw(entries)
 	case "json", "yml", "yaml":
-		printer.PrintStructured(replies)
+		printer.PrintStructured(entries)
 	default:
 		return fmt.Errorf("invalid output format")
 	}
