@@ -9,6 +9,20 @@ import (
 	"github.com/natesales/q/util"
 )
 
+// rrSection generates a printable section from a given RR slice
+func rrSection(s, label string, rrs []dns.RR) string {
+	if len(rrs) > 0 {
+		s += "\n;; " + label + " SECTION:\n"
+		for _, r := range rrs {
+			if r != nil {
+				s += r.String() + "\n"
+			}
+		}
+	}
+
+	return s
+}
+
 // PrintRaw a slice of entries in raw (dig-style) format
 func (p Printer) PrintRaw(entries []*Entry) {
 	for _, entry := range entries {
@@ -29,29 +43,14 @@ func (p Printer) PrintRaw(entries []*Entry) {
 					s += r.String() + "\n"
 				}
 			}
-			if p.Opts.ShowAnswer && len(reply.Answer) > 0 {
-				s += "\n;; ANSWER SECTION:\n"
-				for _, r := range reply.Answer {
-					if r != nil {
-						s += r.String() + "\n"
-					}
-				}
+			if p.Opts.ShowAnswer {
+				s += rrSection(s, "ANSWER", reply.Answer)
 			}
-			if p.Opts.ShowAuthority && len(reply.Ns) > 0 {
-				s += "\n;; AUTHORITY SECTION:\n"
-				for _, r := range reply.Ns {
-					if r != nil {
-						s += r.String() + "\n"
-					}
-				}
+			if p.Opts.ShowAuthority {
+				s += rrSection(s, "AUTHORITY", reply.Ns)
 			}
-			if p.Opts.ShowAdditional && len(reply.Extra) > 0 && (opt == nil || len(reply.Extra) > 1) {
-				s += "\n;; ADDITIONAL SECTION:\n"
-				for _, r := range reply.Extra {
-					if r != nil && r.Header().Rrtype != dns.TypeOPT {
-						s += r.String() + "\n"
-					}
-				}
+			if p.Opts.ShowAdditional && (opt == nil || len(reply.Extra) > 1) {
+				s += rrSection(s, "ADDITIONAL", reply.Extra)
 			}
 			util.MustWriteln(p.Out, s)
 
