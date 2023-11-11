@@ -372,17 +372,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	for rrType := range rrTypes {
 		rrTypesSlice = append(rrTypesSlice, rrType)
 	}
-	msgs := createQuery(
-		opts.Name,
-		opts.DNSSEC, opts.NSID,
-		opts.Class,
-		rrTypesSlice,
-		opts.AuthoritativeAnswer, opts.AuthenticData, opts.CheckingDisabled, opts.RecursionDesired, opts.RecursionAvailable, opts.Zero, opts.Truncated,
-		opts.UDPBuffer,
-		opts.ClientSubnet,
-		opts.Pad,
-		opts.ID,
-	)
+	msgs := createQuery(opts, rrTypesSlice)
 
 	// Parse server address and transport type
 	server, transportType, err := parseServer(opts.Server)

@@ -9,60 +9,51 @@ import (
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/natesales/q/cli"
 	"github.com/natesales/q/transport"
 )
 
 // createQuery creates a slice of DNS queries
-func createQuery(
-	name string,
-	dnssec, nsid bool,
-	class uint16,
-	rrTypes []uint16,
-	aaFlag, adFlag, cdFlag, rdFlag, raFlag, zFlag, tcFlag bool,
-	udpBuffer uint16,
-	clientSubnet string,
-	pad bool,
-	id int,
-) []dns.Msg {
+func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 	var queries []dns.Msg
 
 	// Query for each requested RR type
 	for _, qType := range rrTypes {
 		req := dns.Msg{}
 
-		if id != -1 {
-			req.Id = uint16(id)
+		if opts.ID != -1 {
+			req.Id = uint16(opts.ID)
 		} else {
 			req.Id = dns.Id()
 		}
-		req.Authoritative = aaFlag
-		req.AuthenticatedData = adFlag
-		req.CheckingDisabled = cdFlag
-		req.RecursionDesired = rdFlag
-		req.RecursionAvailable = raFlag
-		req.Zero = zFlag
-		req.Truncated = tcFlag
+		req.Authoritative = opts.AuthoritativeAnswer
+		req.AuthenticatedData = opts.AuthenticData
+		req.CheckingDisabled = opts.CheckingDisabled
+		req.RecursionDesired = opts.RecursionDesired
+		req.RecursionAvailable = opts.RecursionAvailable
+		req.Zero = opts.Zero
+		req.Truncated = opts.Truncated
 
-		if dnssec || nsid || pad || clientSubnet != "" {
+		if opts.DNSSEC || opts.NSID || opts.Pad || opts.ClientSubnet != "" {
 			opt := &dns.OPT{
 				Hdr: dns.RR_Header{
 					Name:   ".",
-					Class:  udpBuffer,
+					Class:  opts.UDPBuffer,
 					Rrtype: dns.TypeOPT,
 				},
 			}
 
-			if dnssec {
+			if opts.DNSSEC {
 				opt.SetDo()
 			}
 
-			if nsid {
+			if opts.NSID {
 				opt.Option = append(opt.Option, &dns.EDNS0_NSID{
 					Code: dns.EDNS0NSID,
 				})
 			}
 
-			if pad {
+			if opts.Pad {
 				paddingOpt := new(dns.EDNS0_PADDING)
 
 				msgLen := req.Len()
@@ -81,10 +72,10 @@ func createQuery(
 				opt.Option = append(opt.Option, paddingOpt)
 			}
 
-			if clientSubnet != "" {
-				ip, ipNet, err := net.ParseCIDR(clientSubnet)
+			if opts.ClientSubnet != "" {
+				ip, ipNet, err := net.ParseCIDR(opts.ClientSubnet)
 				if err != nil {
-					log.Fatalf("parsing subnet %s", clientSubnet)
+					log.Fatalf("parsing subnet %s", opts.ClientSubnet)
 				}
 				mask, _ := ipNet.Mask.Size()
 				log.Debugf("EDNS0 client subnet %s/%d", ip, mask)
@@ -105,9 +96,9 @@ func createQuery(
 		}
 
 		req.Question = []dns.Question{{
-			Name:   dns.Fqdn(name),
+			Name:   dns.Fqdn(opts.Name),
 			Qtype:  qType,
-			Qclass: class,
+			Qclass: opts.Class,
 		}}
 
 		queries = append(queries, req)
