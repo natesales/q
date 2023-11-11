@@ -35,7 +35,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 Application Options:
   -q, --qname=                 Query name
-  -s, --server=                DNS server
+  -s, --server=                DNS server(s)
   -t, --type=                  RR type (e.g. A, AAAA, MX, etc.) or type integer
   -x, --reverse                Reverse lookup
   -d, --dnssec                 Set the DO (DNSSEC OK) bit in the OPT record
