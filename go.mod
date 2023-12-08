@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
-	github.com/cloudflare/odoh-go v1.0.0
+	github.com/cloudflare/odoh-go v1.0.1-0.20230926114050-f39fa019b017
 	github.com/jedisct1/go-dnsstamps v0.0.0-20230211133001-124a632de565
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/miekg/dns v1.1.56
@@ -20,7 +20,7 @@ require (
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
 	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/ameshkov/dnsstamps v1.0.3 // indirect
-	github.com/cisco/go-hpke v0.0.0-20221026214622-55155e0d96c6 // indirect
+	github.com/cisco/go-hpke v0.0.0-20230407100446-246075f83609 // indirect
 	github.com/cisco/go-tls-syntax v0.0.0-20200617162716-46b0cfb76b9b // indirect
 	github.com/cloudflare/circl v1.3.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
