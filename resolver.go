@@ -34,7 +34,7 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 		req.Zero = opts.Zero
 		req.Truncated = opts.Truncated
 
-		if opts.DNSSEC || opts.NSID || opts.Pad || opts.ClientSubnet != "" {
+		if opts.DNSSEC || opts.NSID || opts.Pad || opts.ClientSubnet != "" || opts.Cookie != "" {
 			opt := &dns.OPT{
 				Hdr: dns.RR_Header{
 					Name:   ".",
@@ -92,6 +92,15 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 				}
 				opt.Option = append(opt.Option, ednsSubnet)
 			}
+
+			if opts.Cookie != "" {
+				cookie := &dns.EDNS0_COOKIE{
+					Code:   dns.EDNS0COOKIE,
+					Cookie: opts.Cookie,
+				}
+				opt.Option = append(opt.Option, cookie)
+			}
+
 			req.Extra = append(req.Extra, opt)
 		}
 

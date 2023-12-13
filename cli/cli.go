@@ -31,7 +31,9 @@ type Flags struct {
 	ID               int           `long:"qid" description:"Set query ID (-1 for random)" default:"-1"`
 	BootstrapServer  string        `short:"b" long:"bootstrap-server" description:"DNS server to use for bootstrapping"`
 	BootstrapTimeout time.Duration `long:"bootstrap-timeout" description:"Bootstrapping timeout" default:"5s"`
+	Cookie           string        `long:"cookie" description:"EDNS0 cookie"`
 
+	// Special query modes
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
 	// Output
