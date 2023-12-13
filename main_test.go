@@ -18,7 +18,7 @@ func TestMainQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 	}, &out))
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* TXT "v=spf1 -all"`), out.String())
@@ -28,7 +28,7 @@ func TestMainVersion(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-V", "--trace",
+		"-V",
 	}, &out))
 	assert.Contains(t, out.String(), "https://github.com/natesales/q version dev (unknown unknown)")
 }
@@ -37,7 +37,7 @@ func TestMainVersion(t *testing.T) {
 // func TestMainODoHQuery(t *testing.T) {
 // 	clearOpts()
 // 	assert.Nil(t, driver([]string{
-// 		"-v", "--trace", "--all",
+// 		"--all",
 // 		"-q", "example.com",
 // 		"-s", "https://odoh.cloudflare-dns.com",
 // 		"--odoh-proxy", "https://odoh.crypto.sx",
@@ -48,7 +48,7 @@ func TestMainRawFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"--format=raw",
 	}, &out))
@@ -60,7 +60,7 @@ func TestMainJSONFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"--format=json",
 	}, &out))
@@ -73,7 +73,7 @@ func TestMainInvalidOutputFormat(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"--format=invalid",
 	}, &out)
@@ -86,7 +86,7 @@ func TestMainParseTypes(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-t", "A",
 		"-t", "AAAA",
@@ -99,7 +99,7 @@ func TestMainInvalidTypes(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-t", "INVALID",
 	}, &out)
@@ -112,7 +112,7 @@ func TestMainInvalidODoHUpstream(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-s", "tls://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "https://odoh.crypto.sx",
@@ -125,7 +125,7 @@ func TestMainInvalidODoHProxy(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-s", "https://odoh.cloudflare-dns.com",
 		"--odoh-proxy", "tls://odoh1.surfdomeinen.nl",
@@ -138,7 +138,7 @@ func TestMainReverseQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-x",
 		"-q", "1.1.1.1",
 	}, &out))
@@ -149,7 +149,7 @@ func TestMainInferredQname(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"example.com",
 		"A",
 	}, &out))
@@ -160,7 +160,7 @@ func TestMainInferredServer(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"@8.8.8.8",
 		"-t", "A",
@@ -172,7 +172,7 @@ func TestMainInvalidReverseQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-x",
 		"example.com",
 	}, &out)
@@ -185,7 +185,7 @@ func TestMainInvalidUpstream(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	err := driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-s", "127.127.127.127:1",
 		"example.com",
 	}, &out)
@@ -198,7 +198,7 @@ func TestMainDNSSECArg(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"example.com",
 		"+dnssec",
 		"@9.9.9.9",
@@ -211,7 +211,7 @@ func TestMainPad(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"--pad",
 		"--format=json",
@@ -223,7 +223,7 @@ func TestMainChaosClass(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"id.server",
 		"CH",
 		"TXT",
@@ -243,7 +243,7 @@ func TestMainTCPQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-t", "A",
 		"-q", "example.com",
 		"@tcp://1.1.1.1",
@@ -255,7 +255,7 @@ func TestMainTLSQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-t", "A",
 		"@tls://1.1.1.1",
@@ -267,7 +267,7 @@ func TestMainHTTPSQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-t", "A",
 		"@https://dns.quad9.net",
@@ -279,7 +279,7 @@ func TestMainQUICQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"-t", "A",
 		"@quic://dns.adguard.com",
@@ -291,7 +291,6 @@ func TestMainDNSCryptStampQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace",
 		"-q", "example.com",
 		"-t", "A",
 		"@sdns://AQMAAAAAAAAAETk0LjE0MC4xNC4xNDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
@@ -303,7 +302,6 @@ func TestMainDNSCryptManualQuery(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace",
 		"-q", "example.com",
 		"-t", "A",
 		"@dnscrypt://94.140.14.14:5443",
@@ -317,7 +315,7 @@ func TestMainInvalidServerURL(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.NotNil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"@bad::server::url",
 		"--format=json",
@@ -329,7 +327,7 @@ func TestMainInvalidTransportScheme(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.NotNil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"@invalid://example.com",
 		"--format=json",
@@ -341,7 +339,7 @@ func TestMainTLS12(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"-q", "example.com",
 		"--tls-min-version=1.1",
 		"--tls-max-version=1.2",
@@ -355,7 +353,7 @@ func TestMainNSID(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"@9.9.9.9",
 		"+nsid",
 	}, &out))
@@ -366,7 +364,7 @@ func TestMainECSv4(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"@script-ns.packetframe.com",
 		"TXT",
 		"query.script.packetframe.com",
@@ -379,7 +377,7 @@ func TestMainECSv6(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"@script-ns.packetframe.com",
 		"TXT",
 		"query.script.packetframe.com",
@@ -392,7 +390,7 @@ func TestMainHTTPUserAgent(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"@https://dns.quad9.net",
 		"--http-user-agent", "Example/1.0",
 		"-t", "NS",
@@ -510,7 +508,7 @@ func TestMainRecAXFR(t *testing.T) {
 	clearOpts()
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
-		"-v", "--trace", "--all",
+		"--all",
 		"+recaxfr",
 		"@nsztm1.digi.ninja", "zonetransfer.me",
 	}, &out))
@@ -530,7 +528,7 @@ func TestMainShowAll(t *testing.T) {
 	var out bytes.Buffer
 	assert.Nil(t, driver([]string{
 		"@9.9.9.9",
-		"-v", "--trace", "--all",
+		"--all",
 		"+all",
 		"example.com",
 		"A",

@@ -53,7 +53,7 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 	if q.conn == nil || !q.ReuseConn {
 		q.setServerName()
 		if len(q.TLSConfig.NextProtos) == 0 {
-			log.Warn("No ALPN tokens specified, using default: \"doq\"")
+			log.Debug("No ALPN tokens specified, using default: \"doq\"")
 			q.TLSConfig.NextProtos = []string{"doq"}
 		}
 		log.Debugf("Dialing with QUIC ALPN tokens: %v", q.TLSConfig.NextProtos)
