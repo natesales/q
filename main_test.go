@@ -66,9 +66,10 @@ func TestMainJSONFormat(t *testing.T) {
 		"--format=json",
 	)
 	assert.Nil(t, err)
-	assert.Contains(t, out.String(), `"Preference":0,"Mx":"."`)
-	assert.Contains(t, out.String(), `"Ns":"a.iana-servers.net."`)
-	assert.Contains(t, out.String(), `"Txt":["v=spf1 -all"]`)
+	o := strings.ReplaceAll(out.String(), `\\"`, `"`)
+	assert.Contains(t, o, `"preference":0,"mx":"."`)
+	assert.Contains(t, o, `"ns":"a.iana-servers.net."`)
+	assert.Contains(t, o, `"txt":["v=spf1 -all"`)
 }
 
 func TestMainInvalidOutputFormat(t *testing.T) {
@@ -200,7 +201,8 @@ func TestMainPad(t *testing.T) {
 		"--format=json",
 	)
 	assert.Nil(t, err)
-	assert.Contains(t, out.String(), `"Truncated":false`)
+	o := strings.ReplaceAll(out.String(), `\\"`, `"`)
+	assert.Contains(t, o, `"truncated":false`)
 }
 
 func TestMainChaosClass(t *testing.T) {

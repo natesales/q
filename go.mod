@@ -6,6 +6,7 @@ require (
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
 	github.com/jedisct1/go-dnsstamps v0.0.0-20230211133001-124a632de565
 	github.com/jessevdk/go-flags v1.5.0
+	github.com/json-iterator/go v1.1.12
 	github.com/miekg/dns v1.1.57
 	github.com/natesales/bgptools-go v0.0.0-20230212051756-2b519d61269c
 	github.com/quic-go/quic-go v0.40.0
@@ -27,6 +28,8 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/pprof v0.0.0-20231212022811-ec68065c825e // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/ginkgo/v2 v2.13.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect

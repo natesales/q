@@ -23,6 +23,7 @@ type Printer struct {
 
 // Entry stores the replies from a server
 type Entry struct {
+	Queries []dns.Msg
 	Replies []*dns.Msg
 	Server  string
 

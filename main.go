@@ -450,6 +450,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		entries = append(entries, &output.Entry{
+			Queries: msgs,
 			Replies: replies,
 			Server:  server,
 			Txp:     txp,
