@@ -29,7 +29,7 @@ const (
 type QUIC struct {
 	Server          string
 	TLSConfig       *tls.Config
-	NoPMTUD         bool
+	PMTUD           bool
 	AddLengthPrefix bool
 	ReuseConn       bool
 
@@ -62,7 +62,7 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 			q.Server,
 			q.TLSConfig,
 			&quic.Config{
-				DisablePathMTUDiscovery: q.NoPMTUD,
+				DisablePathMTUDiscovery: !q.PMTUD,
 			},
 		)
 		if err != nil {

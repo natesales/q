@@ -118,7 +118,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				Target:    server,
 				Proxy:     opts.ODoHProxy,
 				TLSConfig: tlsConfig,
-				ReuseConn: !opts.NoReuseConn,
+				ReuseConn: opts.ReuseConn,
 			}
 		} else {
 			log.Debugf("Using HTTP(s) transport: %s", server)
@@ -129,8 +129,8 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				Method:    opts.HTTPMethod,
 				Timeout:   opts.Timeout,
 				HTTP3:     opts.HTTP3,
-				NoPMTUd:   opts.QUICNoPMTUD,
-				ReuseConn: !opts.NoReuseConn,
+				NoPMTUd:   !opts.PMTUD,
+				ReuseConn: opts.ReuseConn,
 			}
 		}
 	case transport.TypeDNSCrypt:
@@ -142,7 +142,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				TCP:         opts.DNSCryptTCP,
 				Timeout:     opts.Timeout,
 				UDPSize:     opts.DNSCryptUDPSize,
-				ReuseConn:   !opts.NoReuseConn,
+				ReuseConn:   opts.ReuseConn,
 			}
 		} else {
 			log.Traceln("Using manual DNSCrypt configuration")
@@ -150,7 +150,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				TCP:          opts.DNSCryptTCP,
 				Timeout:      opts.Timeout,
 				UDPSize:      opts.DNSCryptUDPSize,
-				ReuseConn:    !opts.NoReuseConn,
+				ReuseConn:    opts.ReuseConn,
 				Server:       server,
 				PublicKey:    opts.DNSCryptPublicKey,
 				ProviderName: opts.DNSCryptProvider,
@@ -165,9 +165,9 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		ts = &transport.QUIC{
 			Server:          server,
 			TLSConfig:       tc,
-			NoPMTUD:         opts.QUICNoPMTUD,
-			AddLengthPrefix: !opts.QUICNoLengthPrefix,
-			ReuseConn:       !opts.NoReuseConn,
+			PMTUD:           opts.PMTUD,
+			AddLengthPrefix: opts.QUICLengthPrefix,
+			ReuseConn:       opts.ReuseConn,
 		}
 	case transport.TypeTLS:
 		log.Debugf("Using TLS transport: %s", server)
@@ -175,7 +175,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 			Server:    server,
 			TLSConfig: tlsConfig,
 			Timeout:   opts.Timeout,
-			ReuseConn: !opts.NoReuseConn,
+			ReuseConn: opts.ReuseConn,
 		}
 	case transport.TypeTCP:
 		log.Debugf("Using TCP transport: %s", server)

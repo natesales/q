@@ -25,8 +25,8 @@ type Flags struct {
 	Timeout          time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
 	Pad              bool          `long:"pad" description:"Set EDNS0 padding"`
 	HTTP3            bool          `long:"http3" description:"Use HTTP/3 for DoH"`
-	NoIDCheck        bool          `long:"no-id-check" description:"Disable checking of DNS response ID"`
-	NoReuseConn      bool          `long:"no-reuse-conn" description:"Use a new connection for each query"`
+	IDCheck          bool          `long:"id-check" description:"Check DNS response ID (default: true)"`
+	ReuseConn        bool          `long:"reuse-conn" description:"Reuse connections across queries to the same server (default: true)"`
 	TXTConcat        bool          `long:"txtconcat" description:"Concatenate TXT responses"`
 	ID               int           `long:"qid" description:"Set query ID (-1 for random)" default:"-1"`
 	BootstrapServer  string        `short:"b" long:"bootstrap-server" description:"DNS server to use for bootstrapping"`
@@ -59,25 +59,26 @@ type Flags struct {
 	Truncated           bool `long:"t" description:"Set TC (Truncated) flag in query"`
 
 	// TLS parameters
-	TLSNoVerify          bool     `short:"i" long:"tls-no-verify" description:"Disable TLS certificate verification"`
-	TLSServerName        string   `long:"tls-server-name" description:"TLS server name for host verification"`
-	TLSMinVersion        string   `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
-	TLSMaxVersion        string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
-	TLSNextProtos        []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
-	TLSCipherSuites      []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
-	TLSCurvePreferences  []string `long:"tls-curve-preferences" description:"TLS curve preferences"`
-	TLSClientCertificate string   `long:"tls-client-cert" description:"TLS client certificate file"`
-	TLSClientKey         string   `long:"tls-client-key" description:"TLS client key file"`
-	TLSKeyLogFile        string   `long:"tls-key-log-file" env:"SSLKEYLOGFILE" description:"TLS key log file"`
+	TLSInsecureSkipVerify bool     `short:"i" long:"tls-insecure-skip-verify" description:"Disable TLS certificate verification"`
+	TLSServerName         string   `long:"tls-server-name" description:"TLS server name for host verification"`
+	TLSMinVersion         string   `long:"tls-min-version" description:"Minimum TLS version to use" default:"1.0"`
+	TLSMaxVersion         string   `long:"tls-max-version" description:"Maximum TLS version to use" default:"1.3"`
+	TLSNextProtos         []string `long:"tls-next-protos" description:"TLS next protocols for ALPN"`
+	TLSCipherSuites       []string `long:"tls-cipher-suites" description:"TLS cipher suites"`
+	TLSCurvePreferences   []string `long:"tls-curve-preferences" description:"TLS curve preferences"`
+	TLSClientCertificate  string   `long:"tls-client-cert" description:"TLS client certificate file"`
+	TLSClientKey          string   `long:"tls-client-key" description:"TLS client key file"`
+	TLSKeyLogFile         string   `long:"tls-key-log-file" env:"SSLKEYLOGFILE" description:"TLS key log file"`
 
 	// HTTP
 	HTTPUserAgent string `long:"http-user-agent" description:"HTTP user agent" default:""`
 	HTTPMethod    string `long:"http-method" description:"HTTP method" default:"GET"`
 
+	PMTUD bool `long:"pmtud" description:"PMTU discovery (default: true)"`
+
 	// QUIC
-	QUICALPNTokens     []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"` //nolint:golint,staticcheck
-	QUICNoPMTUD        bool     `long:"quic-no-pmtud" description:"Disable QUIC PMTU discovery"`
-	QUICNoLengthPrefix bool     `long:"quic-no-length-prefix" description:"Don't add RFC 9250 compliant length prefix"`
+	QUICALPNTokens   []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"` //nolint:golint,staticcheck
+	QUICLengthPrefix bool     `long:"quic-length-prefix" description:"Add RFC 9250 compliant length prefix (default: true)"`
 
 	// DNSCrypt
 	DNSCryptTCP       bool   `long:"dnscrypt-tcp" description:"Use TCP for DNSCrypt (default UDP)"`
@@ -112,6 +113,18 @@ func ParsePlusFlags(opts *Flags, args []string) {
 					break
 				}
 			}
+		}
+	}
+}
+
+// SetDefaultTrueBools enables boolean flags that are true by default
+func SetDefaultTrueBools(opts *Flags) {
+	v := reflect.Indirect(reflect.ValueOf(opts))
+	vT := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		defaultTrue := strings.Contains(vT.Field(i).Tag.Get("description"), "default: true")
+		if vT.Field(i).Type == reflect.TypeOf(true) && defaultTrue {
+			reflect.ValueOf(opts).Elem().Field(i).SetBool(true)
 		}
 	}
 }

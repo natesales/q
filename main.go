@@ -39,10 +39,7 @@ var (
 // clearOpts sets the default values for the CLI options
 func clearOpts() {
 	opts = cli.Flags{}
-	opts.RecursionDesired = true
-	opts.ShowAnswer = true
-	opts.PrettyTTLs = true
-	opts.ShortTTLs = true
+	cli.SetDefaultTrueBools(&opts)
 
 	// Enable color output if stdout is a terminal
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
@@ -372,7 +369,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	// Create TLS config
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: opts.TLSNoVerify,
+		InsecureSkipVerify: opts.TLSInsecureSkipVerify,
 		ServerName:         opts.TLSServerName,
 		MinVersion:         tlsutil.Version(opts.TLSMinVersion, tls.VersionTLS10),
 		MaxVersion:         tlsutil.Version(opts.TLSMaxVersion, tls.VersionTLS13),
@@ -438,7 +435,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				return err
 			}
 
-			if transportType != transport.TypeQUIC && !opts.NoIDCheck && reply.Id != msg.Id {
+			if transportType != transport.TypeQUIC && opts.IDCheck && reply.Id != msg.Id {
 				return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
 			}
 			replies = append(replies, reply)
