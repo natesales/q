@@ -136,6 +136,43 @@ func SetDefaultTrueBools(opts *Flags) {
 	}
 }
 
+// SetFalseBooleans sets boolean flags to false from a given argument list and returns the remaining arguments
+func SetFalseBooleans(opts *Flags, args []string) []string {
+	// Add equal signs to separated flags (e.g. --foo bar becomes --foo=bar)
+	for i, arg := range args {
+		if arg[0] == '-' && !strings.Contains(arg, "=") && i+1 < len(args) && (args[i+1] == "true" || args[i+1] == "false") {
+			args[i] = arg + "=" + args[i+1]
+			args = append(args[:i+1], args[i+2:]...)
+		}
+	}
+
+	var remainingArgs []string
+	for _, arg := range args {
+
+		if strings.HasSuffix(arg, "=true") || strings.HasSuffix(arg, "=false") {
+			flag := strings.ToLower(strings.TrimLeft(arg, "-"))
+			flag = strings.TrimSuffix(flag, "=true")
+			flag = strings.TrimSuffix(flag, "=false")
+
+			v := reflect.Indirect(reflect.ValueOf(opts))
+			vT := v.Type()
+			for i := 0; i < v.NumField(); i++ {
+				if vT.Field(i).Type == reflect.TypeOf(true) && (vT.Field(i).Tag.Get("long") == flag || vT.Field(i).Tag.Get("short") == flag) {
+					boolState := strings.HasSuffix(arg, "=true")
+					log.Tracef("Setting %s to %t", arg, boolState)
+					reflect.ValueOf(opts).Elem().Field(i).SetBool(boolState)
+					break
+				}
+			}
+		} else {
+			remainingArgs = append(remainingArgs, arg)
+		}
+	}
+
+	log.Tracef("remaining args: %v", remainingArgs)
+	return remainingArgs
+}
+
 // ParseRRTypes parses a list of RR types in string format ("A", "AAAA", etc.) or integer format (1, 28, etc.)
 func ParseRRTypes(t []string) (map[uint16]bool, error) {
 	rrTypes := make(map[uint16]bool, len(t))
