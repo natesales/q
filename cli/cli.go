@@ -98,6 +98,8 @@ type Flags struct {
 func ParsePlusFlags(opts *Flags, args []string) {
 	for _, arg := range args {
 		if len(arg) > 3 && arg[0] == '+' {
+			argFound := false
+
 			flag := strings.ToLower(arg[3:])
 			state := arg[1:3] != "no"
 			if state {
@@ -109,9 +111,14 @@ func ParsePlusFlags(opts *Flags, args []string) {
 			for i := 0; i < v.NumField(); i++ {
 				fieldTag := vT.Field(i).Tag.Get("long")
 				if vT.Field(i).Type == reflect.TypeOf(true) && fieldTag == flag {
+					argFound = true
 					reflect.ValueOf(opts).Elem().Field(i).SetBool(state)
 					break
 				}
+			}
+
+			if !argFound {
+				log.Fatalf("unknown flag %s", arg)
 			}
 		}
 	}
