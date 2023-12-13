@@ -50,6 +50,7 @@ type Flags struct {
 	Whois          bool   `short:"w" description:"Resolve ASN/ASName for A and AAAA records"`
 	ValueOnly      bool   `short:"r" long:"short" description:"Show record values only"`
 	ResolveIPs     bool   `short:"R" long:"resolve-ips" description:"Resolve PTR records for IP addresses in A and AAAA records"`
+	RoundTTLs      bool   `long:"round-ttls" description:"Round TTLs to the nearest minute"`
 
 	// Header flags
 	AuthoritativeAnswer bool `long:"aa" description:"Set AA (Authoritative Answer) flag in query"`

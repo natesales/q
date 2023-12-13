@@ -449,6 +449,15 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			}
 		}
 
+		// Round TTL
+		if opts.RoundTTLs {
+			for _, reply := range replies {
+				for _, rr := range reply.Answer {
+					rr.Header().Ttl = rr.Header().Ttl - (rr.Header().Ttl % 60)
+				}
+			}
+		}
+
 		entries = append(entries, &output.Entry{
 			Queries: msgs,
 			Replies: replies,
