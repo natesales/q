@@ -31,9 +31,9 @@ type Entry struct {
 	Time time.Duration
 
 	// Txp is the transport used to resolve IP addresses in A/AAAA records to their PTR records
-	Txp *transport.Transport
+	Txp *transport.Transport `json:"-"`
 
-	PTRs        map[string]string // IP -> PTR value
+	PTRs        map[string]string `json:"-"` // IP -> PTR value
 	existingRRs map[string]bool
 }
 
