@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
@@ -55,10 +56,24 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		return nil, fmt.Errorf("packing message: %w", err)
 	}
 
-	queryURL := h.Server + "?dns=" + base64.RawURLEncoding.EncodeToString(buf)
-	req, err := http.NewRequest(h.Method, queryURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating http request to %s: %w", queryURL, err)
+	var queryURL string
+	var req *http.Request
+	switch h.Method {
+	case http.MethodGet:
+		queryURL = h.Server + "?dns=" + base64.RawURLEncoding.EncodeToString(buf)
+		req, err = http.NewRequest(http.MethodGet, queryURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("creating http request to %s: %w", queryURL, err)
+		}
+	case http.MethodPost:
+		queryURL = h.Server
+		req, err = http.NewRequest(http.MethodPost, queryURL, bytes.NewReader(buf))
+		if err != nil {
+			return nil, fmt.Errorf("creating http request to %s: %w", queryURL, err)
+		}
+		req.Header.Set("Content-Type", "application/dns-message")
+	default:
+		return nil, fmt.Errorf("unsupported HTTP method: %s", h.Method)
 	}
 
 	req.Header.Set("Accept", "application/dns-message")

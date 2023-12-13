@@ -22,6 +22,14 @@ func httpTransport() *HTTP {
 	}
 }
 
+func TestTransportHTTPPOST(t *testing.T) {
+	tp := httpTransport()
+	tp.Method = http.MethodPost
+	reply, err := tp.Exchange(validQuery())
+	assert.Nil(t, err)
+	assert.Greater(t, len(reply.Answer), 0)
+}
+
 func TestTransportHTTP3(t *testing.T) {
 	tp := httpTransport()
 	tp.HTTP3 = true
