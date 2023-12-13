@@ -491,6 +491,11 @@ func TestMainParseServer(t *testing.T) {
 			Type:         transport.TypeHTTP,
 			ExpectedHost: "https://localhost:443/1:89==:64fx",
 		},
+		{ // Plain IPv6 address
+			Server:       "2001:db8:11:8340:dea6:32ff:fe5b:a19e",
+			Type:         transport.TypePlain,
+			ExpectedHost: "[2001:db8:11:8340:dea6:32ff:fe5b:a19e]:53",
+		},
 	} {
 		t.Run(tc.Server, func(t *testing.T) {
 			server, transportType, err := parseServer(tc.Server)

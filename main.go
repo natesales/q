@@ -149,13 +149,18 @@ func parseServer(s string) (string, transport.Type, error) {
 	// Check if server starts with a scheme, if not, default to plain
 	schemeRe := regexp.MustCompile(`^[a-zA-Z0-9]+://`)
 	if !schemeRe.MatchString(s) {
+		// Enclose in brackets if IPv6
+		v6re := regexp.MustCompile(`^[a-fA-F0-9:]+$`)
+		if v6re.MatchString(s) {
+			s = "[" + s + "]"
+		}
 		s = "plain://" + s
 	}
 
 	// Parse server as URL
 	tu, err := url.Parse(s)
 	if err != nil {
-		return "", "", fmt.Errorf("parsing %s: %s", s, err)
+		return "", "", fmt.Errorf("parsing %s as URL: %s", s, err)
 	}
 
 	// Parse transport type
