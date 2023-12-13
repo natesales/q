@@ -4,13 +4,13 @@ go 1.21
 
 require (
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
-	github.com/cloudflare/odoh-go v1.0.0
 	github.com/jedisct1/go-dnsstamps v0.0.0-20230211133001-124a632de565
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/miekg/dns v1.1.57
 	github.com/natesales/bgptools-go v0.0.0-20230212051756-2b519d61269c
 	github.com/quic-go/quic-go v0.40.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/sthorne/odoh-go v1.0.4
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1
 )

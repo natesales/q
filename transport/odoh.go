@@ -36,9 +36,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cloudflare/odoh-go"
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
+	"github.com/sthorne/odoh-go"
 )
 
 const ODoHContentType = "application/oblivious-dns-message"
