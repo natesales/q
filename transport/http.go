@@ -13,18 +13,19 @@ import (
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/http2"
 )
 
 // HTTP makes a DNS query over HTTP(s)
 type HTTP struct {
-	Server    string
-	TLSConfig *tls.Config
-	UserAgent string
-	Method    string
-	Timeout   time.Duration
-	HTTP3     bool
-	NoPMTUd   bool
-	ReuseConn bool
+	Server       string
+	TLSConfig    *tls.Config
+	UserAgent    string
+	Method       string
+	Timeout      time.Duration
+	HTTP2, HTTP3 bool
+	NoPMTUd      bool
+	ReuseConn    bool
 
 	conn *http.Client
 }
@@ -39,6 +40,13 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 				MaxIdleConns:    1,
 				Proxy:           http.ProxyFromEnvironment,
 			},
+		}
+		if h.HTTP2 {
+			log.Debug("Using HTTP/2")
+			h.conn.Transport = &http2.Transport{
+				TLSClientConfig: h.TLSConfig,
+				AllowHTTP:       true,
+			}
 		}
 		if h.HTTP3 {
 			log.Debug("Using HTTP/3")

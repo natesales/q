@@ -137,6 +137,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				UserAgent: opts.HTTPUserAgent,
 				Method:    opts.HTTPMethod,
 				Timeout:   opts.Timeout,
+				HTTP2:     opts.HTTP2,
 				HTTP3:     opts.HTTP3,
 				NoPMTUd:   !opts.PMTUD,
 				ReuseConn: opts.ReuseConn,

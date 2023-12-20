@@ -48,6 +48,7 @@ Application Options:
   -p, --odoh-proxy=               ODoH proxy
       --timeout=                  Query timeout (default: 10s)
       --pad                       Set EDNS0 padding
+      --http2                     Use HTTP/2 for DoH
       --http3                     Use HTTP/3 for DoH
       --id-check                  Check DNS response ID (default: true)
       --reuse-conn                Reuse connections across queries to the same

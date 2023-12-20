@@ -24,6 +24,7 @@ type Flags struct {
 	ODoHProxy        string        `short:"p" long:"odoh-proxy" description:"ODoH proxy"`
 	Timeout          time.Duration `long:"timeout" description:"Query timeout" default:"10s"`
 	Pad              bool          `long:"pad" description:"Set EDNS0 padding"`
+	HTTP2            bool          `long:"http2" description:"Use HTTP/2 for DoH"`
 	HTTP3            bool          `long:"http3" description:"Use HTTP/3 for DoH"`
 	IDCheck          bool          `long:"id-check" description:"Check DNS response ID (default: true)"`
 	ReuseConn        bool          `long:"reuse-conn" description:"Reuse connections across queries to the same server (default: true)"`
@@ -151,7 +152,6 @@ func SetFalseBooleans(opts *Flags, args []string) []string {
 
 	var remainingArgs []string
 	for _, arg := range args {
-
 		if strings.HasSuffix(arg, "=true") || strings.HasSuffix(arg, "=false") {
 			flag := strings.ToLower(strings.TrimLeft(arg, "-"))
 			flag = strings.TrimSuffix(flag, "=true")
