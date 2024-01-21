@@ -90,7 +90,13 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		e.existingRRs = make(map[string]bool)
 	}
 
-	val := strings.TrimSpace(strings.Join(strings.Split(a.String(), dns.TypeToString[a.Header().Rrtype])[1:], ""))
+	val := a.String()
+	for _, cut := range []string{a.Header().Name, strconv.Itoa(int(a.Header().Ttl)), dns.ClassToString[a.Header().Class], dns.TypeToString[a.Header().Rrtype]} {
+		val = strings.TrimSpace(
+			strings.TrimPrefix(val, cut),
+		)
+	}
+
 	rrSignature := fmt.Sprintf("%s %d %s %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val, e.Server)
 	// Skip if we've already printed this RR
 	if ok := e.existingRRs[rrSignature]; ok {

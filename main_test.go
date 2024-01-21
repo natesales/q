@@ -517,3 +517,12 @@ func TestMainResolveIPs(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Regexp(t, regexp.MustCompile(`core1.fmt2.he.net. .* A .* \(core1.fmt2.he.net.\)`), out.String())
 }
+
+func TestMainQueryDomainWithRRType(t *testing.T) {
+	out, err := run(
+		"NS.network",
+		"A",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`NS.network. .* A .*`), out.String())
+}
