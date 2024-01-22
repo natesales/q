@@ -56,12 +56,28 @@ brews:
       name: repo
 dockers:
   - image_templates:
-      - "ghcr.io/natesales/q:{{ .Version }}"
-      - "ghcr.io/natesales/q:latest"
-    dockerfile: Dockerfile
+      - "ghcr.io/natesales/q:{{ .Version }}-amd64"
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
       - --label=org.opencontainers.image.licenses=GPL-3.0-only
+  - image_templates:
+      - "ghcr.io/natesales/q:{{ .Version }}-arm64"
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=GPL-3.0-only
+    goarch: arm64
+docker_manifests:
+  - name_template: "ghcr.io/natesales/q:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/natesales/q:{{ .Version }}-amd64"
+      - "ghcr.io/natesales/q:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/natesales/q:latest"
+    image_templates:
+      - "ghcr.io/natesales/q:{{ .Version }}-amd64"
+      - "ghcr.io/natesales/q:{{ .Version }}-arm64"
