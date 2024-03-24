@@ -68,6 +68,10 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 		if err != nil {
 			return nil, fmt.Errorf("opening quic session to %s: %v", q.Server, err)
 		}
+
+		// close quic connection on to avoid retransmission.
+		defer q.Close()
+
 		q.conn = &conn
 	}
 
