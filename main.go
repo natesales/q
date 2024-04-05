@@ -458,13 +458,22 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			}
 		}
 
-		entries = append(entries, &output.Entry{
+		e := &output.Entry{
 			Queries: msgs,
 			Replies: replies,
 			Server:  server,
-			Txp:     txp,
 			Time:    time.Since(startTime),
-		})
+		}
+
+		if opts.ResolveIPs {
+			e.LoadPTRs(txp)
+		}
+
+		entries = append(entries, e)
+
+		if err := (*txp).Close(); err != nil {
+			return fmt.Errorf("closing transport: %s", err)
+		}
 	}
 
 	printer := output.Printer{

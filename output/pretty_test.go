@@ -10,16 +10,6 @@ import (
 	"github.com/natesales/q/util"
 )
 
-func TestOutputPrettyPTRCache(t *testing.T) {
-	var e Entry
-	e.PTRs = make(map[string]string)
-	e.PTRs["192.0.2.1"] = "example.com."
-
-	ptr, err := e.ptr("192.0.2.1")
-	assert.Nil(t, err)
-	assert.Equal(t, "example.com.", ptr)
-}
-
 func TestOutputPrettyPrintColumn(t *testing.T) {
 	var buf bytes.Buffer
 	util.UseColor = false

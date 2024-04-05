@@ -47,42 +47,6 @@ func (p Printer) PrettyPrintNSID(entries []*Entry) {
 	}
 }
 
-// ptr resolves an IP address (not an arpa FQDN) to its PTR record
-func (e *Entry) ptr(ip string) (string, error) {
-	// Initialize ptrCache if it doesn't exist
-	if e.PTRs == nil {
-		e.PTRs = make(map[string]string)
-	}
-
-	// Return the result from cache if we already have it
-	if ptr, ok := e.PTRs[ip]; ok {
-		return ptr, nil
-	}
-
-	// Create PTR query
-	qname, err := dns.ReverseAddr(ip)
-	if err != nil {
-		log.Fatalf("error reversing PTR record: %s", err)
-	}
-	msg := dns.Msg{}
-	msg.SetQuestion(qname, dns.TypePTR)
-
-	// Resolve qname and cache result
-	resp, err := (*e.Txp).Exchange(&msg)
-	if err != nil {
-		return "", err
-	}
-
-	// Cache and return
-	if len(resp.Answer) > 0 {
-		e.PTRs[ip] = resp.Answer[0].(*dns.PTR).Ptr
-		return e.PTRs[ip], nil
-	}
-
-	// No value
-	return "", fmt.Errorf("no PTR record found for %s", ip)
-}
-
 // parseRR converts an RR into a pretty string and returns the qname, ttl, type, value, and whether to skip printing it because it's a duplicate
 func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	// Initialize existingRRs map if it doesn't exist
@@ -128,11 +92,7 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 
 	// Handle PTR resolution
 	if opts.ResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		if ptr, err := e.ptr(valCopy); err == nil {
-			val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", ptr))
-		} else {
-			log.Warnf("PTR resolution: %s", err)
-		}
+		val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", e.PTRs[valCopy]))
 	}
 
 	// Server suffix

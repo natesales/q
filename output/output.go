@@ -4,11 +4,12 @@ import (
 	"io"
 	"time"
 
+	"github.com/natesales/q/transport"
+
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/natesales/q/cli"
-	"github.com/natesales/q/transport"
 )
 
 // Printer stores global options across multiple entries
@@ -30,15 +31,12 @@ type Entry struct {
 	// Time is the total time it took to query this server
 	Time time.Duration
 
-	// Txp is the transport used to resolve IP addresses in A/AAAA records to their PTR records
-	Txp *transport.Transport `json:"-"`
-
 	PTRs        map[string]string `json:"-"` // IP -> PTR value
 	existingRRs map[string]bool
 }
 
 // LoadPTRs populates an entry's PTRs map with PTR values for all A/AAAA records
-func (e *Entry) LoadPTRs() {
+func (e *Entry) LoadPTRs(txp *transport.Transport) {
 	// Initialize PTR cache if it doesn't exist
 	if e.PTRs == nil {
 		e.PTRs = make(map[string]string)
@@ -66,7 +64,7 @@ func (e *Entry) LoadPTRs() {
 			msg.SetQuestion(qname, dns.TypePTR)
 
 			// Resolve qname and cache result
-			resp, err := (*e.Txp).Exchange(&msg)
+			resp, err := (*txp).Exchange(&msg)
 			if err != nil {
 				log.Debugf("error resolving PTR record: %s", err)
 			}

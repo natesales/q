@@ -38,7 +38,6 @@ var entries = []*Entry{
 		Replies:     replies(),
 		Server:      "192.0.2.10",
 		Time:        time.Second * 2,
-		Txp:         nil,
 		PTRs:        nil,
 		existingRRs: nil,
 	},
