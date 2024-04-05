@@ -10,9 +10,11 @@ import (
 
 func plainTransport() *Plain {
 	return &Plain{
-		Server:    "9.9.9.9:53",
+		Common: Common{
+			Server:  "9.9.9.9:53",
+			Timeout: 5 * time.Second,
+		},
 		PreferTCP: false,
-		Timeout:   5 * time.Second,
 		UDPBuffer: 1232,
 	}
 }

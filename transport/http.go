@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go"
@@ -18,14 +17,12 @@ import (
 
 // HTTP makes a DNS query over HTTP(s)
 type HTTP struct {
-	Server       string
+	Common
 	TLSConfig    *tls.Config
 	UserAgent    string
 	Method       string
-	Timeout      time.Duration
 	HTTP2, HTTP3 bool
 	NoPMTUd      bool
-	ReuseConn    bool
 
 	conn *http.Client
 }

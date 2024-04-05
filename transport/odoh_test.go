@@ -8,7 +8,7 @@ import (
 
 func odohTransport() *ODoH {
 	return &ODoH{
-		Target: "odoh.cloudflare-dns.com",
+		Common: Common{Server: "odoh.cloudflare-dns.com"},
 		Proxy:  "odoh.crypto.sx",
 	}
 }
@@ -31,7 +31,7 @@ func TestODoHBuildURL(t *testing.T) {
 
 func TestTransportODoHInvalidTarget(t *testing.T) {
 	tp := odohTransport()
-	tp.Target = "example.com"
+	tp.Server = "example.com"
 	_, err := tp.Exchange(validQuery())
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Invalid serialized ObliviousDoHConfig")

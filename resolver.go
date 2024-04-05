@@ -119,28 +119,30 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 func newTransport(server string, transportType transport.Type, tlsConfig *tls.Config) (*transport.Transport, error) {
 	var ts transport.Transport
 
+	common := transport.Common{
+		Server:    server,
+		ReuseConn: opts.ReuseConn,
+		Timeout:   opts.Timeout,
+	}
+
 	switch transportType {
 	case transport.TypeHTTP:
 		if opts.ODoHProxy != "" {
 			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
 			ts = &transport.ODoH{
-				Target:    server,
 				Proxy:     opts.ODoHProxy,
 				TLSConfig: tlsConfig,
-				ReuseConn: opts.ReuseConn,
 			}
 		} else {
 			log.Debugf("Using HTTP(s) transport: %s", server)
 			ts = &transport.HTTP{
-				Server:    server,
+				Common:    common,
 				TLSConfig: tlsConfig,
 				UserAgent: opts.HTTPUserAgent,
 				Method:    opts.HTTPMethod,
-				Timeout:   opts.Timeout,
 				HTTP2:     opts.HTTP2,
 				HTTP3:     opts.HTTP3,
 				NoPMTUd:   !opts.PMTUD,
-				ReuseConn: opts.ReuseConn,
 			}
 		}
 	case transport.TypeDNSCrypt:
@@ -148,20 +150,17 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		if strings.HasPrefix(server, "sdns://") {
 			log.Traceln("Using provided DNS stamp for DNSCrypt")
 			ts = &transport.DNSCrypt{
+				Common:      common,
 				ServerStamp: server,
 				TCP:         opts.DNSCryptTCP,
-				Timeout:     opts.Timeout,
 				UDPSize:     opts.DNSCryptUDPSize,
-				ReuseConn:   opts.ReuseConn,
 			}
 		} else {
 			log.Traceln("Using manual DNSCrypt configuration")
-			ts = &transport.DNSCrypt{
+			ts = &transport.DNSCrypt{Common: common,
+
 				TCP:          opts.DNSCryptTCP,
-				Timeout:      opts.Timeout,
 				UDPSize:      opts.DNSCryptUDPSize,
-				ReuseConn:    opts.ReuseConn,
-				Server:       server,
 				PublicKey:    opts.DNSCryptPublicKey,
 				ProviderName: opts.DNSCryptProvider,
 			}
@@ -173,34 +172,29 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		tlsConfig.NextProtos = opts.QUICALPNTokens
 
 		ts = &transport.QUIC{
-			Server:          server,
+			Common:          common,
 			TLSConfig:       tc,
 			PMTUD:           opts.PMTUD,
 			AddLengthPrefix: opts.QUICLengthPrefix,
-			ReuseConn:       opts.ReuseConn,
 		}
 	case transport.TypeTLS:
 		log.Debugf("Using TLS transport: %s", server)
 		ts = &transport.TLS{
-			Server:    server,
+			Common:    common,
 			TLSConfig: tlsConfig,
-			Timeout:   opts.Timeout,
-			ReuseConn: opts.ReuseConn,
 		}
 	case transport.TypeTCP:
 		log.Debugf("Using TCP transport: %s", server)
 		ts = &transport.Plain{
-			Server:    server,
+			Common:    common,
 			PreferTCP: true,
-			Timeout:   opts.Timeout,
 			UDPBuffer: opts.UDPBuffer,
 		}
 	case transport.TypePlain:
 		log.Debugf("Using UDP with TCP fallback: %s", server)
 		ts = &transport.Plain{
-			Server:    server,
+			Common:    common,
 			PreferTCP: false,
-			Timeout:   opts.Timeout,
 			UDPBuffer: opts.UDPBuffer,
 		}
 	default:

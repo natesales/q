@@ -27,11 +27,10 @@ const (
 
 // QUIC makes a DNS query over QUIC
 type QUIC struct {
-	Server          string
+	Common
 	TLSConfig       *tls.Config
 	PMTUD           bool
 	AddLengthPrefix bool
-	ReuseConn       bool
 
 	conn *quic.Connection
 }
@@ -51,6 +50,7 @@ func (q *QUIC) setServerName() {
 
 func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 	if q.conn == nil || !q.ReuseConn {
+		log.Debugf("Connecting to %s", q.Server)
 		q.setServerName()
 		if len(q.TLSConfig.NextProtos) == 0 {
 			log.Debug("No ALPN tokens specified, using default: \"doq\"")

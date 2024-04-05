@@ -1,17 +1,14 @@
 package transport
 
 import (
-	"time"
-
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 )
 
 // Plain makes a DNS query over TCP or UDP (with TCP fallback)
 type Plain struct {
-	Server    string
+	Common
 	PreferTCP bool
-	Timeout   time.Duration
 	UDPBuffer uint16
 }
 

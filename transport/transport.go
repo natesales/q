@@ -1,10 +1,20 @@
 package transport
 
-import "github.com/miekg/dns"
+import (
+	"time"
+
+	"github.com/miekg/dns"
+)
 
 type Transport interface {
 	Exchange(*dns.Msg) (*dns.Msg, error)
 	Close() error
+}
+
+type Common struct {
+	Server    string
+	ReuseConn bool
+	Timeout   time.Duration
 }
 
 type Type string

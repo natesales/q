@@ -4,19 +4,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/miekg/dns"
 )
 
 // TLS makes a DNS query over TLS
 type TLS struct {
-	Server    string
+	Common
 	TLSConfig *tls.Config
-	Timeout   time.Duration
-	ReuseConn bool
-
-	conn *tls.Conn
+	conn      *tls.Conn
 }
 
 func (t *TLS) Exchange(msg *dns.Msg) (*dns.Msg, error) {

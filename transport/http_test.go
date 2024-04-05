@@ -12,11 +12,13 @@ import (
 
 func httpTransport() *HTTP {
 	return &HTTP{
-		Server:    "https://cloudflare-dns.com/dns-query",
+		Common: Common{
+			Server:  "https://cloudflare-dns.com/dns-query",
+			Timeout: 2 * time.Second,
+		},
 		TLSConfig: &tls.Config{},
 		UserAgent: "",
 		Method:    http.MethodGet,
-		Timeout:   2 * time.Second,
 		HTTP3:     false,
 		NoPMTUd:   false,
 	}

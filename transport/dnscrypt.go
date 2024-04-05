@@ -1,8 +1,6 @@
 package transport
 
 import (
-	"time"
-
 	"github.com/ameshkov/dnscrypt/v2"
 	"github.com/jedisct1/go-dnsstamps"
 	"github.com/miekg/dns"
@@ -10,14 +8,12 @@ import (
 )
 
 type DNSCrypt struct {
+	Common
 	ServerStamp string
 	TCP         bool // default false (UDP)
-	Timeout     time.Duration
 	UDPSize     int
-	ReuseConn   bool
 
 	// ServerStamp takes precedence if set
-	Server       string
 	PublicKey    string
 	ProviderName string
 

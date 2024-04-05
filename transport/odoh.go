@@ -61,10 +61,9 @@ func buildURL(s, defaultPath string) *url.URL {
 
 // ODoH makes a DNS query over ODoH
 type ODoH struct {
-	Target    string
+	Common    // Server is the target
 	Proxy     string
 	TLSConfig *tls.Config
-	ReuseConn bool
 
 	conn *http.Client
 }
@@ -73,7 +72,7 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	// Query ODoH configs on target
 	req, err := http.NewRequest(
 		http.MethodGet,
-		buildURL(strings.TrimSuffix(o.Target, "/dns-query"), "/.well-known/odohconfigs").String(),
+		buildURL(strings.TrimSuffix(o.Server, "/dns-query"), "/.well-known/odohconfigs").String(),
 		nil,
 	)
 	if err != nil {
@@ -118,7 +117,7 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		return nil, fmt.Errorf("encrypt query: %s", err)
 	}
 
-	t := buildURL(o.Target, "/dns-query")
+	t := buildURL(o.Server, "/dns-query")
 	p := buildURL(o.Proxy, "/proxy")
 	qry := p.Query()
 	if qry.Get("targethost") == "" {
