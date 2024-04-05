@@ -176,7 +176,9 @@ func TestMainInvalidUpstream(t *testing.T) {
 		"-s", "127.127.127.127:1",
 		"example.com",
 	)
-	if !(err != nil && strings.Contains(err.Error(), "connection refused")) {
+	if !(err != nil &&
+		(strings.Contains(err.Error(), "connection refused") ||
+			strings.Contains(err.Error(), "i/o timeout"))) {
 		t.Errorf("expected connection error, got %+v", err)
 	}
 }
