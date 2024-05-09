@@ -13,13 +13,13 @@ type Plain struct {
 }
 
 func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
-	tcpClient := dns.Client{Net: "tcp", Timeout: p.Timeout}
+	tcpClient := dns.Client{Net: "tcp"}
 	if p.PreferTCP {
 		reply, _, tcpErr := tcpClient.Exchange(m, p.Server)
 		return reply, tcpErr
 	}
 
-	client := dns.Client{Timeout: p.Timeout, UDPSize: p.UDPBuffer}
+	client := dns.Client{UDPSize: p.UDPBuffer}
 	reply, _, err := client.Exchange(m, p.Server)
 
 	if reply != nil && reply.Truncated {

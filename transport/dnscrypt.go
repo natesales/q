@@ -24,8 +24,6 @@ type DNSCrypt struct {
 func (d *DNSCrypt) setup() {
 	if d.client == nil || d.resolver == nil || !d.ReuseConn {
 		d.client = &dnscrypt.Client{
-			Net:     "udp",
-			Timeout: d.Timeout,
 			UDPSize: d.UDPSize,
 		}
 

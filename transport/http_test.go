@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"crypto/tls"
 	"net/http"
 	"testing"
 	"time"
@@ -13,14 +12,9 @@ import (
 func httpTransport() *HTTP {
 	return &HTTP{
 		Common: Common{
-			Server:  "https://cloudflare-dns.com/dns-query",
-			Timeout: 2 * time.Second,
+			Server: "https://cloudflare-dns.com/dns-query",
 		},
-		TLSConfig: &tls.Config{},
-		UserAgent: "",
-		Method:    http.MethodGet,
-		HTTP3:     false,
-		NoPMTUd:   false,
+		Method: http.MethodGet,
 	}
 }
 

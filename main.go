@@ -404,98 +404,118 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	msgs := createQuery(opts, rrTypesSlice)
 
-	var entries []*output.Entry
-	for _, serverStr := range opts.Server {
-		// Parse server address and transport type
-		server, transportType, err := parseServer(serverStr)
-		if err != nil {
-			return err
-		}
-		log.Debugf("Using server %s with transport %s", server, transportType)
+	errChan := make(chan error)
 
-		// Recursive zone transfer
-		if opts.RecAXFR {
-			if opts.Name == "" {
-				return fmt.Errorf("no name specified for AXFR")
-			}
-			_ = RecAXFR(opts.Name, server, out)
-			return nil
-		}
-
-		// Create transport
-		txp, err := newTransport(server, transportType, tlsConfig)
-		if err != nil {
-			return err
-		}
-
-		startTime := time.Now()
-		var replies []*dns.Msg
-		for _, msg := range msgs {
-			reply, err := (*txp).Exchange(&msg)
+	go func() {
+		var entries []*output.Entry
+		for _, serverStr := range opts.Server {
+			// Parse server address and transport type
+			server, transportType, err := parseServer(serverStr)
 			if err != nil {
-				return err
+				errChan <- fmt.Errorf("parsing server %s: %s", serverStr, err)
+			}
+			log.Debugf("Using server %s with transport %s", server, transportType)
+
+			// Recursive zone transfer
+			if opts.RecAXFR {
+				if opts.Name == "" {
+					errChan <- fmt.Errorf("no name specified for AXFR")
+				}
+				_ = RecAXFR(opts.Name, server, out)
+				errChan <- nil // exit immediately
 			}
 
-			if transportType != transport.TypeQUIC && opts.IDCheck && reply.Id != msg.Id {
-				return fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+			// Create transport
+			txp, err := newTransport(server, transportType, tlsConfig)
+			if err != nil {
+				errChan <- fmt.Errorf("creating transport: %s", err)
 			}
-			replies = append(replies, reply)
-		}
 
-		// Process TXT parsing
-		if opts.TXTConcat {
-			for _, reply := range replies {
-				txtConcat(reply)
+			startTime := time.Now()
+			var replies []*dns.Msg
+			for _, msg := range msgs {
+				if txp == nil {
+					errChan <- fmt.Errorf("transport is nil")
+				}
+				reply, err := (*txp).Exchange(&msg)
+				if err != nil {
+					errChan <- fmt.Errorf("exchange: %s", err)
+				}
+
+				if reply == nil {
+					errChan <- fmt.Errorf("no reply from server")
+				}
+
+				if transportType != transport.TypeQUIC && opts.IDCheck && reply.Id != msg.Id {
+					errChan <- fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+				}
+				replies = append(replies, reply)
 			}
-		}
 
-		// Round TTL
-		if opts.RoundTTLs {
-			for _, reply := range replies {
-				for _, rr := range reply.Answer {
-					rr.Header().Ttl = rr.Header().Ttl - (rr.Header().Ttl % 60)
+			// Process TXT parsing
+			if opts.TXTConcat {
+				for _, reply := range replies {
+					txtConcat(reply)
 				}
 			}
+
+			// Round TTL
+			if opts.RoundTTLs {
+				for _, reply := range replies {
+					for _, rr := range reply.Answer {
+						rr.Header().Ttl = rr.Header().Ttl - (rr.Header().Ttl % 60)
+					}
+				}
+			}
+
+			e := &output.Entry{
+				Queries: msgs,
+				Replies: replies,
+				Server:  server,
+				Time:    time.Since(startTime),
+			}
+
+			if opts.ResolveIPs {
+				e.LoadPTRs(txp)
+			}
+
+			entries = append(entries, e)
+
+			if err := (*txp).Close(); err != nil {
+				errChan <- fmt.Errorf("closing transport: %s", err)
+			}
 		}
 
-		e := &output.Entry{
-			Queries: msgs,
-			Replies: replies,
-			Server:  server,
-			Time:    time.Since(startTime),
+		printer := output.Printer{
+			Out:  out,
+			Opts: &opts,
 		}
 
-		if opts.ResolveIPs {
-			e.LoadPTRs(txp)
+		if opts.NSID && opts.Format == "pretty" {
+			printer.PrettyPrintNSID(entries)
 		}
 
-		entries = append(entries, e)
-
-		if err := (*txp).Close(); err != nil {
-			return fmt.Errorf("closing transport: %s", err)
+		switch opts.Format {
+		case "pretty":
+			printer.PrintPretty(entries)
+		case "column":
+			printer.PrintColumn(entries)
+		case "raw":
+			printer.PrintRaw(entries)
+		case "json", "yml", "yaml":
+			printer.PrintStructured(entries)
+		default:
+			errChan <- fmt.Errorf("invalid output format")
 		}
-	}
 
-	printer := output.Printer{
-		Out:  out,
-		Opts: &opts,
-	}
+		errChan <- nil
+	}()
 
-	if opts.NSID && opts.Format == "pretty" {
-		printer.PrettyPrintNSID(entries)
-	}
-
-	switch opts.Format {
-	case "pretty":
-		printer.PrintPretty(entries)
-	case "column":
-		printer.PrintColumn(entries)
-	case "raw":
-		printer.PrintRaw(entries)
-	case "json", "yml", "yaml":
-		printer.PrintStructured(entries)
-	default:
-		return fmt.Errorf("invalid output format")
+	select {
+	case <-time.After(opts.Timeout):
+		return fmt.Errorf("timeout")
+	case err := <-errChan:
+		return err
 	}
 
 	return nil

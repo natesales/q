@@ -122,7 +122,6 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 	common := transport.Common{
 		Server:    server,
 		ReuseConn: opts.ReuseConn,
-		Timeout:   opts.Timeout,
 	}
 
 	switch transportType {

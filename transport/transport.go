@@ -1,8 +1,6 @@
 package transport
 
 import (
-	"time"
-
 	"github.com/miekg/dns"
 )
 
@@ -14,7 +12,6 @@ type Transport interface {
 type Common struct {
 	Server    string
 	ReuseConn bool
-	Timeout   time.Duration
 }
 
 type Type string

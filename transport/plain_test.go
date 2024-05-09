@@ -2,7 +2,6 @@ package transport
 
 import (
 	"testing"
-	"time"
 
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -11,8 +10,7 @@ import (
 func plainTransport() *Plain {
 	return &Plain{
 		Common: Common{
-			Server:  "9.9.9.9:53",
-			Timeout: 5 * time.Second,
+			Server: "9.9.9.9:53",
 		},
 		PreferTCP: false,
 		UDPBuffer: 1232,

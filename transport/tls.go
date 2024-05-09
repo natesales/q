@@ -19,9 +19,7 @@ func (t *TLS) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 	if t.conn == nil || !t.ReuseConn {
 		var err error
 		t.conn, err = tls.DialWithDialer(
-			&net.Dialer{
-				Timeout: t.Timeout,
-			},
+			&net.Dialer{},
 			"tcp",
 			t.Server,
 			t.TLSConfig,
