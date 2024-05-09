@@ -58,5 +58,7 @@ func (d *DNSCrypt) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 }
 
 func (d *DNSCrypt) Close() error {
+	d.resolver = nil
+	d.client = nil
 	return nil
 }
