@@ -90,6 +90,7 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("do target configs request: %s", err)
 	}
+	defer resp.Body.Close()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
