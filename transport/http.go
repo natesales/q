@@ -29,13 +29,10 @@ type HTTP struct {
 
 func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if h.conn == nil || !h.ReuseConn {
+		transport := http.DefaultTransport.(*http.Transport)
+		transport.TLSClientConfig = h.TLSConfig
 		h.conn = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: h.TLSConfig,
-				MaxConnsPerHost: 1,
-				MaxIdleConns:    1,
-				Proxy:           http.ProxyFromEnvironment,
-			},
+			Transport: transport,
 		}
 		if h.HTTP2 {
 			log.Debug("Using HTTP/2")
