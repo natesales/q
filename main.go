@@ -513,7 +513,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	select {
 	case <-time.After(opts.Timeout):
-		return fmt.Errorf("timeout")
+		return fmt.Errorf("timeout after %s", opts.Timeout)
 	case err := <-errChan:
 		return err
 	}
