@@ -30,7 +30,6 @@ type HTTP struct {
 func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if h.conn == nil || !h.ReuseConn {
 		h.conn = &http.Client{
-			Timeout: h.Timeout,
 			Transport: &http.Transport{
 				TLSClientConfig: h.TLSConfig,
 				MaxConnsPerHost: 1,
