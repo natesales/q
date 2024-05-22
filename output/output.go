@@ -12,6 +12,14 @@ import (
 	"github.com/natesales/q/cli"
 )
 
+var (
+	FormatPretty = "pretty"
+	FormatColumn = "column"
+	FormatJSON   = "json"
+	FormatYAML   = "yaml"
+	FormatRAW    = "raw"
+)
+
 // Printer stores global options across multiple entries
 type Printer struct {
 	Out  io.Writer

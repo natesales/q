@@ -491,18 +491,18 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			Opts: &opts,
 		}
 
-		if opts.NSID && opts.Format == "pretty" {
+		if opts.NSID && (opts.Format == output.FormatPretty || opts.Format == output.FormatColumn) {
 			printer.PrettyPrintNSID(entries)
 		}
 
 		switch opts.Format {
-		case "pretty":
+		case output.FormatPretty:
 			printer.PrintPretty(entries)
-		case "column":
+		case output.FormatColumn:
 			printer.PrintColumn(entries)
-		case "raw":
+		case output.FormatRAW:
 			printer.PrintRaw(entries)
-		case "json", "yml", "yaml":
+		case output.FormatJSON, output.FormatYAML, "yml":
 			printer.PrintStructured(entries)
 		default:
 			errChan <- fmt.Errorf("invalid output format")
