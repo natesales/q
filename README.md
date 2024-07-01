@@ -189,14 +189,14 @@ the `SSLKEYLOGFILE` environment variable is set to a file path.
 | Toggle answer section         | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
 | Toggle authority section      | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
 | Toggle additional section     | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
-| Show query time               | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
+| Show query time               | ✅ |   ✅   |  ❌  |  ✅   |  ✅  |   ❌   |
 | **Query Flags**               |   |       |     |      |     |       |
-| AA                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
-| AD                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
-| CD                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
-| RD                            | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ✅   |
-| Z                             | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ❌   |
-| DO                            | ✅ |   ❌   |  ✅  |  ✅   |  ✅  |   ✅   |
+| AA                            | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ✅   |
+| AD                            | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ✅   |
+| CD                            | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ✅   |
+| RD                            | ✅ |   ✅   |  ❌  |  ✅   |  ✅  |   ✅   |
+| Z                             | ✅ |   ✅   |  ❌  |  ✅   |  ✅  |   ❌   |
+| DO                            | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ✅   |
 | TC                            | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ✅   |
 | **Protocol Tweaks**           |   |       |     |      |     |       |
 | HTTP Method                   | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
