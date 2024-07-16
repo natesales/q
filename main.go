@@ -446,6 +446,14 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 					errChan <- fmt.Errorf("no reply from server")
 				}
 
+				if opts.ShowOpt {
+					for _, o := range reply.Extra {
+						if o.Header().Rrtype == dns.TypeOPT {
+							fmt.Printf("OPT: %v\n", o)
+						}
+					}
+				}
+
 				if transportType != transport.TypeQUIC && opts.IDCheck && reply.Id != msg.Id {
 					errChan <- fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
 				}

@@ -43,6 +43,7 @@ type Flags struct {
 	ShortTTLs      bool   `long:"short-ttls" description:"Remove zero components of pretty TTLs. (24h0m0s->24h) (default: true)"`
 	Color          bool   `long:"color" description:"Enable color output"`
 	ShowQuestion   bool   `long:"question" description:"Show question section"`
+	ShowOpt        bool   `long:"opt" description:"Show OPT records"`
 	ShowAnswer     bool   `long:"answer" description:"Show answer section (default: true)"`
 	ShowAuthority  bool   `long:"authority" description:"Show authority section"`
 	ShowAdditional bool   `long:"additional" description:"Show additional section"`
