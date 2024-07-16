@@ -368,6 +368,10 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.Class = dns.ClassCHAOS
 	}
 
+	if opts.NSIDOnly {
+		opts.NSID = true
+	}
+
 	// Create TLS config
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: opts.TLSInsecureSkipVerify,
@@ -499,8 +503,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			Opts: &opts,
 		}
 
-		if opts.NSID && (opts.Format == output.FormatPretty || opts.Format == output.FormatColumn) {
-			printer.PrettyPrintNSID(entries)
+		if (opts.NSID && (opts.Format == output.FormatPretty || opts.Format == output.FormatColumn)) || opts.NSIDOnly {
+			printer.PrettyPrintNSID(entries, !opts.NSIDOnly)
+		}
+
+		// Skip printing if NSIDOnly is set
+		if opts.NSIDOnly {
+			errChan <- nil
 		}
 
 		switch opts.Format {

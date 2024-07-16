@@ -17,7 +17,7 @@ import (
 )
 
 // PrettyPrintNSID prints the NSID from a slice of entries
-func (p Printer) PrettyPrintNSID(entries []*Entry) {
+func (p Printer) PrettyPrintNSID(entries []*Entry, printPrefix bool) {
 	for _, entry := range entries {
 		for _, r := range entry.Replies {
 			for _, o := range r.Extra {
@@ -33,8 +33,14 @@ func (p Printer) PrettyPrintNSID(entries []*Entry) {
 							if len(entries) > 1 {
 								suffix = fmt.Sprintf(" (%s)", entry.Server)
 							}
-							util.MustWritef(p.Out, "%s %s%s\n",
-								util.Color(util.ColorWhite, "NSID:"),
+
+							var prefix string
+							if printPrefix {
+								prefix = util.Color(util.ColorWhite, "NSID:") + " "
+							}
+
+							util.MustWritef(p.Out, "%s%s%s\n",
+								prefix,
 								util.Color(util.ColorPurple, string(nsidStr)),
 								suffix,
 							)

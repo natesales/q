@@ -18,6 +18,7 @@ type Flags struct {
 	Reverse          bool          `short:"x" long:"reverse" description:"Reverse lookup"`
 	DNSSEC           bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
 	NSID             bool          `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
+	NSIDOnly         bool          `short:"N" long:"nsid-only" description:"Set EDNS0 NSID opt and query only for the NSID"`
 	ClientSubnet     string        `long:"subnet" description:"Set EDNS0 client subnet"`
 	Chaos            bool          `short:"c" long:"chaos" description:"Use CHAOS query class"`
 	Class            uint16        `short:"C" description:"Set query class (default: IN 0x01)" default:"1"`
