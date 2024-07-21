@@ -119,7 +119,7 @@ func setPort(u *url.URL, port int) {
 func parseServer(s string) (string, transport.Type, error) {
 	// Remove IPv6 scope ID if present
 	var scopeId string
-	v6scopeRe := regexp.MustCompile(`\[[a-fA-F0-9:]+%[a-zA-Z0-9]+]`)
+	v6scopeRe := regexp.MustCompile(`(^|\[)[a-fA-F0-9:]+%[a-zA-Z0-9]+`)
 	if v6scopeRe.MatchString(s) {
 		v6scopeRemoveRe := regexp.MustCompile(`(%[a-zA-Z0-9]+)`)
 		matches := v6scopeRemoveRe.FindStringSubmatch(s)

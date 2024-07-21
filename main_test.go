@@ -442,6 +442,11 @@ func TestMainParseServer(t *testing.T) {
 			Type:         transport.TypeQUIC,
 			ExpectedHost: "dns.adguard.com:8530",
 		},
+		{ // IPv6 plain with scope ID but without port
+			Server:       "fe80::1%en0",
+			Type:         transport.TypePlain,
+			ExpectedHost: "[fe80::1%en0]:53",
+		},
 		{ // IPv6 with scope ID and explicit port
 			Server:       "plain://[fe80::1%en0]:53",
 			Type:         transport.TypePlain,
