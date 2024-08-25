@@ -319,7 +319,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		log.Debugf("Name: %s", opts.Name)
 		var rrTypeStrings []string
 		for rrType := range rrTypes {
-			rrTypeStrings = append(rrTypeStrings, dns.TypeToString[rrType])
+			rrS, ok := dns.TypeToString[rrType]
+			if !ok {
+				rrS = fmt.Sprintf("TYPE%d", rrType)
+			}
+			rrTypeStrings = append(rrTypeStrings, rrS)
 		}
 		log.Debugf("RR types: %+v", rrTypeStrings)
 	}
