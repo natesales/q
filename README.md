@@ -41,6 +41,7 @@ Application Options:
   -x, --reverse                   Reverse lookup
   -d, --dnssec                    Set the DO (DNSSEC OK) bit in the OPT record
   -n, --nsid                      Set EDNS0 NSID opt
+  -N, --nsid-only                 Set EDNS0 NSID opt and query only for the NSID
       --subnet=                   Set EDNS0 client subnet
   -c, --chaos                     Use CHAOS query class
   -C=                             Set query class (default: IN 0x01) (default:
@@ -67,6 +68,7 @@ Application Options:
                                   (24h0m0s->24h) (default: true)
       --color                     Enable color output
       --question                  Show question section
+      --opt                       Show OPT records
       --answer                    Show answer section (default: true)
       --authority                 Show authority section
       --additional                Show additional section
