@@ -207,6 +207,7 @@ func parseServer(s string) (string, transport.Type, error) {
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string, out io.Writer) error {
 	args = cli.SetFalseBooleans(&opts, args)
+	args = cli.AddEqualSigns(args)
 	parser := flags.NewParser(&opts, flags.Default)
 	parser.Usage = `[OPTIONS] [@server] [type...] [name]
 

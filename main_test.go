@@ -533,3 +533,13 @@ func TestMainQueryDomainWithRRType(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Regexp(t, regexp.MustCompile(`NS.network. .* A .*`), out.String())
 }
+
+func TestMainQueryTypeFlag(t *testing.T) {
+	out, err := run(
+		"-t", "65",
+		"cloudflare.com",
+		"-v",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`cloudflare.com. .* HTTPS 1 .*`), out.String())
+}

@@ -196,3 +196,45 @@ func ParseRRTypes(t []string) (map[uint16]bool, error) {
 	}
 	return rrTypes, nil
 }
+
+// isBool checks if a flag by a given name is a boolean flag of Flags
+func isBool(name string) bool {
+	v := reflect.ValueOf(Flags{})
+	vT := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		if vT.Field(i).Tag.Get("short") == name || vT.Field(i).Tag.Get("long") == name {
+			return vT.Field(i).Type == reflect.TypeOf(true)
+		}
+	}
+	return false
+}
+
+// AddEqualSigns adds equal signs between flags and their values, ignoring boolean flags
+func AddEqualSigns(args []string) []string {
+	var newArgs []string
+	skip := false
+	for i, arg := range args {
+		if skip {
+			skip = false
+			continue
+		}
+
+		isFlag := arg[0] == '-'
+		flagName := strings.TrimLeft(arg, "-")
+
+		if isFlag && isBool(flagName) { // Standalone boolean flag
+			newArgs = append(newArgs, arg)
+		} else if isFlag && !isBool(flagName) { // Flag with mapping
+			if i+1 < len(args) && args[i+1][0] != '-' { // If the next argument is not a flag
+				newArgs = append(newArgs, arg+"="+args[i+1])
+				skip = true
+			} else { // If the next argument is a flag, add the flag as is
+				newArgs = append(newArgs, arg)
+			}
+		} else { // Positional argument
+			newArgs = append(newArgs, arg)
+		}
+	}
+
+	return newArgs
+}
