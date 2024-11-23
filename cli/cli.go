@@ -89,7 +89,8 @@ type Flags struct {
 	TCP  bool `long:"tcp" description:"Use TCP for plain DNS (force TCP)"`
 
 	// QUIC
-	QUICALPNTokens   []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"` //nolint:golint,staticcheck
+	//lint:ignore SA5008 go-flags accepts multiple default values in the struct tag
+	QUICALPNTokens   []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"`
 	QUICLengthPrefix bool     `long:"quic-length-prefix" description:"Add RFC 9250 compliant length prefix (default: true)"`
 
 	// DNSCrypt
@@ -98,7 +99,8 @@ type Flags struct {
 	DNSCryptPublicKey string `long:"dnscrypt-key" description:"DNSCrypt public key"`
 	DNSCryptProvider  string `long:"dnscrypt-provider" description:"DNSCrypt provider name"`
 
-	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"CNAME"` //nolint:golint,staticcheck
+	//lint:ignore SA5008 go-flags accepts multiple default values in the struct tag
+	DefaultRRTypes []string `long:"default-rr-types" description:"Default record types" default:"A" default:"AAAA" default:"NS" default:"MX" default:"TXT" default:"HTTPS" default:"CNAME"`
 
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
