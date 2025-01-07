@@ -98,6 +98,7 @@ func dnsStampToURL(s string) (string, error) {
 
 	// TODO: This might be a source of problems...we might want to be using parsedStamp.ServerAddrStr
 	u.Host = parsedStamp.ProviderName
+	u.Path = parsedStamp.Path
 
 	log.Tracef("DNS stamp parsed into URL as %s", u.String())
 	return u.String(), nil
