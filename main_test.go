@@ -564,3 +564,13 @@ func TestMainDnsstampDoHPath(t *testing.T) {
 	assert.Contains(t, err.Error(), "from https://cloudflare-dns.com:443/test")
 }
 
+func TestMainDnsstampInvalid(t *testing.T) {
+	_, err := run(
+		"@sdns://invalid",
+		"--all",
+	)
+
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "converting DNS stamp to URL: illegal base64 data")
+}
+
