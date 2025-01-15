@@ -129,6 +129,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		if opts.ODoHProxy != "" {
 			log.Debugf("Using ODoH transport with target %s proxy %s", server, opts.ODoHProxy)
 			ts = &transport.ODoH{
+				Common:    common,
 				Proxy:     opts.ODoHProxy,
 				TLSConfig: tlsConfig,
 			}
