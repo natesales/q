@@ -35,7 +35,7 @@ jobs:
           go test -p 1 -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
 
       - name: Upload original test log
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-log
