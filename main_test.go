@@ -543,3 +543,34 @@ func TestMainQueryTypeFlag(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Regexp(t, regexp.MustCompile(`cloudflare.com. .* HTTPS 1 .*`), out.String())
 }
+
+func TestMainDnsstampDoH(t *testing.T) {
+	out, err := run(
+		"@sdns://AgcAAAAAAAAADjEwNC4xNi4yNDguMjQ5ABJjbG91ZGZsYXJlLWRucy5jb20A", // cloudflare-dns.com
+		"--all",
+	)
+
+	assert.Nil(t, err)
+	assert.Contains(t, out.String(), "from https://cloudflare-dns.com:443/dns-query")
+}
+
+func TestMainDnsstampDoHPath(t *testing.T) {
+	_, err := run(
+		"@sdns://AgcAAAAAAAAADjEwNC4xNi4yNDguMjQ5ABJjbG91ZGZsYXJlLWRucy5jb20FL3Rlc3Q", // cloudflare-dns.com/test
+		"--all",
+	)
+
+	// use err here because the query will result in a 404
+	assert.Contains(t, err.Error(), "from https://cloudflare-dns.com:443/test")
+}
+
+func TestMainDnsstampInvalid(t *testing.T) {
+	_, err := run(
+		"@sdns://invalid",
+		"--all",
+	)
+
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "converting DNS stamp to URL: illegal base64 data")
+}
+
