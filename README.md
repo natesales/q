@@ -20,6 +20,7 @@ q example.com MX SOA                     ...or specify a list of types
 q example.com MX @9.9.9.9                Query a specific server
 q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)...
 q @sdns://AgcAAAAAAAAAAAAHOS45LjkuOQA    ...or from a DNS Stamp
+q example.com --header='X-Client-ID: abc' Add custom headers to DOH requests
 
 q example.com MX --format=raw            Output in raw (dig) format
 q example.com MX --format=json           ...or as JSON (or YAML)
@@ -99,6 +100,7 @@ Application Options:
       --tls-key-log-file=         TLS key log file [$SSLKEYLOGFILE]
       --http-user-agent=          HTTP user agent
       --http-method=              HTTP method (default: GET)
+      --header=                   HTTP header in format 'Name: Value'
       --pmtud                     PMTU discovery (default: true)
       --quic-alpn-tokens=         QUIC ALPN tokens (default: doq, doq-i11)
       --quic-length-prefix        Add RFC 9250 compliant length prefix
@@ -202,6 +204,7 @@ the `SSLKEYLOGFILE` environment variable is set to a file path.
 | TC                            | ✅ |   ❌   |  ❌  |  ✅   |  ✅  |   ✅   |
 | **Protocol Tweaks**           |   |       |     |      |     |       |
 | HTTP Method                   | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
+| HTTP Headers                  | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
 | QUIC ALPN Tokens              | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
 | QUIC toggle PMTU discovery    | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
 | QUIC timeouts (dial and idle) | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |

@@ -135,6 +135,21 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 			}
 		} else {
 			log.Debugf("Using HTTP(s) transport: %s", server)
+
+			// Parse HTTP headers
+			headers := make(map[string]string)
+			for _, header := range opts.HTTPHeaders {
+				parts := strings.SplitN(header, ":", 2)
+				if len(parts) == 2 {
+					name := strings.TrimSpace(parts[0])
+					value := strings.TrimSpace(parts[1])
+					headers[name] = value
+					log.Debugf("Added header %s: %s", name, value)
+				} else {
+					log.Warnf("Invalid header format: %s (expected 'Name: Value')", header)
+				}
+			}
+
 			ts = &transport.HTTP{
 				Common:    common,
 				TLSConfig: tlsConfig,
@@ -143,6 +158,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				HTTP2:     opts.HTTP2,
 				HTTP3:     opts.HTTP3,
 				NoPMTUd:   !opts.PMTUD,
+				Headers:   headers,
 			}
 		}
 	case transport.TypeDNSCrypt:
