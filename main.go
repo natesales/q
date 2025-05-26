@@ -284,6 +284,10 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		rrType, typeFound := dns.StringToType[strings.ToUpper(arg)]
 		if typeFound {
 			rrTypes[rrType] = true
+			if rrType == dns.TypeNS {
+				opts.ShowAuthority = true
+				opts.ShowAdditional = true
+			}
 		}
 
 		// Set qname if not set by flag
