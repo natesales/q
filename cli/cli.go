@@ -97,6 +97,8 @@ type Flags struct {
 	UDPBuffer   uint16 `long:"udp-buffer" description:"Set EDNS0 UDP size in query" default:"1232"`
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
 	Trace       bool   `long:"trace" description:"Show trace log messages"`
+	Recursive   bool   `long:"recursive" description:"Do recursive query from authentic servers"`
+	ForceIPv4   bool   `short:"4" long:"ipv4" description:"Force use the ipv4 address"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
 }
 

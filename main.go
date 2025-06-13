@@ -225,7 +225,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	if opts.Verbose {
 		log.SetLevel(log.DebugLevel)
-	} else if opts.Trace {
+	} else if opts.Trace || opts.Recursive {
 		log.SetLevel(log.TraceLevel)
 		opts.ShowAll = true
 	}
@@ -334,7 +334,27 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	if len(opts.Server) == 0 {
 		opts.Server = make([]string, 1)
 
-		if os.Getenv(defaultServerVar) != "" {
+		if opts.Recursive {
+			ipv4s, ipv6s, err := getRootHints()
+			if err != nil {
+				return fmt.Errorf("unable to load root hints: %s", err)
+			}
+
+			hasIPv6, err := supportIPv6()
+			if err != nil {
+				return fmt.Errorf("unable to detect ipv6 support: %s", err)
+			}
+
+			if !hasIPv6 {
+				opts.ForceIPv4 = true
+			}
+
+			if opts.ForceIPv4 || !hasIPv6 {
+				opts.Server = ipv4s[:1]
+			} else {
+				opts.Server = ipv6s[:1]
+			}
+		} else if os.Getenv(defaultServerVar) != "" {
 			opts.Server[0] = os.Getenv(defaultServerVar)
 			log.Debugf("Using %s from %s environment variable", opts.Server, defaultServerVar)
 		} else {
@@ -414,11 +434,23 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 	msgs := createQuery(opts, rrTypesSlice)
 
+	if opts.Recursive {
+		if len(msgs) > 1 {
+			return fmt.Errorf("Only query one type in recursive mode")
+		}
+
+		opts.Timeout = 10 * time.Minute // FIXME(tao)
+	}
+
 	errChan := make(chan error)
 
+	servers := opts.Server
+
 	go func() {
+	recursive:
+		var replies []*dns.Msg
 		var entries []*output.Entry
-		for _, serverStr := range opts.Server {
+		for _, serverStr := range servers {
 			// Parse server address and transport type
 			server, transportType, err := parseServer(serverStr)
 			if err != nil {
@@ -442,7 +474,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			}
 
 			startTime := time.Now()
-			var replies []*dns.Msg
 			for _, msg := range msgs {
 				if txp == nil {
 					errChan <- fmt.Errorf("transport is nil")
@@ -529,6 +560,30 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			printer.PrintStructured(entries)
 		default:
 			errChan <- fmt.Errorf("invalid output format")
+		}
+
+		if opts.Recursive && len(replies) > 0 {
+			if r := replies[0]; len(r.Answer) == 0 {
+				servers = []string{}
+				if opts.ForceIPv4 {
+					for _, extra := range r.Extra {
+						if a, ok := extra.(*dns.A); ok {
+							servers = append(servers, a.A.String())
+							break
+						}
+					}
+				} else {
+					for _, extra := range r.Extra {
+						if a, ok := extra.(*dns.AAAA); ok {
+							servers = append(servers, a.AAAA.String())
+							break
+						}
+					}
+				}
+				if len(servers) > 0 {
+					goto recursive
+				}
+			}
 		}
 
 		errChan <- nil
