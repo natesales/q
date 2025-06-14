@@ -349,7 +349,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				opts.ForceIPv4 = true
 			}
 
-			if opts.ForceIPv4 || !hasIPv6 {
+			if opts.ForceIPv4 {
 				opts.Server = ipv4s[:1]
 			} else {
 				opts.Server = ipv6s[:1]
@@ -580,6 +580,16 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 						}
 					}
 				}
+
+				if len(servers) == 0 {
+					for _, ns := range r.Ns {
+						if a, ok := ns.(*dns.NS); ok {
+							servers = append(servers, a.Ns)
+							break
+						}
+					}
+				}
+
 				if len(servers) > 0 {
 					goto recursive
 				}
