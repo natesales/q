@@ -23,6 +23,7 @@ type HTTP struct {
 	Method       string
 	HTTP2, HTTP3 bool
 	NoPMTUd      bool
+	Headers      map[string]string
 
 	conn *http.Client
 }
@@ -81,6 +82,14 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if h.UserAgent != "" {
 		log.Debugf("Setting User-Agent to %s", h.UserAgent)
 		req.Header.Set("User-Agent", h.UserAgent)
+	}
+
+	// Set custom headers if provided
+	if h.Headers != nil {
+		for name, value := range h.Headers {
+			log.Debugf("Setting custom header %s: %s", name, value)
+			req.Header.Set(name, value)
+		}
 	}
 
 	log.Debugf("[http] sending %s request to %s", h.Method, queryURL)
