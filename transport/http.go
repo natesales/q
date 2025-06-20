@@ -43,9 +43,9 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		}
 		if h.HTTP3 {
 			log.Debug("Using HTTP/3")
-			h.conn.Transport = &http3.RoundTripper{
+			h.conn.Transport = &http3.Transport{
 				TLSClientConfig: h.TLSConfig,
-				QuicConfig: &quic.Config{
+				QUICConfig: &quic.Config{
 					DisablePathMTUDiscovery: h.NoPMTUd,
 				},
 			}

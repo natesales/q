@@ -573,4 +573,3 @@ func TestMainDnsstampInvalid(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "converting DNS stamp to URL: illegal base64 data")
 }
-
