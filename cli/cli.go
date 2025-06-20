@@ -79,7 +79,7 @@ type Flags struct {
 	// HTTP
 	HTTPUserAgent string   `long:"http-user-agent" description:"HTTP user agent" default:""`
 	HTTPMethod    string   `long:"http-method" description:"HTTP method" default:"GET"`
-	HTTPHeaders   []string `long:"header" description:"HTTP header in format 'Name: Value'"`
+	HTTPHeaders   []string `long:"http-header" description:"HTTP header in format 'Name: Value'"`
 
 	PMTUD bool `long:"pmtud" description:"PMTU discovery (default: true)"`
 
