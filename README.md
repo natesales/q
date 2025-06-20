@@ -172,8 +172,8 @@ the `SSLKEYLOGFILE` environment variable is set to a file path.
 |:------------------------------|:-:|:-----:|:---:|:----:|:---:|:-----:|
 | **Transport Protocols**       |   |       |     |      |     |       |
 | UDP/TCP                       | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ✅   |
-| DNS over TLS                  | ✅ |   ✅   |  ✅  |  ✅   |  ❌  |   ❌   |
-| DNS over HTTPS                | ✅ |   ✅   |  ✅  |  ✅   |  ❌  |   ❌   |
+| DNS over TLS                  | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ❌   |
+| DNS over HTTPS                | ✅ |   ✅   |  ✅  |  ✅   |  ✅  |   ❌   |
 | DNS over QUIC                 | ✅ |   ✅   |  ❌  |  ❌   |  ❌  |   ❌   |
 | Oblivious DNS over HTTPS      | ✅ |   ❌   |  ❌  |  ❌   |  ❌  |   ❌   |
 | DNSCrypt v2                   | ✅ |   ✅   |  ❌  |  ❌   |  ❌  |   ❌   |
