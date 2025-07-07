@@ -216,7 +216,7 @@ func TestMainChaosClass(t *testing.T) {
 		"@9.9.9.9",
 	)
 	assert.Nil(t, err)
-	assert.Regexp(t, regexp.MustCompile(`id.server. .* TXT ".*.pch.net"`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`id.server. .* TXT "res.*"`), out.String())
 }
 
 func TestMainParsePlusFlags(t *testing.T) {
@@ -333,7 +333,7 @@ func TestMainNSID(t *testing.T) {
 		"+nsid",
 	)
 	assert.Nil(t, err)
-	assert.Regexp(t, regexp.MustCompile(`.*.pch.net.*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`NSID: .*`), out.String())
 }
 
 func TestMainECSv4(t *testing.T) {
