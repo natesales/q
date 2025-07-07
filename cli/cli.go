@@ -183,6 +183,18 @@ func SetFalseBooleans(opts *Flags, args []string) []string {
 func ParseRRTypes(t []string) (map[uint16]bool, error) {
 	rrTypes := make(map[uint16]bool, len(t))
 	for _, rrType := range t {
+		// Check for TYPE<N> notation
+		if strings.HasPrefix(strings.ToUpper(rrType), "TYPE") {
+			typeStr := strings.TrimPrefix(strings.ToUpper(rrType), "TYPE")
+			typeCode, err := strconv.Atoi(typeStr)
+			if err != nil {
+				return nil, fmt.Errorf("%s is not a valid RR type", rrType)
+			}
+			log.Debugf("using RR type %d from TYPE notation", typeCode)
+			rrTypes[uint16(typeCode)] = true
+			continue
+		}
+
 		typeCode, ok := dns.StringToType[strings.ToUpper(rrType)]
 		if ok {
 			rrTypes[typeCode] = true

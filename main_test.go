@@ -573,3 +573,23 @@ func TestMainDnsstampInvalid(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "converting DNS stamp to URL: illegal base64 data")
 }
+
+func TestMainTypeNotation(t *testing.T) {
+	// Test invalid TYPE notation
+	_, err := run(
+		"--all",
+		"-q", "example.com",
+		"-t", "TYPEinvalid",
+	)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "TYPEinvalid is not a valid RR type")
+
+	// Test that TYPE65 is equivalent to HTTPS
+	outType65, err := run(
+		"--all",
+		"-q", "cloudflare.com",
+		"-t", "TYPE65",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`cloudflare.com. .* HTTPS .*`), outType65.String())
+}
