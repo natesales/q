@@ -20,10 +20,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-      - uses: actions/checkout@v3
       - run: go build -v ./...
       - run: go install github.com/jpoles1/gopherbadger@latest
       - run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
