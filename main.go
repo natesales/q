@@ -532,7 +532,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		case output.FormatJSON, output.FormatYAML, "yml":
 			printer.PrintStructured(entries)
 		default:
-			errChan <- fmt.Errorf("invalid output format")
+			errChan <- fmt.Errorf("invalid output format %s", opts.Format)
 		}
 
 		errChan <- nil
@@ -544,8 +544,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	case err := <-errChan:
 		return err
 	}
-
-	return nil
 }
 
 func main() {
