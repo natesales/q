@@ -38,6 +38,9 @@ type Flags struct {
 	// Special query modes
 	RecAXFR bool `long:"recaxfr" description:"Perform recursive AXFR"`
 
+	// Daemon options
+	Port int `long:"port" description:"Port for daemon mode" default:"8080"`
+
 	// Output
 	Format         string `short:"f" long:"format" description:"Output format (pretty, column, json, yaml, raw)" default:"pretty"`
 	PrettyTTLs     bool   `long:"pretty-ttls" description:"Format TTLs in human readable format (default: true)"`

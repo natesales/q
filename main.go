@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"regexp"
 	"slices"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/jedisct1/go-dnsstamps"
@@ -546,7 +550,141 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 }
 
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status":"ok"}`))
+}
+
+func parseQuery(r *http.Request) ([]string, error) {
+	query := r.URL.Query()
+	
+	name := query.Get("name")
+	if name == "" {
+		return nil, fmt.Errorf("name parameter is required")
+	}
+
+	var args []string
+	
+	// Add name
+	args = append(args, name)
+	
+	// Add types if specified
+	if types := query.Get("type"); types != "" {
+		for _, t := range strings.Split(types, ",") {
+			t = strings.TrimSpace(t)
+			if t != "" {
+				args = append(args, t)
+			}
+		}
+	}
+	
+	// Add servers if specified
+	if servers := query.Get("server"); servers != "" {
+		for _, s := range strings.Split(servers, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				args = append(args, "@"+s)
+			}
+		}
+	}
+	
+	// Add format if specified
+	if format := query.Get("format"); format != "" {
+		args = append(args, "--format="+format)
+	} else {
+		// Default to JSON format
+		args = append(args, "--format=json")
+	}
+	
+	return args, nil
+}
+
+func queryHandler(w http.ResponseWriter, r *http.Request) {
+	args, err := parseQuery(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	
+	var buf bytes.Buffer
+	err = driver(args, &buf)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("DNS query failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+	
+	output := buf.String()
+	
+	// Check if output is JSON format
+	format := r.URL.Query().Get("format")
+	if format == "" || format == "json" {
+		w.Header().Set("Content-Type", "application/json")
+	} else if format == "yaml" {
+		w.Header().Set("Content-Type", "application/yaml")
+	} else {
+		w.Header().Set("Content-Type", "text/plain")
+	}
+	
+	w.Write([]byte(output))
+}
+
+func runDaemon() error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/query", queryHandler)
+	
+	addr := fmt.Sprintf(":%d", opts.Port)
+	server := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+	
+	// Start server in a goroutine
+	go func() {
+		log.Printf("Starting q-daemon on %s", addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+	
+	// Wait for interrupt signal to gracefully shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	
+	log.Println("Shutting down server...")
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	
+	if err := server.Shutdown(ctx); err != nil {
+		return fmt.Errorf("server forced to shutdown: %v", err)
+	}
+	
+	log.Println("Server exited")
+	return nil
+}
+
 func main() {
+	// Check if daemon mode is requested
+	if len(os.Args) > 1 && os.Args[1] == "daemon" {
+		clearOpts()
+		// Parse daemon flags (skip "daemon" argument)
+		daemonArgs := cli.SetFalseBooleans(&opts, os.Args[2:])
+		daemonArgs = cli.AddEqualSigns(daemonArgs)
+		parser := flags.NewParser(&opts, flags.Default)
+		_, err := parser.ParseArgs(daemonArgs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		if err := runDaemon(); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+	
+	// Default CLI behavior
 	clearOpts()
 	if err := driver(os.Args[1:], os.Stdout); err != nil {
 		log.Fatal(err)
