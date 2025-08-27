@@ -185,7 +185,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		log.Debugf("Using QUIC transport: %s", server)
 
 		tc := tlsConfig.Clone()
-		tlsConfig.NextProtos = opts.QUICALPNTokens
+		tc.NextProtos = opts.QUICALPNTokens
 
 		ts = &transport.QUIC{
 			Common:          common,
