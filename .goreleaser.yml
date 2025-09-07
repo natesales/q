@@ -3,6 +3,7 @@ version: 2
 before:
   hooks:
     - go mod download
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -14,16 +15,14 @@ builds:
     goarch:
       - amd64
       - arm64
-checksum:
-  name_template: "checksums.txt"
-snapshot:
-  name_template: "{{ .Tag }}-next"
+
 changelog:
   sort: asc
   filters:
     exclude:
       - "^docs:"
       - "^test:"
+
 nfpms:
   - id: nfpm-default
     package_name: q
@@ -38,18 +37,21 @@ nfpms:
     formats:
       - deb
       - rpm
+
 publishers:
   - name: fury.io
     ids:
       - nfpm-default
     dir: "{{ dir .ArtifactPath }}"
     cmd: curl -s -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/natesales/
+
 brews:
   - name: q
     homepage: https://github.com/natesales/repo
     repository:
       owner: natesales
       name: repo
+
 dockers:
   - image_templates:
       - "ghcr.io/natesales/q:{{ .Version }}-amd64"
@@ -68,6 +70,7 @@ dockers:
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
       - --label=org.opencontainers.image.licenses=GPL-3.0-only
     goarch: arm64
+
 docker_manifests:
   - name_template: "ghcr.io/natesales/q:{{ .Version }}"
     image_templates:
