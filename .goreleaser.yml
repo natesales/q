@@ -14,12 +14,6 @@ builds:
     goarch:
       - amd64
       - arm64
-scoop:
-  name: q
-  commit_author:
-    name: natesales
-    email: nate@natesales.net
-  commit_msg_template: Scoop update for {{ .ProjectName }} version {{ .Tag }}
 checksum:
   name_template: "checksums.txt"
 snapshot:
