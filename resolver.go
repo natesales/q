@@ -205,6 +205,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 			Common:    common,
 			PreferTCP: true,
 			UDPBuffer: opts.UDPBuffer,
+			Timeout:   opts.Timeout,
 		}
 	case transport.TypePlain:
 		log.Debugf("Using UDP with TCP fallback: %s", server)
@@ -212,6 +213,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 			Common:    common,
 			PreferTCP: false,
 			UDPBuffer: opts.UDPBuffer,
+			Timeout:   opts.Timeout,
 		}
 	default:
 		return nil, fmt.Errorf("unknown transport protocol %s", transportType)
