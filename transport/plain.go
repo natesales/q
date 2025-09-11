@@ -1,6 +1,8 @@
 package transport
 
 import (
+	"time"
+
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 )
@@ -10,16 +12,17 @@ type Plain struct {
 	Common
 	PreferTCP bool
 	UDPBuffer uint16
+	Timeout   time.Duration
 }
 
 func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
-	tcpClient := dns.Client{Net: "tcp"}
+	tcpClient := dns.Client{Net: "tcp", Timeout: p.Timeout}
 	if p.PreferTCP {
 		reply, _, tcpErr := tcpClient.Exchange(m, p.Server)
 		return reply, tcpErr
 	}
 
-	client := dns.Client{UDPSize: p.UDPBuffer}
+	client := dns.Client{UDPSize: p.UDPBuffer, Timeout: p.Timeout}
 	reply, _, err := client.Exchange(m, p.Server)
 
 	if reply != nil && reply.Truncated {
