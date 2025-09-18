@@ -74,11 +74,12 @@ func (e *Entry) LoadPTRs(txp *transport.Transport) {
 			// Resolve qname and cache result
 			resp, err := (*txp).Exchange(&msg)
 			if err != nil {
-				log.Debugf("error resolving PTR record: %s", err)
+				log.Warnf("error resolving PTR record: %s", err)
+				continue
 			}
 
 			// Store in cache
-			if len(resp.Answer) > 0 {
+			if resp != nil && len(resp.Answer) > 0 {
 				e.PTRs[ip] = resp.Answer[0].(*dns.PTR).Ptr
 			}
 		}
