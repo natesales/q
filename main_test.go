@@ -174,13 +174,19 @@ func TestMainInvalidUpstream(t *testing.T) {
 	_, err := run(
 		"--all",
 		"-s", "127.127.127.127:1",
+		"--timeout", "2s",
 		"example.com",
 	)
-	if !(err != nil &&
-		(strings.Contains(err.Error(), "connection refused") ||
-			strings.Contains(err.Error(), "i/o timeout"))) {
-		t.Errorf("expected connection error, got %+v", err)
+
+	expectedErrors := []string{"connection refused", "i/o timeout", "timeout after"}
+	foundErr := false
+	for _, expectedError := range expectedErrors {
+		if strings.Contains(err.Error(), expectedError) {
+			foundErr = true
+			break
+		}
 	}
+	assert.Truef(t, foundErr, "expected connection error, got: %+v", err)
 }
 
 func TestMainDNSSECArg(t *testing.T) {
@@ -191,7 +197,6 @@ func TestMainDNSSECArg(t *testing.T) {
 		"@9.9.9.9",
 	)
 	assert.Nil(t, err)
-	t.Logf("out: %s", out.String())
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* RRSIG .*`), out.String())
 }
 
