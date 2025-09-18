@@ -14,6 +14,7 @@ func plainTransport() *Plain {
 		},
 		PreferTCP: false,
 		UDPBuffer: 1232,
+		Timeout: 0,
 	}
 }
 
