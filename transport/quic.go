@@ -32,11 +32,11 @@ type QUIC struct {
 	PMTUD           bool
 	AddLengthPrefix bool
 
-	conn *quic.Connection
+	conn *quic.Conn
 }
 
-func (q *QUIC) connection() quic.Connection {
-	return *q.conn
+func (q *QUIC) connection() *quic.Conn {
+	return q.conn
 }
 
 // setServerName sets the TLS config server name to the QUIC server
@@ -68,7 +68,7 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 		if err != nil {
 			return nil, fmt.Errorf("opening quic session to %s: %v", q.Server, err)
 		}
-		q.conn = &conn
+		q.conn = conn
 	}
 
 	// Clients and servers MUST NOT send the edns-tcp-keepalive EDNS(0) Option [RFC7828] in any messages sent
