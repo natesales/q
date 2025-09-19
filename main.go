@@ -335,24 +335,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.Server = make([]string, 1)
 
 		if opts.Recursive {
-			ipv4s, ipv6s, err := getRootHints()
-			if err != nil {
-				return fmt.Errorf("unable to load root hints: %s", err)
-			}
-
-			hasIPv6, err := supportIPv6()
-			if err != nil {
-				return fmt.Errorf("unable to detect ipv6 support: %s", err)
-			}
-
-			if !hasIPv6 {
-				opts.ForceIPv4 = true
-			}
-
-			if opts.ForceIPv4 {
-				opts.Server = ipv4s[:1]
-			} else {
-				opts.Server = ipv6s[:1]
+			if err = initRootServer(); err != nil {
+				return err
 			}
 		} else if os.Getenv(defaultServerVar) != "" {
 			opts.Server[0] = os.Getenv(defaultServerVar)
@@ -579,6 +563,29 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		return err
 	}
 
+	return nil
+}
+
+func initRootServer() error {
+	ipv4s, ipv6s, err := getRootHints()
+	if err != nil {
+		return fmt.Errorf("unable to load root hints: %s", err)
+	}
+
+	hasIPv6, err := supportIPv6()
+	if err != nil {
+		return fmt.Errorf("unable to detect ipv6 support: %s", err)
+	}
+
+	if !hasIPv6 {
+		opts.ForceIPv4 = true
+	}
+
+	if opts.ForceIPv4 {
+		opts.Server = ipv4s[:1]
+	} else {
+		opts.Server = ipv6s[:1]
+	}
 	return nil
 }
 
