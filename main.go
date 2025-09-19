@@ -563,36 +563,9 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		}
 
 		if opts.Recursive && len(replies) > 0 {
-			if r := replies[0]; len(r.Answer) == 0 {
-				servers = []string{}
-				if opts.ForceIPv4 {
-					for _, extra := range r.Extra {
-						if a, ok := extra.(*dns.A); ok {
-							servers = append(servers, a.A.String())
-							break
-						}
-					}
-				} else {
-					for _, extra := range r.Extra {
-						if a, ok := extra.(*dns.AAAA); ok {
-							servers = append(servers, a.AAAA.String())
-							break
-						}
-					}
-				}
-
-				if len(servers) == 0 {
-					for _, ns := range r.Ns {
-						if a, ok := ns.(*dns.NS); ok {
-							servers = append(servers, a.Ns)
-							break
-						}
-					}
-				}
-
-				if len(servers) > 0 {
-					goto recursive
-				}
+			servers = getRecursiveServers(replies)
+			if len(servers) > 0 {
+				goto recursive
 			}
 		}
 
@@ -607,6 +580,37 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	return nil
+}
+
+func getRecursiveServers(replies []*dns.Msg) (servers []string) {
+	if r := replies[0]; len(r.Answer) == 0 {
+		servers = []string{}
+		if opts.ForceIPv4 {
+			for _, extra := range r.Extra {
+				if a, ok := extra.(*dns.A); ok {
+					servers = append(servers, a.A.String())
+					break
+				}
+			}
+		} else {
+			for _, extra := range r.Extra {
+				if a, ok := extra.(*dns.AAAA); ok {
+					servers = append(servers, a.AAAA.String())
+					break
+				}
+			}
+		}
+
+		if len(servers) == 0 {
+			for _, ns := range r.Ns {
+				if a, ok := ns.(*dns.NS); ok {
+					servers = append(servers, a.Ns)
+					break
+				}
+			}
+		}
+	}
+	return
 }
 
 func main() {
