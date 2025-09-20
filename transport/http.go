@@ -42,7 +42,7 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 				AllowHTTP:       true,
 			}
 		}
-		if h.HTTP3 {
+		else if h.HTTP3 {
 			log.Debug("Using HTTP/3")
 			h.conn.Transport = &http3.Transport{
 				TLSClientConfig: h.TLSConfig,
