@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/idna"
 
 	"github.com/natesales/q/cli"
 	"github.com/natesales/q/transport"
@@ -70,6 +71,19 @@ func TestMainJSONFormat(t *testing.T) {
 	assert.Contains(t, o, `"preference":0,"mx":"."`)
 	assert.Contains(t, o, `"ns":"a.iana-servers.net."`)
 	assert.Contains(t, o, `"txt":["v=spf1 -all"`)
+}
+
+func TestMainIDNAQuery(t *testing.T) {
+	out, err := run(
+		"--all",
+		"-q", "www.饭太硬.com",
+		"-t", "A",
+	)
+	assert.Nil(t, err)
+	ascii, err := idna.Lookup.ToASCII("www.饭太硬.com")
+	assert.Nil(t, err)
+	re := regexp.MustCompile(regexp.QuoteMeta(ascii + "."))
+	assert.Regexp(t, re, out.String())
 }
 
 func TestMainInvalidOutputFormat(t *testing.T) {
