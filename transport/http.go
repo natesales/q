@@ -23,7 +23,7 @@ type HTTP struct {
 	Method       string
 	HTTP2, HTTP3 bool
 	NoPMTUd      bool
-	Headers      map[string]string
+	Headers      map[string][]string
 
 	conn *http.Client
 }
@@ -85,9 +85,11 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 
 	// Set custom headers if provided
 	if h.Headers != nil {
-		for name, value := range h.Headers {
-			log.Debugf("Setting custom header %s: %s", name, value)
-			req.Header.Set(name, value)
+		for name, values := range h.Headers {
+			for _, value := range values {
+				log.Debugf("Setting custom header %s: %s", name, value) 
+				req.Header.Add(name, value)
+			}
 		}
 	}
 
