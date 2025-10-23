@@ -326,11 +326,13 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		// Skip if already an in-addr.arpa or ip6.arpa name
 		lowerName := strings.ToLower(opts.Name)
 		if !strings.HasSuffix(lowerName, ".in-addr.arpa") && !strings.HasSuffix(lowerName, ".ip6.arpa") {
-			asciiName, err := idna.Lookup.ToASCII(opts.Name)
+			// Allow underscores during IDNA conversion
+			_asciiName := strings.ReplaceAll(opts.Name, "_", "..")
+			asciiName, err := idna.Lookup.ToASCII(_asciiName)
 			if err != nil {
 				return fmt.Errorf("idna toascii: %s", err)
 			}
-			opts.Name = asciiName
+			opts.Name = strings.ReplaceAll(asciiName, "..", "_")
 		}
 	}
 
