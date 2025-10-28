@@ -612,3 +612,16 @@ func TestMainTypeNotation(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Regexp(t, regexp.MustCompile(`cloudflare.com. .* HTTPS .*`), outType65.String())
 }
+
+func TestIDNAUnderscoreASCII(t *testing.T) {
+	// Ensure ASCII names with underscores are not mangled by IDNA processing
+	out, err := run(
+		"--all",
+		"-q", "_acme-challenge.example.com",
+		"-t", "TXT",
+	)
+	assert.Nil(t, err)
+	// Expect the question or answer to include the literal underscore name
+	re := regexp.MustCompile(regexp.QuoteMeta("_acme-challenge.example.com."))
+	assert.Regexp(t, re, out.String())
+}
