@@ -550,7 +550,7 @@ func TestMainQueryDomainWithRRType(t *testing.T) {
 		"A",
 	)
 	assert.Nil(t, err)
-	assert.Regexp(t, regexp.MustCompile(`NS.network. .* A .*`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`(?i)ns.network. .* A .*`), out.String())
 }
 
 func TestMainQueryTypeFlag(t *testing.T) {
