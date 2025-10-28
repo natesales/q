@@ -137,13 +137,13 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 			log.Debugf("Using HTTP(s) transport: %s", server)
 
 			// Parse HTTP headers
-			headers := make(map[string]string)
+			headers := make(map[string][]string)
 			for _, header := range opts.HTTPHeaders {
 				parts := strings.SplitN(header, ":", 2)
 				if len(parts) == 2 {
 					name := strings.TrimSpace(parts[0])
 					value := strings.TrimSpace(parts[1])
-					headers[name] = value
+					headers[name] = append(headers[name], value)
 					log.Debugf("Added header %s: %s", name, value)
 				} else {
 					log.Warnf("Invalid header format: %s (expected 'Name: Value')", header)
