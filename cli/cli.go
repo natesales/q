@@ -238,10 +238,19 @@ func AddEqualSigns(args []string) []string {
 		if isFlag && isBool(flagName) { // Standalone boolean flag
 			newArgs = append(newArgs, arg)
 		} else if isFlag && !isBool(flagName) { // Flag with mapping
-			if i+1 < len(args) && args[i+1][0] != '-' { // If the next argument is not a flag
-				newArgs = append(newArgs, arg+"="+args[i+1])
-				skip = true
-			} else { // If the next argument is a flag, add the flag as is
+			if i+1 < len(args) {
+				nextArg := args[i+1]
+				if nextArg[0] == '@' { // Skip joining if the next argument starts with @
+					newArgs = append(newArgs, arg)
+					continue
+				}
+				if nextArg[0] != '-' { // If the next argument is not a flag
+					newArgs = append(newArgs, arg+"="+nextArg)
+					skip = true
+				} else { // If the next argument is a flag, add the flag as is
+					newArgs = append(newArgs, arg)
+				}
+			} else {
 				newArgs = append(newArgs, arg)
 			}
 		} else { // Positional argument
