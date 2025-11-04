@@ -69,6 +69,7 @@ Application Options:
       --color                     Enable color output
       --question                  Show question section
       --opt                       Show OPT records
+      --ede                       Show Extended DNS Errors (RFC 8914)
       --answer                    Show answer section (default: true)
       --authority                 Show authority section
       --additional                Show additional section
