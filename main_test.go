@@ -310,6 +310,17 @@ func TestMainDNSCryptManualQuery(t *testing.T) {
 	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
 }
 
+func TestMainTCPFallbackOnAuthoritative(t *testing.T) {
+	out, err := run(
+		"--all",
+		"@ns47.domaincontrol.com",
+		"TXT",
+		"chordline.com",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`chordline.com\. .* TXT .*`), out.String())
+}
+
 func TestMainInvalidServerURL(t *testing.T) {
 	out, err := run(
 		"--all",
