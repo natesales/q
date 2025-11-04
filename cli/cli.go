@@ -83,6 +83,10 @@ type Flags struct {
 
 	PMTUD bool `long:"pmtud" description:"PMTU discovery (default: true)"`
 
+	// EDNS/compat flags (dig-like)
+	EDNS bool `long:"edns" description:"Enable EDNS0 (default: true)"`
+	TCP  bool `long:"tcp" description:"Use TCP for plain DNS (force TCP)"`
+
 	// QUIC
 	QUICALPNTokens   []string `long:"quic-alpn-tokens" description:"QUIC ALPN tokens" default:"doq" default:"doq-i11"` //nolint:golint,staticcheck
 	QUICLengthPrefix bool     `long:"quic-length-prefix" description:"Add RFC 9250 compliant length prefix (default: true)"`

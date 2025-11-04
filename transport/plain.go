@@ -3,14 +3,15 @@ package transport
 import (
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 // Plain makes a DNS query over TCP or UDP (with TCP fallback)
 type Plain struct {
 	Common
 	PreferTCP bool
+	EDNS      bool
 	UDPBuffer uint16
 	Timeout   time.Duration
 }
@@ -20,6 +21,22 @@ func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if p.PreferTCP {
 		reply, _, tcpErr := tcpClient.Exchange(m, p.Server)
 		return reply, tcpErr
+	}
+
+	// Ensure an EDNS0 OPT record is present (if enabled) and advertises our UDP buffer size
+	// so large UDP responses are either sized appropriately or marked truncated, allowing TCP retry.
+	if p.EDNS {
+		if opt := m.IsEdns0(); opt == nil {
+			m.Extra = append(m.Extra, &dns.OPT{
+				Hdr: dns.RR_Header{
+					Name:   ".",
+					Class:  p.UDPBuffer, // UDP payload size
+					Rrtype: dns.TypeOPT,
+				},
+			})
+		} else if opt.UDPSize() < p.UDPBuffer {
+			opt.SetUDPSize(p.UDPBuffer)
+		}
 	}
 
 	client := dns.Client{UDPSize: p.UDPBuffer, Timeout: p.Timeout}

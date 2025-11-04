@@ -34,7 +34,7 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 		req.Zero = opts.Zero
 		req.Truncated = opts.Truncated
 
-		if opts.DNSSEC || opts.NSID || opts.Pad || opts.ClientSubnet != "" || opts.Cookie != "" {
+		if opts.EDNS || opts.DNSSEC || opts.NSID || opts.Pad || opts.ClientSubnet != "" || opts.Cookie != "" {
 			opt := &dns.OPT{
 				Hdr: dns.RR_Header{
 					Name:   ".",
@@ -101,7 +101,10 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 				opt.Option = append(opt.Option, cookie)
 			}
 
-			req.Extra = append(req.Extra, opt)
+			// Only include the OPT record if EDNS is enabled
+			if opts.EDNS {
+				req.Extra = append(req.Extra, opt)
+			}
 		}
 
 		req.Question = []dns.Question{{
@@ -204,6 +207,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		ts = &transport.Plain{
 			Common:    common,
 			PreferTCP: true,
+			EDNS:      opts.EDNS,
 			UDPBuffer: opts.UDPBuffer,
 			Timeout:   opts.Timeout,
 		}
@@ -211,7 +215,8 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 		log.Debugf("Using UDP with TCP fallback: %s", server)
 		ts = &transport.Plain{
 			Common:    common,
-			PreferTCP: false,
+			PreferTCP: opts.TCP,
+			EDNS:      opts.EDNS,
 			UDPBuffer: opts.UDPBuffer,
 			Timeout:   opts.Timeout,
 		}
