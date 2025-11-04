@@ -224,6 +224,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	cli.ParsePlusFlags(&opts, args)
 	util.UseColor = opts.Color
 
+	log.SetReportTimestamp(false)
+
 	if opts.Verbose {
 		log.SetLevel(log.DebugLevel)
 	} else if opts.Trace {
