@@ -41,7 +41,7 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 				TLSClientConfig: h.TLSConfig,
 				AllowHTTP:       true,
 			}
-		}else if h.HTTP3 {
+		} else if h.HTTP3 {
 			log.Debug("Using HTTP/3")
 			h.conn.Transport = &http3.Transport{
 				TLSClientConfig: h.TLSConfig,
@@ -87,7 +87,7 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if h.Headers != nil {
 		for name, values := range h.Headers {
 			for _, value := range values {
-				log.Debugf("Setting custom header %s: %s", name, value) 
+				log.Debugf("Setting custom header %s: %s", name, value)
 				req.Header.Add(name, value)
 			}
 		}
@@ -111,7 +111,7 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		return nil, fmt.Errorf("got status code %d from %s", resp.StatusCode, queryURL)
 	}
 
-	response := dns.Msg{}
+	var response dns.Msg
 	if err := response.Unpack(body); err != nil {
 		return nil, fmt.Errorf("unpacking DNS response from %s: %w", queryURL, err)
 	}
@@ -120,6 +120,10 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 }
 
 func (h *HTTP) Close() error {
+	if h.conn == nil {
+		return nil
+	}
+	// Close idle connections for standard transports
 	h.conn.CloseIdleConnections()
 	return nil
 }
