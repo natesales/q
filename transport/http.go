@@ -8,10 +8,10 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 )
 

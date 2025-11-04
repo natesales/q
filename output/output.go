@@ -6,8 +6,8 @@ import (
 
 	"github.com/natesales/q/transport"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/natesales/q/cli"
 )

@@ -6,8 +6,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/natesales/q/cli"
 	"github.com/natesales/q/transport"
@@ -164,7 +164,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 	case transport.TypeDNSCrypt:
 		log.Debugf("Using DNSCrypt transport: %s", server)
 		if strings.HasPrefix(server, "sdns://") {
-			log.Traceln("Using provided DNS stamp for DNSCrypt")
+			log.Debug("Using provided DNS stamp for DNSCrypt")
 			ts = &transport.DNSCrypt{
 				Common:      common,
 				ServerStamp: server,
@@ -172,7 +172,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 				UDPSize:     opts.DNSCryptUDPSize,
 			}
 		} else {
-			log.Traceln("Using manual DNSCrypt configuration")
+			log.Debug("Using manual DNSCrypt configuration")
 			ts = &transport.DNSCrypt{Common: common,
 
 				TCP:          opts.DNSCryptTCP,

@@ -3,7 +3,7 @@ package tls
 import (
 	"crypto/tls"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/charmbracelet/log"
 )
 
 // cipherSuiteToInt converts a cipher suite name to its integer identifier

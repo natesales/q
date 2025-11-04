@@ -8,9 +8,9 @@ import (
 	"io"
 	"net"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go"
-	log "github.com/sirupsen/logrus"
 )
 
 // DoQ Error Codes

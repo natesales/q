@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
 	whois "github.com/natesales/bgptools-go"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/natesales/q/cli"
 	"github.com/natesales/q/util"

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/natesales/q/util"
 )

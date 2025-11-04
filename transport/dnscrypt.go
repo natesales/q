@@ -2,9 +2,9 @@ package transport
 
 import (
 	"github.com/ameshkov/dnscrypt/v2"
+	"github.com/charmbracelet/log"
 	"github.com/jedisct1/go-dnsstamps"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 type DNSCrypt struct {

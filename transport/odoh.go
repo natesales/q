@@ -36,8 +36,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 	"github.com/sthorne/odoh-go"
 )
 

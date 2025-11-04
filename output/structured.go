@@ -3,9 +3,9 @@ package output
 import (
 	"strings"
 
+	"github.com/charmbracelet/log"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/json-iterator/go/extra"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
 	"github.com/natesales/q/util"

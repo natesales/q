@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 type Flags struct {
@@ -165,7 +165,7 @@ func SetFalseBooleans(opts *Flags, args []string) []string {
 			for i := 0; i < v.NumField(); i++ {
 				if vT.Field(i).Type == reflect.TypeOf(true) && (vT.Field(i).Tag.Get("long") == flag || vT.Field(i).Tag.Get("short") == flag) {
 					boolState := strings.HasSuffix(arg, "=true")
-					log.Tracef("Setting %s to %t", arg, boolState)
+					// log.Debugf("Setting %s to %t", arg, boolState)
 					reflect.ValueOf(opts).Elem().Field(i).SetBool(boolState)
 					break
 				}
@@ -175,7 +175,7 @@ func SetFalseBooleans(opts *Flags, args []string) []string {
 		}
 	}
 
-	log.Tracef("remaining args: %v", remainingArgs)
+	// log.Debugf("remaining args: %v", remainingArgs)
 	return remainingArgs
 }
 

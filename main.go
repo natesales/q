@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/jedisct1/go-dnsstamps"
 	"github.com/jessevdk/go-flags"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/idna"
 
 	"github.com/natesales/q/cli"
@@ -101,7 +101,7 @@ func dnsStampToURL(s string) (string, error) {
 	u.Host = parsedStamp.ProviderName
 	u.Path = parsedStamp.Path
 
-	log.Tracef("DNS stamp parsed into URL as %s", u.String())
+	// log.Tracef("DNS stamp parsed into URL as %s", u.String())
 	return u.String(), nil
 }
 
@@ -129,7 +129,7 @@ func parseServer(s string) (string, transport.Type, error) {
 			scopeId = matches[1]
 			s = v6scopeRemoveRe.ReplaceAllString(s, "")
 		}
-		log.Tracef("Removed IPv6 scope ID %s from server %s", scopeId, s)
+		log.Debug("Removed IPv6 scope ID %s from server %s", scopeId, s)
 	}
 
 	// Handle DNS stamp
@@ -227,7 +227,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	if opts.Verbose {
 		log.SetLevel(log.DebugLevel)
 	} else if opts.Trace {
-		log.SetLevel(log.TraceLevel)
+		log.SetLevel(log.DebugLevel)
 		opts.ShowAll = true
 	}
 

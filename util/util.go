@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/charmbracelet/log"
 )
 
 var UseColor = true
