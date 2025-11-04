@@ -101,6 +101,8 @@ Application Options:
       --http-method=              HTTP method (default: GET)
       --http-header=              HTTP header in format 'Name: Value'
       --pmtud                     PMTU discovery (default: true)
+      --edns                      Enable EDNS0 (default: true)
+      --tcp                       Use TCP for plain DNS (force TCP)
       --quic-alpn-tokens=         QUIC ALPN tokens (default: doq, doq-i11)
       --quic-length-prefix        Add RFC 9250 compliant length prefix
                                   (default: true)
