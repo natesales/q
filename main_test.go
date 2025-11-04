@@ -636,3 +636,33 @@ func TestIDNAUnderscoreASCII(t *testing.T) {
 	re := regexp.MustCompile(regexp.QuoteMeta("_acme-challenge.example.com."))
 	assert.Regexp(t, re, out.String())
 }
+
+func TestMainEDE_Raw(t *testing.T) {
+	out, err := run(
+		"--all",
+		"-f", "raw",
+		"A",
+		"ede-6.extended-dns-errors.com",
+		"+ede",
+		"@1.1.1.1",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "EDE: 6 (DNSSEC Bogus)")
+	assert.Contains(t, s, "This EDE was intentionally inserted by dnsdist")
+}
+
+func TestMainEDE_Pretty(t *testing.T) {
+	out, err := run(
+		"--all",
+		"A",
+		"ede-6.extended-dns-errors.com",
+		"+ede",
+		"@1.1.1.1",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "EDE:")
+	assert.Contains(t, s, "6 (DNSSEC Bogus)")
+	assert.Contains(t, s, "This EDE was intentionally inserted by dnsdist")
+}

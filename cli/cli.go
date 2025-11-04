@@ -45,6 +45,7 @@ type Flags struct {
 	Color          bool   `long:"color" description:"Enable color output"`
 	ShowQuestion   bool   `long:"question" description:"Show question section"`
 	ShowOpt        bool   `long:"opt" description:"Show OPT records"`
+	ShowEDE        bool   `long:"ede" description:"Show Extended DNS Errors (RFC 8914)"`
 	ShowAnswer     bool   `long:"answer" description:"Show answer section (default: true)"`
 	ShowAuthority  bool   `long:"authority" description:"Show authority section"`
 	ShowAdditional bool   `long:"additional" description:"Show additional section"`

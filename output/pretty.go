@@ -268,6 +268,21 @@ func (p Printer) PrintPretty(entries []*Entry) {
 				p.printSection(toRRs(reply.Extra, entry, &p))
 			}
 
+			// Extended DNS Errors (RFC 8914)
+			if p.Opts.ShowEDE {
+				edes := extractEDE(reply)
+				if len(edes) > 0 {
+					util.MustWriteln(p.Out, util.Color(util.ColorWhite, "EDE:"))
+					for _, e := range edes {
+						util.MustWritef(p.Out, "%s (%s) %s\n",
+							util.Color(util.ColorPurple, fmt.Sprintf("%d", e.Code)),
+							util.Color(util.ColorMagenta, edeName(e.Code)),
+							util.Color(util.ColorGreen, e.Text),
+						)
+					}
+				}
+			}
+
 			// Print separator if there is more than one query
 			if (p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional) &&
 				(len(entry.Replies) > 0 && i != len(entry.Replies)-1) {
