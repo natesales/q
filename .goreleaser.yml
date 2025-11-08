@@ -16,6 +16,11 @@ builds:
       - amd64
       - arm64
 
+archives:
+  - format_overrides:
+      - goos: windows
+        formats: ["zip"]
+
 changelog:
   sort: asc
   filters:
