@@ -440,11 +440,17 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 
 	go func() {
 		var entries []*output.Entry
+		multiServer := len(opts.Server) > 1
 		for _, serverStr := range opts.Server {
 			// Parse server address and transport type
 			server, transportType, err := parseServer(serverStr)
 			if err != nil {
+				if multiServer {
+					log.Warnf("Skipping server %s: %v", serverStr, err)
+					continue
+				}
 				errChan <- fmt.Errorf("parsing server %s: %s", serverStr, err)
+				return
 			}
 			log.Debugf("Using server %s with transport %s", server, transportType)
 
@@ -452,30 +458,41 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			if opts.RecAXFR {
 				if opts.Name == "" {
 					errChan <- fmt.Errorf("no name specified for AXFR")
+					return
 				}
 				_ = RecAXFR(opts.Name, server, out)
 				errChan <- nil // exit immediately
+				return
 			}
 
 			// Create transport
 			txp, err := newTransport(server, transportType, tlsConfig)
 			if err != nil {
+				if multiServer {
+					log.Warnf("Skipping server %s (transport error): %v", server, err)
+					continue
+				}
 				errChan <- fmt.Errorf("creating transport: %s", err)
+				return
 			}
 
 			startTime := time.Now()
 			var replies []*dns.Msg
+			var serverFailed error
 			for _, msg := range msgs {
 				if txp == nil {
-					errChan <- fmt.Errorf("transport is nil")
+					serverFailed = fmt.Errorf("transport is nil")
+					break
 				}
 				reply, err := (*txp).Exchange(&msg)
 				if err != nil {
-					errChan <- fmt.Errorf("exchange: %s", err)
+					serverFailed = fmt.Errorf("exchange: %s", err)
+					break
 				}
 
 				if reply == nil {
-					errChan <- fmt.Errorf("no reply from server")
+					serverFailed = fmt.Errorf("no reply from server")
+					break
 				}
 
 				if opts.ShowOpt {
@@ -487,9 +504,21 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				}
 
 				if transportType != transport.TypeQUIC && opts.IDCheck && reply.Id != msg.Id {
-					errChan <- fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+					serverFailed = fmt.Errorf("ID mismatch: expected %d, got %d", msg.Id, reply.Id)
+					break
 				}
 				replies = append(replies, reply)
+			}
+
+			// If this server failed at any point, either skip (multi) or exit (single)
+			if serverFailed != nil {
+				_ = (*txp).Close()
+				if multiServer {
+					log.Warnf("Server %s failed: %v", server, serverFailed)
+					continue
+				}
+				errChan <- serverFailed
+				return
 			}
 
 			// Process TXT parsing
@@ -522,8 +551,19 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			entries = append(entries, e)
 
 			if err := (*txp).Close(); err != nil {
-				errChan <- fmt.Errorf("closing transport: %s", err)
+				if multiServer {
+					log.Warnf("Server %s close error: %v", server, err)
+				} else {
+					errChan <- fmt.Errorf("closing transport: %s", err)
+					return
+				}
 			}
+		}
+
+		// If none of the servers succeeded, return an error in multi-server mode
+		if len(entries) == 0 {
+			errChan <- fmt.Errorf("all servers failed")
+			return
 		}
 
 		printer := output.Printer{
@@ -538,6 +578,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		// Skip printing if NSIDOnly is set
 		if opts.NSIDOnly {
 			errChan <- nil
+			return
 		}
 
 		switch opts.Format {
@@ -551,14 +592,24 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 			printer.PrintStructured(entries)
 		default:
 			errChan <- fmt.Errorf("invalid output format %s", opts.Format)
+			return
 		}
 
 		errChan <- nil
 	}()
 
+	// When multiple servers are configured, queries are attempted sequentially.
+	// Give the worker goroutine enough time to iterate through all servers by
+	// scaling the overall timeout proportionally. This prevents the controller
+	// from timing out before a later server succeeds.
+	totalTimeout := opts.Timeout
+	if len(opts.Server) > 1 {
+		totalTimeout = opts.Timeout * time.Duration(len(opts.Server))
+	}
+
 	select {
-	case <-time.After(opts.Timeout):
-		return fmt.Errorf("timeout after %s", opts.Timeout)
+	case <-time.After(totalTimeout):
+		return fmt.Errorf("timeout after %s", totalTimeout)
 	case err := <-errChan:
 		return err
 	}

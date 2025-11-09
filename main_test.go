@@ -666,3 +666,31 @@ func TestMainEDE_Pretty(t *testing.T) {
 	assert.Contains(t, s, "6 (DNSSEC Bogus)")
 	assert.Contains(t, s, "This EDE was intentionally inserted by dnsdist")
 }
+
+func TestMainMultipleServersSkipFailures(t *testing.T) {
+	out, err := run(
+		"--all",
+		"-q", "example.com",
+		"-t", "A",
+		"-s", "127.127.127.127:1", // expected to fail
+		"-s", "8.8.8.8", // expected to succeed
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Regexp(t, regexp.MustCompile(`example\.com\. .* A .*`), s)
+	// When multiple servers are used, the server suffix is appended to answers
+	assert.Truef(t, strings.Contains(s, "(8.8.8.8:53)") || strings.Contains(s, "from 8.8.8.8:53"), "expected output to include successful server 8.8.8.8:53, got: %s", s)
+}
+
+func TestMainMultipleServersAllFail(t *testing.T) {
+	_, err := run(
+		"--all",
+		"-q", "example.com",
+		"-t", "A",
+		"-s", "127.127.127.127:1",
+		"-s", "127.127.127.127:2",
+		"--timeout", "1s",
+	)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "timeout after 2s")
+}
