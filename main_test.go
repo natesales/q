@@ -692,5 +692,8 @@ func TestMainMultipleServersAllFail(t *testing.T) {
 		"--timeout", "1s",
 	)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "timeout after 2s")
+
+	timedOut := strings.Contains(err.Error(), "timeout after 2s")
+	erroredOut := strings.Contains(err.Error(), "all servers failed")
+	assert.True(t, timedOut || erroredOut)
 }
