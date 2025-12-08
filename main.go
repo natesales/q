@@ -328,13 +328,19 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		// Skip if already an in-addr.arpa or ip6.arpa name
 		lowerName := strings.ToLower(opts.Name)
 		if !strings.HasSuffix(lowerName, ".in-addr.arpa") && !strings.HasSuffix(lowerName, ".ip6.arpa") {
-			// Allow underscores during IDNA conversion
-			_asciiName := strings.ReplaceAll(opts.Name, "_", "..")
-			asciiName, err := idna.Lookup.ToASCII(_asciiName)
+			// Use a custom IDNA profile to allow underscores (non-LDH characters).
+			// Standard IDNA Lookup enforces STD3 rules which forbid underscores,
+			// but they are valid in DNS records (e.g. TXT, SRV).
+			p := idna.New(
+				idna.MapForLookup(),
+				idna.StrictDomainName(false),
+			)
+
+			asciiName, err := p.ToASCII(opts.Name)
 			if err != nil {
 				return fmt.Errorf("idna toascii: %s", err)
 			}
-			opts.Name = strings.ReplaceAll(asciiName, "..", "_")
+			opts.Name = asciiName
 		}
 	}
 
