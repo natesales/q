@@ -152,7 +152,7 @@ func SetDefaultTrueBools(opts *Flags) {
 func SetFalseBooleans(opts *Flags, args []string) []string {
 	// Add equal signs to separated flags (e.g. --foo bar becomes --foo=bar)
 	for i, arg := range args {
-		if arg[0] == '-' && !strings.Contains(arg, "=") && i+1 < len(args) && (args[i+1] == "true" || args[i+1] == "false") {
+		if len(arg) > 0 && arg[0] == '-' && !strings.Contains(arg, "=") && i+1 < len(args) && (args[i+1] == "true" || args[i+1] == "false") {
 			args[i] = arg + "=" + args[i+1]
 			args = append(args[:i+1], args[i+2:]...)
 		}
@@ -253,12 +253,13 @@ func AddEqualSigns(args []string) []string {
 				if i+1 < len(args) {
 					nextArg := args[i+1]
 					// Skip if the next argument is a server specified with @
-					if nextArg[0] == '@' {
+					if len(nextArg) > 0 && nextArg[0] == '@' {
 						newArgs = append(newArgs, arg)
 						continue
 					}
+					
 					// If the next argument is a value (not a flag), combine them
-					if nextArg[0] != '-' {
+					if len(nextArg) == 0 || nextArg[0] != '-' {
 						newArgs = append(newArgs, arg+"="+nextArg)
 						skip = true
 					} else {
