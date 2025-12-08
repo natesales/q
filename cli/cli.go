@@ -152,7 +152,7 @@ func SetDefaultTrueBools(opts *Flags) {
 func SetFalseBooleans(opts *Flags, args []string) []string {
 	// Add equal signs to separated flags (e.g. --foo bar becomes --foo=bar)
 	for i, arg := range args {
-		if arg[0] == '-' && !strings.Contains(arg, "=") && i+1 < len(args) && (args[i+1] == "true" || args[i+1] == "false") {
+		if len(arg) > 0 && arg[0] == '-' && !strings.Contains(arg, "=") && i+1 < len(args) && (args[i+1] == "true" || args[i+1] == "false") {
 			args[i] = arg + "=" + args[i+1]
 			args = append(args[:i+1], args[i+2:]...)
 		}
@@ -227,7 +227,7 @@ func isBool(name string) bool {
 	return false
 }
 
-// AddEqualSigns adds equal signs between flags and their values, ignoring boolean flags
+// AddEqualSigns adds equal signs between long flags and their values, ignoring boolean flags
 func AddEqualSigns(args []string) []string {
 	var newArgs []string
 	skip := false
@@ -237,31 +237,42 @@ func AddEqualSigns(args []string) []string {
 			continue
 		}
 
-		isFlag := arg[0] == '-'
-		flagName := strings.TrimLeft(arg, "-")
-
-		if isFlag && isBool(flagName) { // Standalone boolean flag
+		// Skip flags that already have an equal sign (e.g. --server=1.2.3.4)
+		if strings.Contains(arg, "=") {
 			newArgs = append(newArgs, arg)
-		} else if isFlag && !isBool(flagName) { // Flag with mapping
-			if i+1 < len(args) {
-				nextArg := args[i+1]
-				if nextArg[0] == '@' { // Skip joining if the next argument starts with @
-					newArgs = append(newArgs, arg)
-					continue
-				}
-				if nextArg[0] != '-' { // If the next argument is not a flag
-					newArgs = append(newArgs, arg+"="+nextArg)
-					skip = true
-				} else { // If the next argument is a flag, add the flag as is
-					newArgs = append(newArgs, arg)
-				}
-			} else {
+			continue
+		}
+
+		// Only process long flags (starting with --)
+		isLongFlag := strings.HasPrefix(arg, "--")
+		if isLongFlag {
+			flagName := strings.TrimLeft(arg, "-")
+			if isBool(flagName) {
 				newArgs = append(newArgs, arg)
+			} else {
+				if i+1 < len(args) {
+					nextArg := args[i+1]
+					// Skip if the next argument is a server specified with @
+					if len(nextArg) > 0 && nextArg[0] == '@' {
+						newArgs = append(newArgs, arg)
+						continue
+					}
+					
+					// If the next argument is a value (not a flag), combine them
+					if len(nextArg) == 0 || nextArg[0] != '-' {
+						newArgs = append(newArgs, arg+"="+nextArg)
+						skip = true
+					} else {
+						newArgs = append(newArgs, arg)
+					}
+				} else {
+					newArgs = append(newArgs, arg)
+				}
 			}
-		} else { // Positional argument
+		} else {
+			// Pass short flags and other arguments through unchanged
 			newArgs = append(newArgs, arg)
 		}
 	}
-
 	return newArgs
 }
