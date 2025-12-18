@@ -150,5 +150,8 @@ func addPrefix(b []byte) (m []byte) {
 }
 
 func (q *QUIC) Close() error {
+	if q.conn == nil {
+		return nil
+	}
 	return q.connection().CloseWithError(DoQNoError, "")
 }
