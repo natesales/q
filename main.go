@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -206,8 +208,50 @@ func parseServer(s string) (string, transport.Type, error) {
 	return server, ts, nil
 }
 
+func loadConfig() []string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Debugf("Could not find user home directory: %s", err)
+		return nil
+	}
+
+	configPath := filepath.Join(home, ".qrc")
+	file, err := os.Open(configPath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		log.Warnf("Could not open config file %s: %s", configPath, err)
+		return nil
+	}
+	defer file.Close()
+
+	var configArgs []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
+			continue
+		}
+		parts := strings.Fields(line)
+		configArgs = append(configArgs, parts...)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Warnf("Error reading config file: %s", err)
+	}
+
+	if len(configArgs) > 0 {
+		log.Debugf("Loaded default options from %s: %v", configPath, configArgs)
+	}
+
+	return configArgs
+}
+
 // driver is the "main" function for this program that accepts a flag slice for testing
 func driver(args []string, out io.Writer) error {
+	configArgs := loadConfig()
+	args = append(configArgs, args...)
 	args = cli.SetFalseBooleans(&opts, args)
 	args = cli.AddEqualSigns(args)
 	parser := flags.NewParser(&opts, flags.Default)
