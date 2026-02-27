@@ -44,13 +44,13 @@ func (p Printer) PrintRaw(entries []*Entry) {
 				}
 			}
 			if p.Opts.ShowAnswer {
-				s += rrSection(s, "ANSWER", reply.Answer)
+				s = rrSection(s, "ANSWER", reply.Answer)
 			}
 			if p.Opts.ShowAuthority {
-				s += rrSection(s, "AUTHORITY", reply.Ns)
+				s = rrSection(s, "AUTHORITY", reply.Ns)
 			}
 			if p.Opts.ShowAdditional && (opt == nil || len(reply.Extra) > 1) {
-				s += rrSection(s, "ADDITIONAL", reply.Extra)
+				s = rrSection(s, "ADDITIONAL", reply.Extra)
 			}
 			util.MustWriteln(p.Out, s)
 
