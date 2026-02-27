@@ -640,7 +640,7 @@ func TestIDNAUnderscoreASCII(t *testing.T) {
 func TestMainEDE_Raw(t *testing.T) {
 	out, err := run(
 		"--all",
-		"-f", "raw",
+		"-f=raw",
 		"A",
 		"ede-6.extended-dns-errors.com",
 		"+ede",
