@@ -69,7 +69,7 @@ func MustWritef(out io.Writer, format string, a ...interface{}) {
 }
 
 func ToPunycode(d string) string {
-	result, err := idna.ToASCII(d)
+	result, err := idna.Lookup.ToASCII(d)
 	if err != nil {
 		// if conversion fails, return the original string
 		return d
