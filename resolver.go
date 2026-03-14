@@ -11,6 +11,7 @@ import (
 
 	"github.com/natesales/q/cli"
 	"github.com/natesales/q/transport"
+	"github.com/natesales/q/util"
 )
 
 // createQuery creates a slice of DNS queries
@@ -107,8 +108,13 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 			}
 		}
 
+		qname := opts.Name
+		if opts.Punycode {
+			qname = util.ToPunycode(qname)
+		}
+
 		req.Question = []dns.Question{{
-			Name:   dns.Fqdn(opts.Name),
+			Name:   dns.Fqdn(qname),
 			Qtype:  qType,
 			Qclass: opts.Class,
 		}}

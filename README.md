@@ -59,6 +59,7 @@ Application Options:
   -b, --bootstrap-server=         DNS server to use for bootstrapping
       --bootstrap-timeout=        Bootstrapping timeout (default: 5s)
       --cookie=                   EDNS0 cookie
+  -u, --punycode                  Convert domain names to Punycode
       --recaxfr                   Perform recursive AXFR
   -f, --format=                   Output format (pretty, column, json, yaml,
                                   raw) (default: pretty)

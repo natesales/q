@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
+	"golang.org/x/net/idna"
 )
 
 var UseColor = true
@@ -65,4 +66,13 @@ func MustWritef(out io.Writer, format string, a ...interface{}) {
 	if _, err := out.Write([]byte(fmt.Sprintf(format, a...))); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ToPunycode(d string) string {
+	result, err := idna.ToASCII(d)
+	if err != nil {
+		// if conversion fails, return the original string
+		return d
+	}
+	return result
 }

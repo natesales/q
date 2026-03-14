@@ -29,3 +29,8 @@ func TestUtilColor(t *testing.T) {
 	assert.Equal(t, "\033[1;31mfoo\033[0m", Color("red", "foo"))
 	assert.Equal(t, "\033[1;37mfoo\033[0m", Color("white", "foo"))
 }
+
+func TestToPunycode(t *testing.T) {
+	assert.Equal(t, "xn--mnchen-3ya.de", ToPunycode("münchen.de"))
+	assert.Equal(t, "example.com", ToPunycode("example.com"))
+}
