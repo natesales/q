@@ -49,10 +49,21 @@ type Entry struct {
 const maxPTRChase = 16
 
 // resolvePTR queries qname for a PTR record, following any CNAME chain
-// up to maxPTRChase hops; see RFC 2317 (Classless IN-ADDR.ARPA delegation). It returns an empty string if
-// no PTR record is ultimately found.
+// until a PTR record is found; see RFC 2317 (Classless IN-ADDR.ARPA delegation). It
+// returns an empty string if no PTR record is ultimately found, and an
+// error if the chain contains a loop or is too long.
 func (e *Entry) resolvePTR(txp *transport.Transport, qname string) (string, error) {
-	for i := 0; i < maxPTRChase; i++ {
+	origQname := qname
+	// Map for loop checking
+	visited := make(map[string]bool)
+
+	// Loop for one initial query plus n=maxPTRChase follow-up queries
+	for i := 0; i <= maxPTRChase; i++ {
+		if visited[qname] {
+			return "", fmt.Errorf("CNAME loop detected resolving PTR for %s", origQname)
+		}
+		visited[qname] = true
+
 		msg := dns.Msg{}
 		msg.SetQuestion(qname, dns.TypePTR)
 
@@ -79,7 +90,7 @@ func (e *Entry) resolvePTR(txp *transport.Transport, qname string) (string, erro
 		}
 		qname = next
 	}
-	return "", fmt.Errorf("CNAME chain too long resolving PTR for %s", qname)
+	return "", fmt.Errorf("CNAME chain too long resolving PTR for %s", origQname)
 }
 
 // LoadPTRs populates an entry's PTRs map with PTR values for all A/AAAA records
