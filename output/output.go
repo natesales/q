@@ -1,6 +1,7 @@
 package output
 
 import (
+	"fmt"
 	"io"
 	"time"
 
@@ -43,6 +44,44 @@ type Entry struct {
 	existingRRs map[string]bool
 }
 
+// maxPTRChase bounds CNAME chasing when resolving a PTR record. 16 matches
+// BIND's CNAME-chase limit.
+const maxPTRChase = 16
+
+// resolvePTR queries qname for a PTR record, following any CNAME chain
+// up to maxPTRChase hops; see RFC 2317 (Classless IN-ADDR.ARPA delegation). It returns an empty string if
+// no PTR record is ultimately found.
+func (e *Entry) resolvePTR(txp *transport.Transport, qname string) (string, error) {
+	for i := 0; i < maxPTRChase; i++ {
+		msg := dns.Msg{}
+		msg.SetQuestion(qname, dns.TypePTR)
+
+		resp, err := (*txp).Exchange(&msg)
+		if err != nil {
+			return "", err
+		}
+		if resp == nil {
+			return "", nil
+		}
+
+		var next string
+		for _, rr := range resp.Answer {
+			switch rr.Header().Rrtype {
+			case dns.TypePTR:
+				return rr.(*dns.PTR).Ptr, nil
+			case dns.TypeCNAME:
+				next = rr.(*dns.CNAME).Target
+			}
+		}
+
+		if next == "" {
+			return "", nil
+		}
+		qname = next
+	}
+	return "", fmt.Errorf("CNAME chain too long resolving PTR for %s", qname)
+}
+
 // LoadPTRs populates an entry's PTRs map with PTR values for all A/AAAA records
 func (e *Entry) LoadPTRs(txp *transport.Transport) {
 	// Initialize PTR cache if it doesn't exist
@@ -68,19 +107,15 @@ func (e *Entry) LoadPTRs(txp *transport.Transport) {
 			if err != nil {
 				log.Fatalf("error reversing PTR record: %s", err)
 			}
-			msg := dns.Msg{}
-			msg.SetQuestion(qname, dns.TypePTR)
 
-			// Resolve qname and cache result
-			resp, err := (*txp).Exchange(&msg)
+			// Resolve qname (following CNAMEs) and cache result
+			ptr, err := e.resolvePTR(txp, qname)
 			if err != nil {
 				log.Warnf("error resolving PTR record: %s", err)
 				continue
 			}
-
-			// Store in cache
-			if resp != nil && len(resp.Answer) > 0 {
-				e.PTRs[ip] = resp.Answer[0].(*dns.PTR).Ptr
+			if ptr != "" {
+				e.PTRs[ip] = ptr
 			}
 		}
 	}
