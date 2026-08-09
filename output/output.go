@@ -3,6 +3,7 @@ package output
 import (
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/natesales/q/transport"
@@ -59,10 +60,10 @@ func (e *Entry) resolvePTR(txp *transport.Transport, qname string) (string, erro
 
 	// Loop for one initial query plus n=maxPTRChase follow-up queries
 	for i := 0; i <= maxPTRChase; i++ {
-		if visited[qname] {
+		if visited[strings.ToLower(qname)] {
 			return "", fmt.Errorf("CNAME loop detected resolving PTR for %s", origQname)
 		}
-		visited[qname] = true
+		visited[strings.ToLower(qname)] = true
 
 		msg := dns.Msg{}
 		msg.SetQuestion(qname, dns.TypePTR)
