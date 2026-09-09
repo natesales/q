@@ -67,7 +67,10 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		)
 	}
 
-	rrSignature := fmt.Sprintf("%s %d %s %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val, e.Server)
+	// Identity ignores TTL so identical answers from multi-type default
+	// queries (e.g. repeated CNAMEs) collapse; longest TTL is chosen in
+	// dedupeAnswersByContent before pretty/column print.
+	rrSignature := fmt.Sprintf("%s %s %s %s %s", a.Header().Name, dns.ClassToString[a.Header().Class], dns.TypeToString[a.Header().Rrtype], val, e.Server)
 	// Skip if we've already printed this RR
 	if ok := e.existingRRs[rrSignature]; ok {
 		return nil
@@ -155,6 +158,41 @@ type RR struct {
 	Name, TTL, Type, Value string
 }
 
+// rrContentKey identifies an RR ignoring TTL.
+func rrContentKey(rr dns.RR) string {
+	h := rr.Header()
+	val := rr.String()
+	for _, cut := range []string{h.Name, strconv.Itoa(int(h.Ttl)), dns.ClassToString[h.Class], dns.TypeToString[h.Rrtype]} {
+		val = strings.TrimSpace(strings.TrimPrefix(val, cut))
+	}
+	return fmt.Sprintf("%s %s %s %s", h.Name, dns.ClassToString[h.Class], dns.TypeToString[h.Rrtype], val)
+}
+
+// dedupeAnswersByContent collapses RRs that differ only by TTL, keeping the longest TTL.
+func dedupeAnswersByContent(rrs []dns.RR) []dns.RR {
+	if len(rrs) < 2 {
+		return rrs
+	}
+	best := make(map[string]dns.RR, len(rrs))
+	order := make([]string, 0, len(rrs))
+	for _, rr := range rrs {
+		key := rrContentKey(rr)
+		if prev, ok := best[key]; ok {
+			if rr.Header().Ttl > prev.Header().Ttl {
+				best[key] = rr
+			}
+			continue
+		}
+		best[key] = rr
+		order = append(order, key)
+	}
+	out := make([]dns.RR, 0, len(order))
+	for _, key := range order {
+		out = append(out, best[key])
+	}
+	return out
+}
+
 func toRRs(rrs []dns.RR, e *Entry, p *Printer) []RR {
 	var out []RR
 	for _, rr := range rrs {
@@ -202,10 +240,11 @@ func (p Printer) printSection(rrs []RR) {
 func (p Printer) PrintColumn(entries []*Entry) {
 	var answers []RR
 	for _, e := range entries {
+		var flat []dns.RR
 		for _, r := range e.Replies {
-			rrs := toRRs(r.Answer, e, &p)
-			answers = append(answers, rrs...)
+			flat = append(flat, r.Answer...)
 		}
+		answers = append(answers, toRRs(dedupeAnswersByContent(flat), e, &p)...)
 	}
 
 	p.printSection(answers)
@@ -243,6 +282,16 @@ func flags(m *dns.Msg) string {
 
 func (p Printer) PrintPretty(entries []*Entry) {
 	for _, entry := range entries {
+		answersOnly := p.Opts.ShowAnswer && !p.Opts.ShowQuestion && !p.Opts.ShowAuthority && !p.Opts.ShowAdditional
+		if answersOnly {
+			var flat []dns.RR
+			for _, reply := range entry.Replies {
+				flat = append(flat, reply.Answer...)
+			}
+			if len(flat) > 0 {
+				p.printSection(toRRs(dedupeAnswersByContent(flat), entry, &p))
+			}
+		}
 		for i, reply := range entry.Replies {
 			if p.Opts.ShowQuestion {
 				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
@@ -253,7 +302,7 @@ func (p Printer) PrintPretty(entries []*Entry) {
 					)
 				}
 			}
-			if p.Opts.ShowAnswer && len(reply.Answer) > 0 {
+			if p.Opts.ShowAnswer && len(reply.Answer) > 0 && !answersOnly {
 				if p.Opts.ShowQuestion || p.Opts.ShowAuthority || p.Opts.ShowAdditional {
 					util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Answer:"))
 				}
