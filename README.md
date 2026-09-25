@@ -147,6 +147,12 @@ Help Options:
 - `go install github.com/natesales/q@latest`
 - `docker run --rm -it ghcr.io/natesales/q`
 
+If you are using [mise](https://jdx.mise.dev), the polyglot tool version manager, you can install `q` using this command:
+
+```sh
+mise use -g q@latest
+```
+
 To install `q` from source:
 
 ```sh
