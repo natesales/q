@@ -149,7 +149,72 @@ func TestMainReverseQuery(t *testing.T) {
 		"-q", "1.1.1.1",
 	)
 	assert.Nil(t, err)
-	assert.Regexp(t, regexp.MustCompile(`1.1.1.1.in-addr.arpa. .* PTR one.one.one.one`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`1\.1\.1\.1\.in-addr\.arpa\. .* PTR one\.one\.one\.one`), out.String())
+}
+
+func TestMainAutoReverseOptIn(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		env     string
+		args    []string
+		reverse bool
+	}{
+		{name: "off by default", args: []string{"1.1.1.1"}},
+		{name: "flag", args: []string{"--auto-reverse-lookup", "1.1.1.1"}, reverse: true},
+		{name: "env", env: "true", args: []string{"1.1.1.1"}, reverse: true},
+		{name: "env false", env: "0", args: []string{"1.1.1.1"}},
+		{name: "env overridden by plus flag", env: "1", args: []string{"+noauto-reverse-lookup", "1.1.1.1"}},
+		{name: "env overridden by =false", env: "1", args: []string{"--auto-reverse-lookup=false", "1.1.1.1"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(autoReverseLookupVar, tc.env)
+			out, err := run(append([]string{"--all"}, tc.args...)...)
+			assert.Nil(t, err)
+			if tc.reverse {
+				assert.Contains(t, out.String(), "in-addr.arpa.")
+			} else {
+				assert.NotContains(t, out.String(), "in-addr.arpa.")
+			}
+		})
+	}
+}
+
+func TestMainAutoReverseIPv4(t *testing.T) {
+	out, err := run(
+		"--all",
+		"--auto-reverse-lookup",
+		"1.1.1.1",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Regexp(t, regexp.MustCompile(`1\.1\.1\.1\.in-addr\.arpa\. .* PTR one\.one\.one\.one`), s)
+	assert.NotContains(t, s, " MX ")
+	assert.Regexp(t, regexp.MustCompile(`1 Q `), s)
+}
+
+func TestMainAutoReverseIPv6(t *testing.T) {
+	out, err := run(
+		"--all",
+		"--auto-reverse-lookup",
+		"2606:4700:4700::1111",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "ip6.arpa.")
+	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
+	assert.Regexp(t, regexp.MustCompile(`1 Q `), s)
+}
+
+func TestMainAutoReverseBracketedIPv6(t *testing.T) {
+	out, err := run(
+		"--all",
+		"--auto-reverse-lookup",
+		"-q", "[2606:4700:4700::1111]",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "ip6.arpa.")
+	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
 }
 
 func TestMainInferredQname(t *testing.T) {
