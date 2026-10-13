@@ -375,10 +375,29 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		return nil
 	}
 
+	// An IP address stands in for a reverse lookup: query PTR on the
+	// in-addr.arpa / ip6.arpa name, same as -x/--reverse.
+	if opts.Name != "" && len(rrTypes) < 1 {
+		ip := opts.Name
+		if strings.Contains(opts.Name, ":") {
+			if len(ip) >= 2 && ip[0] == '[' && ip[len(ip)-1] == ']' {
+				ip = ip[1 : len(ip)-1]
+			}
+		} else if strings.Contains(opts.Name, ".") {
+			ip = strings.TrimSuffix(ip, ".")
+		}
+		if net.ParseIP(ip) != nil {
+			log.Debugf("%s is an IP address, performing a reverse lookup", ip)
+			opts.Name, opts.Reverse = ip, true
+		}
+	}
+
 	// If no RR types are defined, set a list of default ones
 	if len(rrTypes) < 1 {
 		if opts.Name == "" {
 			rrTypes[dns.StringToType["NS"]] = true
+		} else if opts.Reverse {
+			rrTypes[dns.StringToType["PTR"]] = true
 		} else {
 			for _, defaultRRType := range opts.DefaultRRTypes {
 				rrTypes[dns.StringToType[defaultRRType]] = true
