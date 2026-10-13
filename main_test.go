@@ -149,7 +149,42 @@ func TestMainReverseQuery(t *testing.T) {
 		"-q", "1.1.1.1",
 	)
 	assert.Nil(t, err)
-	assert.Regexp(t, regexp.MustCompile(`1.1.1.1.in-addr.arpa. .* PTR one.one.one.one`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`1\.1\.1\.1\.in-addr\.arpa\. .* PTR one\.one\.one\.one`), out.String())
+}
+
+func TestMainAutoReverseIPv4(t *testing.T) {
+	out, err := run(
+		"--all",
+		"1.1.1.1",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Regexp(t, regexp.MustCompile(`1\.1\.1\.1\.in-addr\.arpa\. .* PTR one\.one\.one\.one`), s)
+	assert.NotContains(t, s, " MX ")
+	assert.Regexp(t, regexp.MustCompile(`1 Q `), s)
+}
+
+func TestMainAutoReverseIPv6(t *testing.T) {
+	out, err := run(
+		"--all",
+		"2606:4700:4700::1111",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "ip6.arpa.")
+	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
+	assert.Regexp(t, regexp.MustCompile(`1 Q `), s)
+}
+
+func TestMainAutoReverseBracketedIPv6(t *testing.T) {
+	out, err := run(
+		"--all",
+		"-q", "[2606:4700:4700::1111]",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "ip6.arpa.")
+	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
 }
 
 func TestMainInferredQname(t *testing.T) {

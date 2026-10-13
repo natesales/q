@@ -15,7 +15,7 @@ type Flags struct {
 	Name             string        `short:"q" long:"qname" description:"Query name"`
 	Server           []string      `short:"s" long:"server" description:"DNS server(s)"`
 	Types            []string      `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
-	Reverse          bool          `short:"x" long:"reverse" description:"Reverse lookup"`
+	Reverse          bool          `short:"x" long:"reverse" description:"Reverse lookup (automatic for IP addresses)"`
 	DNSSEC           bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
 	NSID             bool          `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
 	NSIDOnly         bool          `short:"N" long:"nsid-only" description:"Set EDNS0 NSID opt and query only for the NSID"`
@@ -267,7 +267,7 @@ func AddEqualSigns(args []string) []string {
 						newArgs = append(newArgs, arg)
 						continue
 					}
-					
+
 					// If the next argument is a value (not a flag), combine them
 					if len(nextArg) == 0 || nextArg[0] != '-' {
 						newArgs = append(newArgs, arg+"="+nextArg)
