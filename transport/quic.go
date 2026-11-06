@@ -39,8 +39,11 @@ func (q *QUIC) connection() *quic.Conn {
 	return q.conn
 }
 
-// setServerName sets the TLS config server name to the QUIC server
+// setServerName sets the TLS server name from the QUIC server host, unless already set.
 func (q *QUIC) setServerName() {
+	if q.TLSConfig.ServerName != "" {
+		return
+	}
 	host, _, err := net.SplitHostPort(q.Server)
 	if err != nil {
 		log.Fatalf("invalid QUIC server address: %s", err)
