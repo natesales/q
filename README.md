@@ -145,7 +145,7 @@ Help Options:
 - [GitHub releases](https://github.com/natesales/q/releases)
 - [q-dns-git](https://aur.archlinux.org/packages/q-dns-git/) in the AUR
 - `go install github.com/natesales/q@latest`
-- `docker run --rm -it ghcr.io/natesales/q`
+- [`docker run --rm -it ghcr.io/natesales/q`](https://github.com/natesales/q/pkgs/container/q)
 
 To install `q` from source:
 
