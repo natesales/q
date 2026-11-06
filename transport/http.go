@@ -2,10 +2,12 @@ package transport
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 
 	"github.com/charmbracelet/log"
@@ -30,16 +32,24 @@ type HTTP struct {
 
 func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if h.conn == nil || !h.ReuseConn {
-		transport := http.DefaultTransport.(*http.Transport)
-		transport.TLSClientConfig = h.TLSConfig
-		h.conn = &http.Client{
-			Transport: transport,
+		dialer := &net.Dialer{}
+		baseTransport := http.DefaultTransport.(*http.Transport).Clone()
+		baseTransport.TLSClientConfig = h.TLSConfig
+		baseTransport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialer.DialContext(ctx, h.network(network), addr)
 		}
+		baseTransport.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return tls.DialWithDialer(dialer, h.network(network), addr, h.TLSConfig)
+		}
+		h.conn = &http.Client{Transport: baseTransport}
 		if h.HTTP2 {
 			log.Debug("Using HTTP/2")
 			h.conn.Transport = &http2.Transport{
 				TLSClientConfig: h.TLSConfig,
 				AllowHTTP:       true,
+				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+					return tls.DialWithDialer(dialer, h.network(network), addr, cfg)
+				},
 			}
 		} else if h.HTTP3 {
 			log.Debug("Using HTTP/3")
@@ -47,6 +57,13 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 				TLSClientConfig: h.TLSConfig,
 				QUICConfig: &quic.Config{
 					DisablePathMTUDiscovery: h.NoPMTUd,
+				},
+				Dial: func(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+					udpAddr, err := net.ResolveUDPAddr(h.network("udp"), addr)
+					if err != nil {
+						return nil, err
+					}
+					return quic.DialAddrEarly(ctx, udpAddr.String(), tlsCfg, cfg)
 				},
 			}
 		}

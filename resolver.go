@@ -125,6 +125,8 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 	common := transport.Common{
 		Server:    server,
 		ReuseConn: opts.ReuseConn,
+		UseIPv4:   opts.UseIPv4,
+		UseIPv6:   opts.UseIPv6,
 	}
 
 	switch transportType {

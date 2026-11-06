@@ -20,7 +20,7 @@ func (t *TLS) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 		var err error
 		t.conn, err = tls.DialWithDialer(
 			&net.Dialer{},
-			"tcp",
+			t.network("tcp"),
 			t.Server,
 			t.TLSConfig,
 		)

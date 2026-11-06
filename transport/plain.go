@@ -25,7 +25,7 @@ func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		if ip != nil && ip.IsMulticast() {
 			log.Debugf("Detected multicast server %s, using relaxed mDNS exchange logic", p.Server)
 
-			conn, err := net.ListenPacket("udp", ":0")
+			conn, err := net.ListenPacket(p.network("udp"), ":0")
 			if err != nil {
 				return nil, fmt.Errorf("mdns listen: %w", err)
 			}
@@ -40,7 +40,7 @@ func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
 				return nil, fmt.Errorf("mdns pack: %w", err)
 			}
 
-			dstAddr, err := net.ResolveUDPAddr("udp", p.Server)
+			dstAddr, err := net.ResolveUDPAddr(p.network("udp"), p.Server)
 			if err != nil {
 				return nil, fmt.Errorf("mdns resolve: %w", err)
 			}
@@ -63,7 +63,7 @@ func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		}
 	}
 
-	tcpClient := dns.Client{Net: "tcp", Timeout: p.Timeout}
+	tcpClient := dns.Client{Net: p.network("tcp"), Timeout: p.Timeout}
 	if p.PreferTCP {
 		reply, _, tcpErr := tcpClient.Exchange(m, p.Server)
 		return reply, tcpErr
@@ -85,7 +85,7 @@ func (p *Plain) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		}
 	}
 
-	client := dns.Client{UDPSize: p.UDPBuffer, Timeout: p.Timeout}
+	client := dns.Client{Net: p.network("udp"), UDPSize: p.UDPBuffer, Timeout: p.Timeout}
 	reply, _, err := client.Exchange(m, p.Server)
 
 	if reply != nil && reply.Truncated {

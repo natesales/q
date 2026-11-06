@@ -26,6 +26,11 @@ func (d *DNSCrypt) setup() {
 		d.client = &dnscrypt.Client{
 			UDPSize: d.UDPSize,
 		}
+		if d.TCP {
+			d.client.Net = d.network("tcp")
+		} else {
+			d.client.Net = d.network("udp")
+		}
 
 		if d.ServerStamp == "" {
 			stamp, err := dnsstamps.NewDNSCryptServerStampFromLegacy(d.Server, d.PublicKey, d.ProviderName, 0)
@@ -42,11 +47,6 @@ func (d *DNSCrypt) setup() {
 			log.Fatalf("failed to dial DNSCrypt server: %s", err)
 		}
 		d.resolver = ro
-	}
-	if d.TCP {
-		d.client.Net = "tcp"
-	} else {
-		d.client.Net = "udp"
 	}
 }
 

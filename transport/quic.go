@@ -57,9 +57,23 @@ func (q *QUIC) Exchange(msg *dns.Msg) (*dns.Msg, error) {
 			q.TLSConfig.NextProtos = []string{"doq"}
 		}
 		log.Debugf("Dialing with QUIC ALPN tokens: %v", q.TLSConfig.NextProtos)
+
+		server := q.Server
+		if q.UseIPv4 || q.UseIPv6 {
+			host, port, err := net.SplitHostPort(q.Server)
+			if err != nil {
+				return nil, fmt.Errorf("splitting host/port %s: %v", q.Server, err)
+			}
+			resolved, err := q.resolveHost(context.Background(), host)
+			if err != nil {
+				return nil, err
+			}
+			server = net.JoinHostPort(resolved, port)
+		}
+
 		conn, err := quic.DialAddr(
 			context.Background(),
-			q.Server,
+			server,
 			q.TLSConfig,
 			&quic.Config{
 				DisablePathMTUDiscovery: !q.PMTUD,
