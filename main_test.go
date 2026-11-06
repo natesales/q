@@ -457,6 +457,16 @@ func TestMainParseServer(t *testing.T) {
 			Type:         transport.TypeHTTP,
 			ExpectedHost: "https://[2a09::]:443/dns-query",
 		},
+		{ // TLS with bare IPv6 host, default port
+			Server:       "tls://2a09::1",
+			Type:         transport.TypeTLS,
+			ExpectedHost: "[2a09::1]:853",
+		},
+		{ // HTTPS with bare IPv6 host and explicit path
+			Server:       "https://2a09::1/dns-query",
+			Type:         transport.TypeHTTP,
+			ExpectedHost: "https://[2a09::1]:443/dns-query",
+		},
 		{ // HTTPS with explicit endpoint
 			Server:       "https://dns.quad9.net/other-dns-endpoint",
 			Type:         transport.TypeHTTP,
