@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -146,7 +147,7 @@ func newTransport(server string, transportType transport.Type, tlsConfig *tls.Co
 			for _, header := range opts.HTTPHeaders {
 				parts := strings.SplitN(header, ":", 2)
 				if len(parts) == 2 {
-					name := strings.TrimSpace(parts[0])
+					name := http.CanonicalHeaderKey(strings.TrimSpace(parts[0]))
 					value := strings.TrimSpace(parts[1])
 					headers[name] = append(headers[name], value)
 					log.Debugf("Added header %s: %s", name, value)
