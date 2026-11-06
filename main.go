@@ -538,7 +538,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	for rrType := range rrTypes {
 		rrTypesSlice = append(rrTypesSlice, rrType)
 	}
-	msgs := createQuery(opts, rrTypesSlice)
 
 	errChan := make(chan error)
 
@@ -546,6 +545,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		var entries []*output.Entry
 		multiServer := len(opts.Server) > 1
 		for _, serverStr := range opts.Server {
+			// Generate a fresh set of queries per server so each gets its own client cookie.
+			msgs := createQuery(opts, rrTypesSlice)
 			// Parse server address and transport type
 			server, transportType, err := parseServer(serverStr)
 			if err != nil {

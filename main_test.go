@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/idna"
 
@@ -226,6 +227,73 @@ func TestMainPad(t *testing.T) {
 	assert.Contains(t, o, `"truncated":false`)
 }
 
+func TestCreateQueryCookieDefault(t *testing.T) {
+	opts := cli.Flags{EDNS: true}
+	msgs := createQuery(opts, []uint16{dns.TypeA})
+	assert.Equal(t, 1, len(msgs))
+
+	var opt *dns.OPT
+	for _, rr := range msgs[0].Extra {
+		if o, ok := rr.(*dns.OPT); ok {
+			opt = o
+			break
+		}
+	}
+	assert.NotNil(t, opt)
+
+	var cookie *dns.EDNS0_COOKIE
+	for _, o := range opt.Option {
+		if c, ok := o.(*dns.EDNS0_COOKIE); ok {
+			cookie = c
+			break
+		}
+	}
+	assert.NotNil(t, cookie)
+	assert.Len(t, cookie.Cookie, 16) // 8 bytes hex-encoded
+}
+
+func TestCreateQueryCookieManual(t *testing.T) {
+	opts := cli.Flags{EDNS: true, Cookie: "aabbccddeeff0011"}
+	msgs := createQuery(opts, []uint16{dns.TypeA})
+
+	var opt *dns.OPT
+	for _, rr := range msgs[0].Extra {
+		if o, ok := rr.(*dns.OPT); ok {
+			opt = o
+			break
+		}
+	}
+	assert.NotNil(t, opt)
+
+	var cookie *dns.EDNS0_COOKIE
+	for _, o := range opt.Option {
+		if c, ok := o.(*dns.EDNS0_COOKIE); ok {
+			cookie = c
+			break
+		}
+	}
+	assert.NotNil(t, cookie)
+	assert.Equal(t, "aabbccddeeff0011", cookie.Cookie)
+}
+
+func TestCreateQueryCookieDisabled(t *testing.T) {
+	opts := cli.Flags{EDNS: true, NoCookie: true}
+	msgs := createQuery(opts, []uint16{dns.TypeA})
+
+	var opt *dns.OPT
+	for _, rr := range msgs[0].Extra {
+		if o, ok := rr.(*dns.OPT); ok {
+			opt = o
+			break
+		}
+	}
+	assert.NotNil(t, opt)
+	for _, o := range opt.Option {
+		_, ok := o.(*dns.EDNS0_COOKIE)
+		assert.False(t, ok, "cookie option should not be present when --no-cookie is set")
+	}
+}
+
 func TestMainChaosClass(t *testing.T) {
 	out, err := run(
 		"--all",
@@ -239,9 +307,10 @@ func TestMainChaosClass(t *testing.T) {
 }
 
 func TestMainParsePlusFlags(t *testing.T) {
-	cli.ParsePlusFlags(&opts, []string{"+dnssec", "+nord"})
+	cli.ParsePlusFlags(&opts, []string{"+dnssec", "+nord", "+nocookie"})
 	assert.True(t, opts.DNSSEC)
 	assert.False(t, opts.RecursionDesired)
+	assert.True(t, opts.NoCookie)
 }
 
 func TestMainTCPQuery(t *testing.T) {

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"net/http"
@@ -54,25 +56,6 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 				})
 			}
 
-			if opts.Pad {
-				paddingOpt := new(dns.EDNS0_PADDING)
-
-				msgLen := req.Len()
-				padLen := 128 - msgLen%128
-
-				// Truncate padding to fit in UDP buffer
-				if msgLen+padLen > int(opt.UDPSize()) {
-					padLen = int(opt.UDPSize()) - msgLen
-					if padLen < 0 { // Stop padding
-						padLen = 0
-					}
-				}
-
-				log.Debugf("Padding with %d bytes", padLen)
-				paddingOpt.Padding = make([]byte, padLen)
-				opt.Option = append(opt.Option, paddingOpt)
-			}
-
 			if opts.ClientSubnet != "" {
 				ip, ipNet, err := net.ParseCIDR(opts.ClientSubnet)
 				if err != nil {
@@ -94,12 +77,39 @@ func createQuery(opts cli.Flags, rrTypes []uint16) []dns.Msg {
 				opt.Option = append(opt.Option, ednsSubnet)
 			}
 
-			if opts.Cookie != "" {
-				cookie := &dns.EDNS0_COOKIE{
-					Code:   dns.EDNS0COOKIE,
-					Cookie: opts.Cookie,
+			if !opts.NoCookie {
+				cookieValue := opts.Cookie
+				if cookieValue == "" {
+					b := make([]byte, 8)
+					if _, err := rand.Read(b); err == nil {
+						cookieValue = hex.EncodeToString(b)
+					}
 				}
-				opt.Option = append(opt.Option, cookie)
+				if cookieValue != "" {
+					opt.Option = append(opt.Option, &dns.EDNS0_COOKIE{
+						Code:   dns.EDNS0COOKIE,
+						Cookie: cookieValue,
+					})
+				}
+			}
+
+			if opts.Pad {
+				paddingOpt := new(dns.EDNS0_PADDING)
+
+				msgLen := req.Len()
+				padLen := 128 - msgLen%128
+
+				// Truncate padding to fit in UDP buffer
+				if msgLen+padLen > int(opt.UDPSize()) {
+					padLen = int(opt.UDPSize()) - msgLen
+					if padLen < 0 { // Stop padding
+						padLen = 0
+					}
+				}
+
+				log.Debugf("Padding with %d bytes", padLen)
+				paddingOpt.Padding = make([]byte, padLen)
+				opt.Option = append(opt.Option, paddingOpt)
 			}
 
 			// Only include the OPT record if EDNS is enabled
