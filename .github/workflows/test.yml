@@ -30,13 +30,14 @@ jobs:
 
       # Run tests with nice formatting. Save the original log in /tmp/gotest.log
       - name: Run tests
+        id: run-tests
         run: |
           set -euo pipefail
           go test -p 1 -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
 
       - name: Upload original test log
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.run-tests.outcome != 'skipped'
         with:
           name: test-log
           path: /tmp/gotest.log
