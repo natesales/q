@@ -574,6 +574,28 @@ func TestMainQueryDomainWithRRType(t *testing.T) {
 	assert.Regexp(t, regexp.MustCompile(`(?i)ns.network. .* A .*`), out.String())
 }
 
+func TestMainIntegerPositionalRRType(t *testing.T) {
+	// 28 is AAAA; passing it as a bare integer positional argument should
+	// query for AAAA records, not use "28" as the qname.
+	out, err := run(
+		"28",
+		"example.com",
+		"@9.9.9.9",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
+}
+
+func TestMainOutOfRangeIntegerIsQname(t *testing.T) {
+	// 0 is outside the valid RR type range; it must be treated as a qname.
+	// Use a fast-failing server so the test does not depend on real network.
+	_, err := run("0", "-s", "127.127.127.127:1", "--timeout", "1s")
+	// Expect a connection error, not a "0 is not a valid RR type" parse error,
+	// which confirms "0" was treated as a qname rather than a type code.
+	assert.NotNil(t, err)
+	assert.NotContains(t, err.Error(), "not a valid RR type")
+}
+
 func TestMainQueryTypeFlag(t *testing.T) {
 	out, err := run(
 		"-t", "65",

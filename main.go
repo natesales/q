@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -276,7 +277,7 @@ func driver(args []string, out io.Writer) error {
 	parser.Usage = `[OPTIONS] [@server] [type...] [name]
 
 All long form (--) flags can be toggled with the dig-standard +[no]flag notation.`
-	_, err := parser.ParseArgs(args)
+	remainingArgs, err := parser.ParseArgs(args)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Usage") {
 			log.Fatal(err)
@@ -339,7 +340,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Add non-flag RR types
-	for _, arg := range args {
+	for _, arg := range remainingArgs {
 		// Find a server by @ symbol if it isn't set by flag
 		if strings.HasPrefix(arg, "@") {
 			opts.Server = append(opts.Server, strings.TrimPrefix(arg, "@"))
@@ -358,6 +359,9 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				opts.ShowAuthority = true
 				opts.ShowAdditional = true
 			}
+		} else if typeCode, err := strconv.Atoi(arg); err == nil && typeCode > 0 && typeCode <= 65535 {
+			typeFound = true
+			rrTypes[uint16(typeCode)] = true
 		}
 
 		// Set qname if not set by flag
