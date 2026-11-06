@@ -157,6 +157,23 @@ func parseServer(s string) (string, transport.Type, error) {
 			s = "[" + s + "]"
 		}
 		s = "plain://" + s
+	} else {
+		// Bracket a bare IPv6 host in a URL that already has a scheme,
+		// e.g. https://2a09:: → https://[2a09::]
+		if i := strings.Index(s, "://"); i >= 0 {
+			rest := s[i+3:]
+			end := len(rest)
+			for j, c := range rest {
+				if c == '/' || c == '?' || c == '#' {
+					end = j
+					break
+				}
+			}
+			host := rest[:end]
+			if !strings.HasPrefix(host, "[") && strings.Contains(host, ":") && net.ParseIP(host) != nil {
+				s = s[:i+3] + "[" + host + "]" + rest[end:]
+			}
+		}
 	}
 
 	// Parse server as URL
