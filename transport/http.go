@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
@@ -100,12 +101,19 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		req.Header.Set("User-Agent", h.UserAgent)
 	}
 
-	// Set custom headers if provided
+	// Set custom headers. The Host header requires special handling: Go's
+	// net/http ignores req.Header["Host"] and reads req.Host instead.
 	if h.Headers != nil {
 		for name, values := range h.Headers {
-			for _, value := range values {
-				log.Debugf("Setting custom header %s: %s", name, value)
-				req.Header.Add(name, value)
+			if strings.EqualFold(name, "Host") {
+				if len(values) > 0 {
+					req.Host = values[0]
+				}
+			} else {
+				for _, value := range values {
+					log.Debugf("Setting custom header %s: %s", name, value)
+					req.Header.Add(name, value)
+				}
 			}
 		}
 	}
