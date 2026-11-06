@@ -60,6 +60,14 @@ Application Options:
       --bootstrap-timeout=        Bootstrapping timeout (default: 5s)
       --cookie=                   EDNS0 cookie
       --recaxfr                   Perform recursive AXFR
+  -g, --registry                  Resolve target via RDAP with WHOIS fallback
+      --registry-rdap             Resolve target via RDAP only
+      --rdap-server=              RDAP base URL override (skips bootstrap)
+      --rir=                      Force RIR for registry lookups: iana, arin,
+                                  ripe, apnic, lacnic, afrinic (default: iana)
+      --registry-whois            Resolve target via port-43 WHOIS only
+      --whois-server=             Port-43 WHOIS server override (host or
+                                  host:port)
   -f, --format=                   Output format (pretty, column, json, yaml,
                                   raw) (default: pretty)
       --pretty-ttls               Format TTLs in human readable format
@@ -104,6 +112,8 @@ Application Options:
       --pmtud                     PMTU discovery (default: true)
       --edns                      Enable EDNS0 (default: true)
       --tcp                       Use TCP for plain DNS (force TCP)
+  -4, --ipv4                      Use IPv4 transport only
+  -6, --ipv6                      Use IPv6 transport only
       --quic-alpn-tokens=         QUIC ALPN tokens (default: doq, doq-i11)
       --quic-length-prefix        Add RFC 9250 compliant length prefix
                                   (default: true)
@@ -113,7 +123,7 @@ Application Options:
       --dnscrypt-key=             DNSCrypt public key
       --dnscrypt-provider=        DNSCrypt provider name
       --default-rr-types=         Default record types (default: A, AAAA, NS,
-                                  MX, TXT, CNAME)
+                                  MX, TXT, HTTPS, CNAME)
       --udp-buffer=               Set EDNS0 UDP size in query (default: 1232)
   -v, --verbose                   Show verbose log messages
       --trace                     Show trace log messages
