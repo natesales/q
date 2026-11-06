@@ -44,9 +44,11 @@ jobs:
           if-no-files-found: error
 
       - name: Generate coverage badge
+        if: github.event_name == 'push'
         run: gopherbadger -style=for-the-badge -covercmd "go tool cover -func=cover.out"
 
       - name: Commit coverage badge
+        if: github.event_name == 'push'
         uses: EndBug/add-and-commit@v7
         with:
           message: "ci: update coverage"
@@ -54,9 +56,11 @@ jobs:
           author_name: "github-actions[bot]"
           author_email: "github-actions[bot]@users.noreply.github.com"
 
-      - run: ./update-usage-readme.sh
+      - if: github.event_name == 'push'
+        run: ./update-usage-readme.sh
 
       - name: Commit README update
+        if: github.event_name == 'push'
         uses: EndBug/add-and-commit@v7
         with:
           message: "ci: update binary usage in README"
