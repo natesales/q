@@ -93,8 +93,10 @@ type Flags struct {
 	PMTUD bool `long:"pmtud" description:"PMTU discovery (default: true)"`
 
 	// EDNS/compat flags (dig-like)
-	EDNS bool `long:"edns" description:"Enable EDNS0 (default: true)"`
-	TCP  bool `long:"tcp" description:"Use TCP for plain DNS (force TCP)"`
+	EDNS    bool `long:"edns" description:"Enable EDNS0 (default: true)"`
+	TCP     bool `long:"tcp" description:"Use TCP for plain DNS (force TCP)"`
+	UseIPv4 bool `short:"4" long:"ipv4" description:"Use IPv4 transport only"`
+	UseIPv6 bool `short:"6" long:"ipv6" description:"Use IPv6 transport only"`
 
 	// QUIC
 	//lint:ignore SA5008 go-flags accepts multiple default values in the struct tag

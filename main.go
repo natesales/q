@@ -291,6 +291,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.ShowStats = true
 	}
 
+	// Validate address family flags
+	if opts.UseIPv4 && opts.UseIPv6 {
+		return fmt.Errorf("-4 and -6 are mutually exclusive")
+	}
+
 	// Set bootstrap resolver
 	if opts.BootstrapServer != "" {
 		// Add port if not specified

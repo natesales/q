@@ -697,3 +697,36 @@ func TestMainMultipleServersAllFail(t *testing.T) {
 	erroredOut := strings.Contains(err.Error(), "all servers failed")
 	assert.True(t, timedOut || erroredOut)
 }
+
+func TestMainIPv4Flag(t *testing.T) {
+	out, err := run(
+		"--all",
+		"-4",
+		"-q", "example.com",
+		"-t", "A",
+		"@9.9.9.9",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+}
+
+func TestMainIPv4IPv6MutuallyExclusive(t *testing.T) {
+	_, err := run(
+		"-4", "-6",
+		"-q", "example.com",
+	)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "-4 and -6 are mutually exclusive")
+}
+
+func TestMainIPv6ToIPv4OnlyServer(t *testing.T) {
+	_, err := run(
+		"-6",
+		"--timeout", "3s",
+		"-q", "example.com",
+		"-t", "A",
+		"@9.9.9.9",
+	)
+	// 9.9.9.9 is IPv4-only; forcing IPv6 transport must fail
+	assert.NotNil(t, err)
+}
