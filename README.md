@@ -16,6 +16,7 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 ```text
 q example.com                            Lookup default records for a domain
 q example.com MX SOA                     ...or specify a list of types
+q 1.1.1.1                                Reverse lookup when given an IP address
 
 q example.com MX @9.9.9.9                Query a specific server
 q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)...
@@ -38,7 +39,7 @@ Application Options:
   -s, --server=                   DNS server(s)
   -t, --type=                     RR type (e.g. A, AAAA, MX, etc.) or type
                                   integer
-  -x, --reverse                   Reverse lookup
+  -x, --reverse                   Reverse lookup (automatic for IP addresses)
   -d, --dnssec                    Set the DO (DNSSEC OK) bit in the OPT record
   -n, --nsid                      Set EDNS0 NSID opt
   -N, --nsid-only                 Set EDNS0 NSID opt and query only for the NSID
