@@ -277,7 +277,30 @@ func flags(m *dns.Msg) string {
 
 func (p Printer) PrintPretty(entries []*Entry) {
 	for _, entry := range entries {
+		printedNXDOMAIN := make(map[string]bool)
 		for i, reply := range entry.Replies {
+			if reply.Rcode == dns.RcodeNameError && !p.Opts.ValueOnly && !p.Opts.ShowStats {
+				name := ""
+				if len(reply.Question) > 0 {
+					name = reply.Question[0].Name
+				} else if i < len(entry.Queries) && len(entry.Queries[i].Question) > 0 {
+					name = entry.Queries[i].Question[0].Name
+				}
+				// NXDOMAIN applies to the name, so don't repeat it for each RR type.
+				key := strings.ToLower(name)
+				if !printedNXDOMAIN[key] {
+					printedNXDOMAIN[key] = true
+					prefix := util.Color(util.ColorWhite, "Status:")
+					if name != "" {
+						prefix = util.Color(util.ColorPurple, name)
+					}
+					suffix := ""
+					if len(entries) > 1 {
+						suffix = util.Color(util.ColorTeal, fmt.Sprintf(" (%s)", entry.Server))
+					}
+					util.MustWritef(p.Out, "%s %s%s\n", prefix, util.Color(util.ColorRed, "NXDOMAIN"), suffix)
+				}
+			}
 			if p.Opts.ShowQuestion {
 				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
 				for _, a := range reply.Question {

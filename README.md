@@ -25,6 +25,20 @@ q example.com MX --format=raw            Output in raw (dig) format
 q example.com MX --format=json           ...or as JSON (or YAML)
 ```
 
+### Negative answers
+
+The default pretty output reports an `NXDOMAIN` response explicitly:
+
+```text
+missing.example. NXDOMAIN
+```
+
+The status appears once per name and server, even when multiple record types are
+queried. `--stats` already includes the response status. `--short` and column
+output continue to show record values and records, respectively; JSON, YAML and
+raw output retain their existing response status fields. An empty `NOERROR`
+response (no records of the requested type) is not reported as `NXDOMAIN`.
+
 ### Usage
 
 ```text
