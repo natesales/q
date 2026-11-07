@@ -76,6 +76,7 @@ Application Options:
       --short-ttls                Remove zero components of pretty TTLs.
                                   (24h0m0s->24h) (default: true)
       --color                     Enable color output
+      --unknown-format            Show RDATA as RFC 3597 hex (\# len hex)
       --question                  Show question section
       --opt                       Show OPT records
       --ede                       Show Extended DNS Errors (RFC 8914)
