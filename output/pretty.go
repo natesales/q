@@ -53,6 +53,24 @@ func (p Printer) PrettyPrintNSID(entries []*Entry, printPrefix bool) {
 	}
 }
 
+// rrToRFC3597Val returns the RDATA of rr formatted as RFC 3597 unknown-format
+// (\# len hex). This lets callers render any RR type without type-specific
+// parsing, matching dig's +unknownformat behaviour.
+func rrToRFC3597Val(rr dns.RR) string {
+	buf := make([]byte, dns.MaxMsgSize)
+	n, err := dns.PackRR(rr, buf, 0, nil, false)
+	if err != nil {
+		return rr.String()
+	}
+	// The packed RR ends with Rdlength bytes of RDATA; read them from the tail.
+	rdLen := int(rr.Header().Rdlength)
+	if rdLen < 0 || n-rdLen < 0 {
+		return rr.String()
+	}
+	rdata := buf[n-rdLen : n]
+	return fmt.Sprintf("\\# %d %s", rdLen, hex.EncodeToString(rdata))
+}
+
 // parseRR converts an RR into a pretty string and returns the qname, ttl, type, value, and whether to skip printing it because it's a duplicate
 func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	// Initialize existingRRs map if it doesn't exist
@@ -60,11 +78,25 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		e.existingRRs = make(map[string]bool)
 	}
 
-	val := a.String()
-	for _, cut := range []string{a.Header().Name, strconv.Itoa(int(a.Header().Ttl)), dns.ClassToString[a.Header().Class], dns.TypeToString[a.Header().Rrtype]} {
-		val = strings.TrimSpace(
-			strings.TrimPrefix(val, cut),
-		)
+	var val string
+	var ipForEnrichment string // original IP string for WHOIS/PTR, unaffected by UnknownFormat
+	if opts.UnknownFormat {
+		val = rrToRFC3597Val(a)
+	} else {
+		val = a.String()
+		for _, cut := range []string{a.Header().Name, strconv.Itoa(int(a.Header().Ttl)), dns.ClassToString[a.Header().Class], dns.TypeToString[a.Header().Rrtype]} {
+			val = strings.TrimSpace(
+				strings.TrimPrefix(val, cut),
+			)
+		}
+	}
+
+	// Extract the IP for enrichment regardless of UnknownFormat, since
+	// WHOIS/PTR enrichment needs the real address, not RFC 3597 hex.
+	if a.Header().Rrtype == dns.TypeA {
+		ipForEnrichment = a.(*dns.A).A.String()
+	} else if a.Header().Rrtype == dns.TypeAAAA {
+		ipForEnrichment = a.(*dns.AAAA).AAAA.String()
 	}
 
 	rrSignature := fmt.Sprintf("%s %d %s %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val, e.Server)
@@ -83,12 +115,9 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		}
 	}
 
-	// Copy val now before modifying it with a suffix
-	valCopy := val
-
 	// Handle whois
 	if opts.Whois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		resp, err := whois.Query(valCopy)
+		resp, err := whois.Query(ipForEnrichment)
 		if err != nil {
 			log.Warnf("bgp.tools query: %s", err)
 		} else {
@@ -98,7 +127,7 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 
 	// Handle PTR resolution
 	if opts.ResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", e.PTRs[valCopy]))
+		val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", e.PTRs[ipForEnrichment]))
 	}
 
 	// Server suffix
@@ -106,10 +135,15 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		val += util.Color(util.ColorTeal, fmt.Sprintf(" (%s)", e.Server))
 	}
 
+	rrTypeName := dns.TypeToString[a.Header().Rrtype]
+	if opts.UnknownFormat {
+		rrTypeName = fmt.Sprintf("TYPE%d", a.Header().Rrtype)
+	}
+
 	return &RR{
 		util.Color(util.ColorPurple, a.Header().Name),
 		util.Color(util.ColorGreen, ttl),
-		util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]),
+		util.Color(util.ColorMagenta, rrTypeName),
 		val,
 	}
 }

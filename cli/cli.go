@@ -52,6 +52,7 @@ type Flags struct {
 	PrettyTTLs     bool   `long:"pretty-ttls" description:"Format TTLs in human readable format (default: true)"`
 	ShortTTLs      bool   `long:"short-ttls" description:"Remove zero components of pretty TTLs. (24h0m0s->24h) (default: true)"`
 	Color          bool   `long:"color" description:"Enable color output"`
+	UnknownFormat  bool   `long:"unknown-format" description:"Show RDATA as RFC 3597 hex (\\# len hex)"`
 	ShowQuestion   bool   `long:"question" description:"Show question section"`
 	ShowOpt        bool   `long:"opt" description:"Show OPT records"`
 	ShowEDE        bool   `long:"ede" description:"Show Extended DNS Errors (RFC 8914)"`
