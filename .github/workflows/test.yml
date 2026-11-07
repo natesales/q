@@ -5,15 +5,19 @@ on:
     branches:
       - main
     paths:
-      - "*.go"
-      - ".github/workflows/*"
-      - "README.md"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/**"
+      - "update-usage-readme.sh"
 
   pull_request:
     paths:
-      - "*.go"
-      - ".github/workflows/*"
-      - "README.md"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/**"
+      - "update-usage-readme.sh"
 
 jobs:
   build:
