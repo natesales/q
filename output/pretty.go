@@ -295,7 +295,7 @@ func (p Printer) PrintPretty(entries []*Entry) {
 						prefix = util.Color(util.ColorPurple, name)
 					}
 					suffix := ""
-					if len(entries) > 1 {
+					if len(entries) > 1 || len(p.Opts.Server) > 1 {
 						suffix = util.Color(util.ColorTeal, fmt.Sprintf(" (%s)", entry.Server))
 					}
 					util.MustWritef(p.Out, "%s %s%s\n", prefix, util.Color(util.ColorRed, "NXDOMAIN"), suffix)

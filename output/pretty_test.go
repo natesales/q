@@ -36,9 +36,12 @@ func TestPrettyNXDOMAIN(t *testing.T) {
 		showStats bool
 		question  bool
 		query     bool
+		servers   []string
 		want      string
 	}{
 		{name: "NXDOMAIN", rcode: dns.RcodeNameError, question: true, want: "missing.example. NXDOMAIN\n"},
+		{name: "single configured server", rcode: dns.RcodeNameError, question: true, servers: []string{"192.0.2.53:53"}, want: "missing.example. NXDOMAIN\n"},
+		{name: "only one configured server responds", rcode: dns.RcodeNameError, question: true, servers: []string{"192.0.2.53:53", "192.0.2.54:53"}, want: "missing.example. NXDOMAIN (192.0.2.53:53)\n"},
 		{name: "empty NOERROR", rcode: dns.RcodeSuccess, question: true},
 		{name: "SERVFAIL is not NXDOMAIN", rcode: dns.RcodeServerFailure, question: true},
 		{name: "REFUSED is not NXDOMAIN", rcode: dns.RcodeRefused, question: true},
@@ -59,7 +62,7 @@ func TestPrettyNXDOMAIN(t *testing.T) {
 				entry.Queries = []dns.Msg{query}
 			}
 			var buf bytes.Buffer
-			p := Printer{Out: &buf, Opts: &cli.Flags{ShowAnswer: true, ValueOnly: tt.valueOnly, ShowStats: tt.showStats}}
+			p := Printer{Out: &buf, Opts: &cli.Flags{ShowAnswer: true, ValueOnly: tt.valueOnly, ShowStats: tt.showStats, Server: tt.servers}}
 			p.PrintPretty([]*Entry{entry})
 			if tt.showStats {
 				assert.Contains(t, buf.String(), "Status: NXDOMAIN")
