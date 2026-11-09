@@ -16,6 +16,7 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 ```text
 q example.com                            Lookup default records for a domain
 q example.com MX SOA                     ...or specify a list of types
+q example.invalid                       Show NXDOMAIN for a nonexistent domain
 
 q example.com MX @9.9.9.9                Query a specific server
 q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)...
@@ -24,20 +25,6 @@ q @sdns://AgcAAAAAAAAAAAAHOS45LjkuOQA    ...or from a DNS Stamp
 q example.com MX --format=raw            Output in raw (dig) format
 q example.com MX --format=json           ...or as JSON (or YAML)
 ```
-
-### Negative answers
-
-The default pretty output reports an `NXDOMAIN` response explicitly:
-
-```text
-missing.example. NXDOMAIN
-```
-
-The status appears once per name and server, even when multiple record types are
-queried. `--stats` already includes the response status. `--short` and column
-output continue to show record values and records, respectively; JSON, YAML and
-raw output retain their existing response status fields. An empty `NOERROR`
-response (no records of the requested type) is not reported as `NXDOMAIN`.
 
 ### Usage
 
