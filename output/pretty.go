@@ -3,7 +3,6 @@ package output
 import (
 	"encoding/hex"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -148,43 +147,6 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	}
 }
 
-// sortSlices sorts a slice of slices of strings by the nth element of each slice
-func sortSlices(s [][]string, n int) [][]string {
-	sort.Slice(s, func(i, j int) bool {
-		return s[i][n] < s[j][n]
-	})
-	return s
-}
-
-// sortToPrint sorts a slice of records first by record type, then by value
-func sortToPrint(s [][]string) [][]string {
-	// Organize by record type
-	records := make(map[string][][]string)
-	for _, record := range s {
-		rrType := record[2]
-		records[rrType] = append(records[rrType], record)
-	}
-
-	// Sort each record type
-	for rrType, recs := range records {
-		records[rrType] = sortSlices(recs, 3)
-	}
-
-	// Sort record types
-	var sortedTypes []string
-	for rrType := range records {
-		sortedTypes = append(sortedTypes, rrType)
-	}
-	sort.Strings(sortedTypes)
-
-	// Build final result
-	var result [][]string
-	for _, rrType := range sortedTypes {
-		result = append(result, records[rrType]...)
-	}
-	return result
-}
-
 type RR struct {
 	Name, TTL, Type, Value string
 }
@@ -219,9 +181,6 @@ func (p Printer) printSection(rrs []RR) {
 
 		toPrint = append(toPrint, []string{a.Name, a.TTL, a.Type, a.Value})
 	}
-
-	// Sort by record type
-	toPrint = sortToPrint(toPrint)
 
 	for _, a := range toPrint {
 		if p.Opts.Format == "column" {
