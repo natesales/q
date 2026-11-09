@@ -16,7 +16,6 @@ A tiny and feature-rich command line DNS client with support for UDP, TCP, DoT, 
 ```text
 q example.com                            Lookup default records for a domain
 q example.com MX SOA                     ...or specify a list of types
-q example.invalid                       Show NXDOMAIN for a nonexistent domain
 
 q example.com MX @9.9.9.9                Query a specific server
 q example.com MX @https://dns.quad9.net  ...over HTTPS (or TCP, TLS, QUIC, or ODoH)...
