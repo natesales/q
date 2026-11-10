@@ -91,6 +91,8 @@ func Query(ctx context.Context, opts Options) (string, error) {
 	if opts.Timeout <= 0 {
 		opts.Timeout = 10 * time.Second
 	}
+	// Lowercased here so the "iana" checks below and the RIR table lookup
+	// share one spelling. Callers of lookupRIR pass that value through.
 	opts.RIR = strings.ToLower(strings.TrimSpace(opts.RIR))
 	if opts.RIR == "" {
 		opts.RIR = "iana"
@@ -138,34 +140,52 @@ func DetectRIRFromHandle(handle string) string {
 	return ""
 }
 
+// rirService is one row of the RIR routing table. RDAP and WHOIS share these
+// keys so a new registry cannot be added to only one protocol.
+type rirService struct {
+	rdapBase  string
+	whoisHost string
+}
+
+var rirServices = map[string]rirService{
+	"arin":    {rdapBase: "https://rdap.arin.net/registry", whoisHost: "whois.arin.net"},
+	"ripe":    {rdapBase: "https://rdap.db.ripe.net", whoisHost: "whois.ripe.net"},
+	"apnic":   {rdapBase: "https://rdap.apnic.net", whoisHost: "whois.apnic.net"},
+	"lacnic":  {rdapBase: "https://rdap.lacnic.net/rdap", whoisHost: "whois.lacnic.net"},
+	"afrinic": {rdapBase: "https://rdap.afrinic.net/rdap", whoisHost: "whois.afrinic.net"},
+}
+
+// lookupRIR returns the service row for rir. rir must already be
+// lowercase; Query trims and lowercases opts.RIR before calling it.
+func lookupRIR(rir string) (rirService, bool) {
+	svc, ok := rirServices[rir]
+	return svc, ok
+}
+
+// normalizeFormat lowercases an output format and treats "yml" as "yaml".
+func normalizeFormat(format string) string {
+	switch f := strings.ToLower(strings.TrimSpace(format)); f {
+	case "yml":
+		return "yaml"
+	default:
+		return f
+	}
+}
+
+// rirRDAPBase returns the RDAP base URL for a known RIR. Unknown values,
+// including "iana", return "" so the RDAP client uses IANA bootstrap.
 func rirRDAPBase(rir string) string {
-	switch strings.ToLower(rir) {
-	case "arin":
-		return "https://rdap.arin.net/registry"
-	case "ripe":
-		return "https://rdap.db.ripe.net"
-	case "apnic":
-		return "https://rdap.apnic.net"
-	case "lacnic":
-		return "https://rdap.lacnic.net/rdap"
-	case "afrinic":
-		return "https://rdap.afrinic.net/rdap"
+	if svc, ok := lookupRIR(rir); ok {
+		return svc.rdapBase
 	}
 	return ""
 }
 
+// rirWhoisHost returns the port-43 host for a known RIR. Unknown values,
+// including "iana", fall back to whois.iana.org.
 func rirWhoisHost(rir string) string {
-	switch strings.ToLower(rir) {
-	case "arin":
-		return "whois.arin.net"
-	case "ripe":
-		return "whois.ripe.net"
-	case "apnic":
-		return "whois.apnic.net"
-	case "lacnic":
-		return "whois.lacnic.net"
-	case "afrinic":
-		return "whois.afrinic.net"
+	if svc, ok := lookupRIR(rir); ok {
+		return svc.whoisHost
 	}
 	return "whois.iana.org"
 }

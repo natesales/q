@@ -217,11 +217,8 @@ func appendEntity(b *kvBuilder, e *rdap.Entity) {
 	b.add("Registration", eventDate(e.Events, "registration"))
 	b.add("Last Changed", eventDate(e.Events, "last changed"))
 
-	for _, child := range e.Entities {
-		appendEntity(b, &child)
-	}
-
-	// Stable Public IDs
+	// Public IDs belong to this entity. Emit them before descending so they
+	// stay in this section instead of the last child's.
 	if len(e.PublicIDs) > 0 {
 		ids := make([]string, 0, len(e.PublicIDs))
 		for _, id := range e.PublicIDs {
@@ -229,6 +226,10 @@ func appendEntity(b *kvBuilder, e *rdap.Entity) {
 		}
 		sort.Strings(ids)
 		b.addMulti("Public ID", ids)
+	}
+
+	for _, child := range e.Entities {
+		appendEntity(b, &child)
 	}
 }
 

@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/openrdap/rdap"
+	"gopkg.in/yaml.v3"
 )
 
 // queryRDAP performs an RDAP lookup using github.com/openrdap/rdap.
@@ -63,22 +65,95 @@ func buildRDAPRequest(kind Kind, target string) (*rdap.Request, error) {
 }
 
 func formatRDAP(resp *rdap.Response, format string) (string, error) {
-	switch strings.ToLower(format) {
+	switch normalizeFormat(format) {
 	case "json", "raw":
-		b, err := json.MarshalIndent(resp.Object, "", "  ")
-		if err != nil {
-			return "", fmt.Errorf("registry: marshal rdap: %w", err)
-		}
-		return string(b), nil
+		return marshalRDAPJSON(resp)
+	case "yaml":
+		return marshalRDAPYAML(resp)
 	}
 
 	if pretty := formatRDAPPretty(resp); pretty != "" {
 		return pretty, nil
 	}
+	return marshalRDAPJSON(resp)
+}
 
+func marshalRDAPJSON(resp *rdap.Response) (string, error) {
 	b, err := json.MarshalIndent(resp.Object, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("registry: marshal rdap: %w", err)
 	}
 	return string(b), nil
+}
+
+// marshalRDAPYAML re-encodes the server document. openrdap's structs have
+// no yaml tags, so marshaling them emits lowercased Go names, nested
+// Common/DecodeData fields, and every empty value. The last HTTP body is
+// the object the client accepted (earlier entries are failed attempts).
+//
+// Numbers are decoded with UseNumber and integers that fit in int64 are
+// emitted as integers. yaml.v3 formats float64 with 'g', which can turn a
+// value into exponent form; keeping the server's decimal text avoids that.
+func marshalRDAPYAML(resp *rdap.Response) (string, error) {
+	body, err := rdapWireBody(resp)
+	if err != nil {
+		return "", err
+	}
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.UseNumber()
+	var v any
+	if err := dec.Decode(&v); err != nil {
+		return "", fmt.Errorf("registry: decode rdap: %w", err)
+	}
+	b, err := yaml.Marshal(jsonValueToYAML(v))
+	if err != nil {
+		return "", fmt.Errorf("registry: marshal rdap: %w", err)
+	}
+	return string(b), nil
+}
+
+func rdapWireBody(resp *rdap.Response) ([]byte, error) {
+	if resp == nil || len(resp.HTTP) == 0 {
+		return nil, fmt.Errorf("registry: rdap: empty response body")
+	}
+	body := resp.HTTP[len(resp.HTTP)-1].Body
+	if len(bytes.TrimSpace(body)) == 0 {
+		return nil, fmt.Errorf("registry: rdap: empty response body")
+	}
+	return body, nil
+}
+
+// jsonValueToYAML walks a UseNumber decode result and replaces json.Number
+// so yaml.v3 does not quote it or print it as a float64.
+func jsonValueToYAML(v any) any {
+	switch n := v.(type) {
+	case map[string]any:
+		for k, val := range n {
+			n[k] = jsonValueToYAML(val)
+		}
+		return n
+	case []any:
+		for i, val := range n {
+			n[i] = jsonValueToYAML(val)
+		}
+		return n
+	case json.Number:
+		return yamlNumber(n)
+	default:
+		return v
+	}
+}
+
+func yamlNumber(n json.Number) any {
+	if i, err := n.Int64(); err == nil {
+		return i
+	}
+	// Wider than int64, or not an integer. Emit the server's exact text
+	// instead of rounding through float64.
+	s := n.String()
+	tag := "!!float"
+	if !strings.ContainsAny(s, ".eE") {
+		tag = "!!int"
+	}
+	return &yaml.Node{Kind: yaml.ScalarNode, Tag: tag, Value: s}
 }
