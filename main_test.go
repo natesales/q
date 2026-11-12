@@ -150,7 +150,109 @@ func TestMainReverseQuery(t *testing.T) {
 		"-q", "1.1.1.1",
 	)
 	assert.Nil(t, err)
-	assert.Regexp(t, regexp.MustCompile(`1.1.1.1.in-addr.arpa. .* PTR one.one.one.one`), out.String())
+	assert.Regexp(t, regexp.MustCompile(`1\.1\.1\.1\.in-addr\.arpa\. .* PTR one\.one\.one\.one`), out.String())
+}
+
+func TestMainAutoReverseOptIn(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		env     string
+		args    []string
+		reverse bool
+	}{
+		{name: "off by default", args: []string{"1.1.1.1"}},
+		{name: "flag", args: []string{"--auto-reverse-lookup", "1.1.1.1"}, reverse: true},
+		{name: "env", env: "true", args: []string{"1.1.1.1"}, reverse: true},
+		{name: "env false", env: "0", args: []string{"1.1.1.1"}},
+		{name: "env overridden by plus flag", env: "1", args: []string{"+noauto-reverse-lookup", "1.1.1.1"}},
+		{name: "env overridden by =false", env: "1", args: []string{"--auto-reverse-lookup=false", "1.1.1.1"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(autoReverseLookupVar, tc.env)
+			out, err := run(append([]string{"--all"}, tc.args...)...)
+			assert.Nil(t, err)
+			if tc.reverse {
+				assert.Contains(t, out.String(), "in-addr.arpa.")
+			} else {
+				assert.NotContains(t, out.String(), "in-addr.arpa.")
+			}
+		})
+	}
+}
+
+func TestMainAutoReverseIPv4(t *testing.T) {
+	out, err := run(
+		"--all",
+		"--auto-reverse-lookup",
+		"1.1.1.1",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Regexp(t, regexp.MustCompile(`1\.1\.1\.1\.in-addr\.arpa\. .* PTR one\.one\.one\.one`), s)
+	assert.NotContains(t, s, " MX ")
+	assert.Regexp(t, regexp.MustCompile(`1 Q `), s)
+}
+
+func TestMainAutoReverseIPv6(t *testing.T) {
+	out, err := run(
+		"--all",
+		"--auto-reverse-lookup",
+		"2606:4700:4700::1111",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "ip6.arpa.")
+	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
+	assert.Regexp(t, regexp.MustCompile(`1 Q `), s)
+}
+
+func TestMainAutoReverseBracketedIPv6(t *testing.T) {
+	out, err := run(
+		"--all",
+		"--auto-reverse-lookup",
+		"-q", "[2606:4700:4700::1111]",
+	)
+	assert.Nil(t, err)
+	s := out.String()
+	assert.Contains(t, s, "ip6.arpa.")
+	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
+}
+
+func TestConfigPaths(t *testing.T) {
+	home, xdg := t.TempDir(), t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", xdg)
+	assert.Equal(t, []string{
+		filepath.Join(home, ".qrc"),
+		filepath.Join(xdg, "q", "qrc"),
+		"/etc/q/qrc",
+	}, configPaths())
+}
+
+func TestLoadConfigLookupOrder(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		homeRC   string
+		xdgRC    string
+		expected []string
+	}{
+		{name: "xdg only", xdgRC: "--short", expected: []string{"--short"}},
+		{name: "home wins over xdg", homeRC: "# comment\n--format=json", xdgRC: "--short", expected: []string{"--format=json"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, xdg := t.TempDir(), t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("XDG_CONFIG_HOME", xdg)
+			if tc.homeRC != "" {
+				assert.Nil(t, os.WriteFile(filepath.Join(home, ".qrc"), []byte(tc.homeRC), 0o644))
+			}
+			if tc.xdgRC != "" {
+				assert.Nil(t, os.MkdirAll(filepath.Join(xdg, "q"), 0o755))
+				assert.Nil(t, os.WriteFile(filepath.Join(xdg, "q", "qrc"), []byte(tc.xdgRC), 0o644))
+			}
+			assert.Equal(t, tc.expected, loadConfig())
+		})
+	}
 }
 
 func TestMainInferredQname(t *testing.T) {

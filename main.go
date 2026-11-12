@@ -30,7 +30,10 @@ import (
 	tlsutil "github.com/natesales/q/util/tls"
 )
 
-const defaultServerVar = "Q_DEFAULT_SERVER"
+const (
+	defaultServerVar     = "Q_DEFAULT_SERVER"
+	autoReverseLookupVar = "Q_AUTO_REVERSE_LOOKUP"
+)
 
 var opts = cli.Flags{}
 
@@ -57,6 +60,15 @@ func clearOpts() {
 		opts.Color = false
 	}
 	util.UseColor = opts.Color
+
+	// Seeded before flag parsing so .qrc and command line flags can override it
+	if v, ok := os.LookupEnv(autoReverseLookupVar); ok && v != "" {
+		autoReverse, err := strconv.ParseBool(v)
+		if err != nil {
+			log.Warnf("Ignoring invalid %s value %q: expected a boolean", autoReverseLookupVar, v)
+		}
+		opts.AutoReverse = autoReverse
+	}
 }
 
 func txtConcat(m *dns.Msg) {
@@ -227,20 +239,39 @@ func parseServer(s string) (string, transport.Type, error) {
 	return server, ts, nil
 }
 
-func loadConfig() []string {
-	home, err := os.UserHomeDir()
-	if err != nil {
+// configPaths returns the config file locations in lookup order
+func configPaths() []string {
+	var paths []string
+	if home, err := os.UserHomeDir(); err == nil {
+		paths = append(paths, filepath.Join(home, ".qrc"))
+	} else {
 		log.Debugf("Could not find user home directory: %s", err)
-		return nil
 	}
+	if configDir, err := os.UserConfigDir(); err == nil {
+		paths = append(paths, filepath.Join(configDir, "q", "qrc"))
+	} else {
+		log.Debugf("Could not find user config directory: %s", err)
+	}
+	return append(paths, "/etc/q/qrc")
+}
 
-	configPath := filepath.Join(home, ".qrc")
-	file, err := os.Open(configPath)
-	if os.IsNotExist(err) {
-		return nil
+// loadConfig reads default arguments from the first config file that exists
+func loadConfig() []string {
+	var file *os.File
+	var configPath string
+	for _, path := range configPaths() {
+		f, err := os.Open(path)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			log.Warnf("Could not open config file %s: %s", path, err)
+			return nil
+		}
+		file, configPath = f, path
+		break
 	}
-	if err != nil {
-		log.Warnf("Could not open config file %s: %s", configPath, err)
+	if file == nil {
 		return nil
 	}
 	defer file.Close()
@@ -401,10 +432,29 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		return nil
 	}
 
+	// An IP address stands in for a reverse lookup: query PTR on the
+	// in-addr.arpa / ip6.arpa name, same as -x/--reverse.
+	if opts.AutoReverse && opts.Name != "" && len(rrTypes) < 1 {
+		ip := opts.Name
+		if strings.Contains(opts.Name, ":") {
+			if len(ip) >= 2 && ip[0] == '[' && ip[len(ip)-1] == ']' {
+				ip = ip[1 : len(ip)-1]
+			}
+		} else if strings.Contains(opts.Name, ".") {
+			ip = strings.TrimSuffix(ip, ".")
+		}
+		if net.ParseIP(ip) != nil {
+			log.Debugf("%s is an IP address, performing a reverse lookup", ip)
+			opts.Name, opts.Reverse = ip, true
+		}
+	}
+
 	// If no RR types are defined, set a list of default ones
 	if len(rrTypes) < 1 {
 		if opts.Name == "" {
 			rrTypes[dns.StringToType["NS"]] = true
+		} else if opts.Reverse {
+			rrTypes[dns.StringToType["PTR"]] = true
 		} else {
 			for _, defaultRRType := range opts.DefaultRRTypes {
 				rrTypes[dns.StringToType[defaultRRType]] = true
