@@ -28,10 +28,12 @@ package transport
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -80,9 +82,14 @@ func (o *ODoH) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	}
 
 	if o.conn == nil || !o.ReuseConn {
+		dialer := &net.Dialer{}
 		o.conn = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: o.TLSConfig,
+				Proxy:           http.ProxyFromEnvironment,
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					return dialer.DialContext(ctx, o.network(network), addr)
+				},
 			},
 		}
 	}

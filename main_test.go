@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/idna"
 
@@ -328,6 +329,73 @@ func TestMainPad(t *testing.T) {
 	assert.Contains(t, o, `"truncated":false`)
 }
 
+func TestCreateQueryCookieDefault(t *testing.T) {
+	opts := cli.Flags{EDNS: true}
+	msgs := createQuery(opts, []uint16{dns.TypeA})
+	assert.Equal(t, 1, len(msgs))
+
+	var opt *dns.OPT
+	for _, rr := range msgs[0].Extra {
+		if o, ok := rr.(*dns.OPT); ok {
+			opt = o
+			break
+		}
+	}
+	assert.NotNil(t, opt)
+
+	var cookie *dns.EDNS0_COOKIE
+	for _, o := range opt.Option {
+		if c, ok := o.(*dns.EDNS0_COOKIE); ok {
+			cookie = c
+			break
+		}
+	}
+	assert.NotNil(t, cookie)
+	assert.Len(t, cookie.Cookie, 16) // 8 bytes hex-encoded
+}
+
+func TestCreateQueryCookieManual(t *testing.T) {
+	opts := cli.Flags{EDNS: true, Cookie: "aabbccddeeff0011"}
+	msgs := createQuery(opts, []uint16{dns.TypeA})
+
+	var opt *dns.OPT
+	for _, rr := range msgs[0].Extra {
+		if o, ok := rr.(*dns.OPT); ok {
+			opt = o
+			break
+		}
+	}
+	assert.NotNil(t, opt)
+
+	var cookie *dns.EDNS0_COOKIE
+	for _, o := range opt.Option {
+		if c, ok := o.(*dns.EDNS0_COOKIE); ok {
+			cookie = c
+			break
+		}
+	}
+	assert.NotNil(t, cookie)
+	assert.Equal(t, "aabbccddeeff0011", cookie.Cookie)
+}
+
+func TestCreateQueryCookieDisabled(t *testing.T) {
+	opts := cli.Flags{EDNS: true, NoCookie: true}
+	msgs := createQuery(opts, []uint16{dns.TypeA})
+
+	var opt *dns.OPT
+	for _, rr := range msgs[0].Extra {
+		if o, ok := rr.(*dns.OPT); ok {
+			opt = o
+			break
+		}
+	}
+	assert.NotNil(t, opt)
+	for _, o := range opt.Option {
+		_, ok := o.(*dns.EDNS0_COOKIE)
+		assert.False(t, ok, "cookie option should not be present when --no-cookie is set")
+	}
+}
+
 func TestMainChaosClass(t *testing.T) {
 	out, err := run(
 		"--all",
@@ -341,9 +409,10 @@ func TestMainChaosClass(t *testing.T) {
 }
 
 func TestMainParsePlusFlags(t *testing.T) {
-	cli.ParsePlusFlags(&opts, []string{"+dnssec", "+nord"})
+	cli.ParsePlusFlags(&opts, []string{"+dnssec", "+nord", "+nocookie"})
 	assert.True(t, opts.DNSSEC)
 	assert.False(t, opts.RecursionDesired)
+	assert.True(t, opts.NoCookie)
 }
 
 func TestMainTCPQuery(t *testing.T) {
@@ -559,6 +628,16 @@ func TestMainParseServer(t *testing.T) {
 			Type:         transport.TypeHTTP,
 			ExpectedHost: "https://[2a09::]:443/dns-query",
 		},
+		{ // TLS with bare IPv6 host, default port
+			Server:       "tls://2a09::1",
+			Type:         transport.TypeTLS,
+			ExpectedHost: "[2a09::1]:853",
+		},
+		{ // HTTPS with bare IPv6 host and explicit path
+			Server:       "https://2a09::1/dns-query",
+			Type:         transport.TypeHTTP,
+			ExpectedHost: "https://[2a09::1]:443/dns-query",
+		},
 		{ // HTTPS with explicit endpoint
 			Server:       "https://dns.quad9.net/other-dns-endpoint",
 			Type:         transport.TypeHTTP,
@@ -664,6 +743,28 @@ func TestMainQueryDomainWithRRType(t *testing.T) {
 	)
 	assert.Nil(t, err)
 	assert.Regexp(t, regexp.MustCompile(`(?i)ns.network. .* A .*`), out.String())
+}
+
+func TestMainIntegerPositionalRRType(t *testing.T) {
+	// 28 is AAAA; passing it as a bare integer positional argument should
+	// query for AAAA records, not use "28" as the qname.
+	out, err := run(
+		"28",
+		"example.com",
+		"@9.9.9.9",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* AAAA .*`), out.String())
+}
+
+func TestMainOutOfRangeIntegerIsQname(t *testing.T) {
+	// 0 is outside the valid RR type range; it must be treated as a qname.
+	// Use a fast-failing server so the test does not depend on real network.
+	_, err := run("0", "-s", "127.127.127.127:1", "--timeout", "1s")
+	// Expect a connection error, not a "0 is not a valid RR type" parse error,
+	// which confirms "0" was treated as a qname rather than a type code.
+	assert.NotNil(t, err)
+	assert.NotContains(t, err.Error(), "not a valid RR type")
 }
 
 func TestMainQueryTypeFlag(t *testing.T) {
@@ -798,4 +899,37 @@ func TestMainMultipleServersAllFail(t *testing.T) {
 	timedOut := strings.Contains(err.Error(), "timeout after 2s")
 	erroredOut := strings.Contains(err.Error(), "all servers failed")
 	assert.True(t, timedOut || erroredOut)
+}
+
+func TestMainIPv4Flag(t *testing.T) {
+	out, err := run(
+		"--all",
+		"-4",
+		"-q", "example.com",
+		"-t", "A",
+		"@9.9.9.9",
+	)
+	assert.Nil(t, err)
+	assert.Regexp(t, regexp.MustCompile(`example.com. .* A .*`), out.String())
+}
+
+func TestMainIPv4IPv6MutuallyExclusive(t *testing.T) {
+	_, err := run(
+		"-4", "-6",
+		"-q", "example.com",
+	)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "-4 and -6 are mutually exclusive")
+}
+
+func TestMainIPv6ToIPv4OnlyServer(t *testing.T) {
+	_, err := run(
+		"-6",
+		"--timeout", "3s",
+		"-q", "example.com",
+		"-t", "A",
+		"@9.9.9.9",
+	)
+	// 9.9.9.9 is IPv4-only; forcing IPv6 transport must fail
+	assert.NotNil(t, err)
 }

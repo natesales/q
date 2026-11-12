@@ -2,11 +2,14 @@ package transport
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/charmbracelet/log"
 	"github.com/miekg/dns"
@@ -30,16 +33,24 @@ type HTTP struct {
 
 func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if h.conn == nil || !h.ReuseConn {
-		transport := http.DefaultTransport.(*http.Transport)
-		transport.TLSClientConfig = h.TLSConfig
-		h.conn = &http.Client{
-			Transport: transport,
+		dialer := &net.Dialer{}
+		baseTransport := http.DefaultTransport.(*http.Transport).Clone()
+		baseTransport.TLSClientConfig = h.TLSConfig
+		baseTransport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialer.DialContext(ctx, h.network(network), addr)
 		}
+		baseTransport.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return tls.DialWithDialer(dialer, h.network(network), addr, h.TLSConfig)
+		}
+		h.conn = &http.Client{Transport: baseTransport}
 		if h.HTTP2 {
 			log.Debug("Using HTTP/2")
 			h.conn.Transport = &http2.Transport{
 				TLSClientConfig: h.TLSConfig,
 				AllowHTTP:       true,
+				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+					return tls.DialWithDialer(dialer, h.network(network), addr, cfg)
+				},
 			}
 		} else if h.HTTP3 {
 			log.Debug("Using HTTP/3")
@@ -47,6 +58,13 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 				TLSClientConfig: h.TLSConfig,
 				QUICConfig: &quic.Config{
 					DisablePathMTUDiscovery: h.NoPMTUd,
+				},
+				Dial: func(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+					udpAddr, err := net.ResolveUDPAddr(h.network("udp"), addr)
+					if err != nil {
+						return nil, err
+					}
+					return quic.DialAddrEarly(ctx, udpAddr.String(), tlsCfg, cfg)
 				},
 			}
 		}
@@ -83,12 +101,19 @@ func (h *HTTP) Exchange(m *dns.Msg) (*dns.Msg, error) {
 		req.Header.Set("User-Agent", h.UserAgent)
 	}
 
-	// Set custom headers if provided
+	// Set custom headers. The Host header requires special handling: Go's
+	// net/http ignores req.Header["Host"] and reads req.Host instead.
 	if h.Headers != nil {
 		for name, values := range h.Headers {
-			for _, value := range values {
-				log.Debugf("Setting custom header %s: %s", name, value)
-				req.Header.Add(name, value)
+			if strings.EqualFold(name, "Host") {
+				if len(values) > 0 {
+					req.Host = values[0]
+				}
+			} else {
+				for _, value := range values {
+					log.Debugf("Setting custom header %s: %s", name, value)
+					req.Header.Add(name, value)
+				}
 			}
 		}
 	}

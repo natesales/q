@@ -3,7 +3,6 @@ package output
 import (
 	"encoding/hex"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -53,6 +52,24 @@ func (p Printer) PrettyPrintNSID(entries []*Entry, printPrefix bool) {
 	}
 }
 
+// rrToRFC3597Val returns the RDATA of rr formatted as RFC 3597 unknown-format
+// (\# len hex). This lets callers render any RR type without type-specific
+// parsing, matching dig's +unknownformat behaviour.
+func rrToRFC3597Val(rr dns.RR) string {
+	buf := make([]byte, dns.MaxMsgSize)
+	n, err := dns.PackRR(rr, buf, 0, nil, false)
+	if err != nil {
+		return rr.String()
+	}
+	// The packed RR ends with Rdlength bytes of RDATA; read them from the tail.
+	rdLen := int(rr.Header().Rdlength)
+	if rdLen < 0 || n-rdLen < 0 {
+		return rr.String()
+	}
+	rdata := buf[n-rdLen : n]
+	return fmt.Sprintf("\\# %d %s", rdLen, hex.EncodeToString(rdata))
+}
+
 // parseRR converts an RR into a pretty string and returns the qname, ttl, type, value, and whether to skip printing it because it's a duplicate
 func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 	// Initialize existingRRs map if it doesn't exist
@@ -60,11 +77,25 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		e.existingRRs = make(map[string]bool)
 	}
 
-	val := a.String()
-	for _, cut := range []string{a.Header().Name, strconv.Itoa(int(a.Header().Ttl)), dns.ClassToString[a.Header().Class], dns.TypeToString[a.Header().Rrtype]} {
-		val = strings.TrimSpace(
-			strings.TrimPrefix(val, cut),
-		)
+	var val string
+	var ipForEnrichment string // original IP string for WHOIS/PTR, unaffected by UnknownFormat
+	if opts.UnknownFormat {
+		val = rrToRFC3597Val(a)
+	} else {
+		val = a.String()
+		for _, cut := range []string{a.Header().Name, strconv.Itoa(int(a.Header().Ttl)), dns.ClassToString[a.Header().Class], dns.TypeToString[a.Header().Rrtype]} {
+			val = strings.TrimSpace(
+				strings.TrimPrefix(val, cut),
+			)
+		}
+	}
+
+	// Extract the IP for enrichment regardless of UnknownFormat, since
+	// WHOIS/PTR enrichment needs the real address, not RFC 3597 hex.
+	if a.Header().Rrtype == dns.TypeA {
+		ipForEnrichment = a.(*dns.A).A.String()
+	} else if a.Header().Rrtype == dns.TypeAAAA {
+		ipForEnrichment = a.(*dns.AAAA).AAAA.String()
 	}
 
 	rrSignature := fmt.Sprintf("%s %d %s %s %s", a.Header().Name, a.Header().Ttl, dns.TypeToString[a.Header().Rrtype], val, e.Server)
@@ -83,12 +114,9 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		}
 	}
 
-	// Copy val now before modifying it with a suffix
-	valCopy := val
-
 	// Handle whois
 	if opts.Whois && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		resp, err := whois.Query(valCopy)
+		resp, err := whois.Query(ipForEnrichment)
 		if err != nil {
 			log.Warnf("bgp.tools query: %s", err)
 		} else {
@@ -98,7 +126,7 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 
 	// Handle PTR resolution
 	if opts.ResolveIPs && (a.Header().Rrtype == dns.TypeA || a.Header().Rrtype == dns.TypeAAAA) {
-		val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", e.PTRs[valCopy]))
+		val += util.Color(util.ColorMagenta, fmt.Sprintf(" (%s)", e.PTRs[ipForEnrichment]))
 	}
 
 	// Server suffix
@@ -106,49 +134,17 @@ func (e *Entry) parseRR(a dns.RR, opts *cli.Flags) *RR {
 		val += util.Color(util.ColorTeal, fmt.Sprintf(" (%s)", e.Server))
 	}
 
+	rrTypeName := dns.TypeToString[a.Header().Rrtype]
+	if opts.UnknownFormat {
+		rrTypeName = fmt.Sprintf("TYPE%d", a.Header().Rrtype)
+	}
+
 	return &RR{
 		util.Color(util.ColorPurple, a.Header().Name),
 		util.Color(util.ColorGreen, ttl),
-		util.Color(util.ColorMagenta, dns.TypeToString[a.Header().Rrtype]),
+		util.Color(util.ColorMagenta, rrTypeName),
 		val,
 	}
-}
-
-// sortSlices sorts a slice of slices of strings by the nth element of each slice
-func sortSlices(s [][]string, n int) [][]string {
-	sort.Slice(s, func(i, j int) bool {
-		return s[i][n] < s[j][n]
-	})
-	return s
-}
-
-// sortToPrint sorts a slice of records first by record type, then by value
-func sortToPrint(s [][]string) [][]string {
-	// Organize by record type
-	records := make(map[string][][]string)
-	for _, record := range s {
-		rrType := record[2]
-		records[rrType] = append(records[rrType], record)
-	}
-
-	// Sort each record type
-	for rrType, recs := range records {
-		records[rrType] = sortSlices(recs, 3)
-	}
-
-	// Sort record types
-	var sortedTypes []string
-	for rrType := range records {
-		sortedTypes = append(sortedTypes, rrType)
-	}
-	sort.Strings(sortedTypes)
-
-	// Build final result
-	var result [][]string
-	for _, rrType := range sortedTypes {
-		result = append(result, records[rrType]...)
-	}
-	return result
 }
 
 type RR struct {
@@ -185,9 +181,6 @@ func (p Printer) printSection(rrs []RR) {
 
 		toPrint = append(toPrint, []string{a.Name, a.TTL, a.Type, a.Value})
 	}
-
-	// Sort by record type
-	toPrint = sortToPrint(toPrint)
 
 	for _, a := range toPrint {
 		if p.Opts.Format == "column" {
@@ -243,7 +236,30 @@ func flags(m *dns.Msg) string {
 
 func (p Printer) PrintPretty(entries []*Entry) {
 	for _, entry := range entries {
+		printedNXDOMAIN := make(map[string]bool)
 		for i, reply := range entry.Replies {
+			if reply.Rcode == dns.RcodeNameError && !p.Opts.ValueOnly && !p.Opts.ShowStats {
+				name := ""
+				if len(reply.Question) > 0 {
+					name = reply.Question[0].Name
+				} else if i < len(entry.Queries) && len(entry.Queries[i].Question) > 0 {
+					name = entry.Queries[i].Question[0].Name
+				}
+				// NXDOMAIN applies to the name, so don't repeat it for each RR type.
+				key := strings.ToLower(name)
+				if !printedNXDOMAIN[key] {
+					printedNXDOMAIN[key] = true
+					prefix := util.Color(util.ColorWhite, "Status:")
+					if name != "" {
+						prefix = util.Color(util.ColorPurple, name)
+					}
+					suffix := ""
+					if len(entries) > 1 || len(p.Opts.Server) > 1 {
+						suffix = util.Color(util.ColorTeal, fmt.Sprintf(" (%s)", entry.Server))
+					}
+					util.MustWritef(p.Out, "%s %s%s\n", prefix, util.Color(util.ColorRed, "NXDOMAIN"), suffix)
+				}
+			}
 			if p.Opts.ShowQuestion {
 				util.MustWriteln(p.Out, util.Color(util.ColorWhite, "Question:"))
 				for _, a := range reply.Question {

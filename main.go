@@ -170,6 +170,23 @@ func parseServer(s string) (string, transport.Type, error) {
 			s = "[" + s + "]"
 		}
 		s = "plain://" + s
+	} else {
+		// Bracket a bare IPv6 host in a URL that already has a scheme,
+		// e.g. https://2a09:: → https://[2a09::]
+		if i := strings.Index(s, "://"); i >= 0 {
+			rest := s[i+3:]
+			end := len(rest)
+			for j, c := range rest {
+				if c == '/' || c == '?' || c == '#' {
+					end = j
+					break
+				}
+			}
+			host := rest[:end]
+			if !strings.HasPrefix(host, "[") && strings.Contains(host, ":") && net.ParseIP(host) != nil {
+				s = s[:i+3] + "[" + host + "]" + rest[end:]
+			}
+		}
 	}
 
 	// Parse server as URL
@@ -291,7 +308,7 @@ func driver(args []string, out io.Writer) error {
 	parser.Usage = `[OPTIONS] [@server] [type...] [name]
 
 All long form (--) flags can be toggled with the dig-standard +[no]flag notation.`
-	_, err := parser.ParseArgs(args)
+	remainingArgs, err := parser.ParseArgs(args)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Usage") {
 			log.Fatal(err)
@@ -323,6 +340,11 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.ShowStats = true
 	}
 
+	// Validate address family flags
+	if opts.UseIPv4 && opts.UseIPv6 {
+		return fmt.Errorf("-4 and -6 are mutually exclusive")
+	}
+
 	// Set bootstrap resolver
 	if opts.BootstrapServer != "" {
 		// Add port if not specified
@@ -349,7 +371,7 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	}
 
 	// Add non-flag RR types
-	for _, arg := range args {
+	for _, arg := range remainingArgs {
 		// Find a server by @ symbol if it isn't set by flag
 		if strings.HasPrefix(arg, "@") {
 			opts.Server = append(opts.Server, strings.TrimPrefix(arg, "@"))
@@ -368,6 +390,9 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 				opts.ShowAuthority = true
 				opts.ShowAdditional = true
 			}
+		} else if typeCode, err := strconv.Atoi(arg); err == nil && typeCode > 0 && typeCode <= 65535 {
+			typeFound = true
+			rrTypes[uint16(typeCode)] = true
 		}
 
 		// Set qname if not set by flag
@@ -488,21 +513,17 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		if os.Getenv(defaultServerVar) != "" {
 			opts.Server[0] = os.Getenv(defaultServerVar)
 			log.Debugf("Using %s from %s environment variable", opts.Server, defaultServerVar)
-		} else {
-			log.Debugf("No server specified or %s set, using /etc/resolv.conf", defaultServerVar)
-			conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
-			if err != nil {
+		} else if opts.ODoHProxy == "" {
+			if servers := systemDNSServers(); len(servers) > 0 {
+				opts.Server[0] = servers[0]
+				log.Debugf("found server %s from system DNS config", opts.Server)
+			} else {
 				opts.Server[0] = "https://cloudflare-dns.com/dns-query"
 				log.Debugf("no server set, using %s", opts.Server)
-			} else {
-				if len(conf.Servers) == 0 {
-					opts.Server[0] = "https://cloudflare-dns.com/dns-query"
-					log.Debugf("no server set, using %s", opts.Server)
-				} else {
-					opts.Server[0] = conf.Servers[0]
-					log.Debugf("found server %s from /etc/resolv.conf", opts.Server)
-				}
 			}
+		} else {
+			opts.Server[0] = "https://cloudflare-dns.com/dns-query"
+			log.Debugf("no server set, using %s", opts.Server)
 		}
 	}
 
@@ -563,7 +584,6 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 	for rrType := range rrTypes {
 		rrTypesSlice = append(rrTypesSlice, rrType)
 	}
-	msgs := createQuery(opts, rrTypesSlice)
 
 	errChan := make(chan error)
 
@@ -571,6 +591,8 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		var entries []*output.Entry
 		multiServer := len(opts.Server) > 1
 		for _, serverStr := range opts.Server {
+			// Generate a fresh set of queries per server so each gets its own client cookie.
+			msgs := createQuery(opts, rrTypesSlice)
 			// Parse server address and transport type
 			server, transportType, err := parseServer(serverStr)
 			if err != nil {

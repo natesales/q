@@ -2,6 +2,7 @@ package transport
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -58,6 +59,22 @@ func TestTransportHTTPServerError(t *testing.T) {
 	_, err := tp.Exchange(validQuery())
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "got status code 500")
+}
+
+func TestTransportHTTPHostHeader(t *testing.T) {
+	hostCh := make(chan string, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hostCh <- r.Host
+		http.Error(w, "echo", http.StatusBadRequest)
+	}))
+	defer srv.Close()
+
+	tp := httpTransport()
+	tp.Server = srv.URL
+	tp.Headers = map[string][]string{"Host": {"custom.example.com"}}
+	_, _ = tp.Exchange(validQuery())
+
+	assert.Equal(t, "custom.example.com", <-hostCh)
 }
 
 func TestTransportHTTPIDMismatch(t *testing.T) {

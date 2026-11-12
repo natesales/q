@@ -5,15 +5,19 @@ on:
     branches:
       - main
     paths:
-      - "*.go"
-      - ".github/workflows/*"
-      - "README.md"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/**"
+      - "update-usage-readme.sh"
 
   pull_request:
     paths:
-      - "*.go"
-      - ".github/workflows/*"
-      - "README.md"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/**"
+      - "update-usage-readme.sh"
 
 jobs:
   build:
@@ -30,22 +34,25 @@ jobs:
 
       # Run tests with nice formatting. Save the original log in /tmp/gotest.log
       - name: Run tests
+        id: run-tests
         run: |
           set -euo pipefail
           go test -p 1 -json -v -covermode atomic -coverprofile=cover.out ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
 
       - name: Upload original test log
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.run-tests.outcome != 'skipped'
         with:
           name: test-log
           path: /tmp/gotest.log
           if-no-files-found: error
 
       - name: Generate coverage badge
+        if: github.event_name == 'push'
         run: gopherbadger -style=for-the-badge -covercmd "go tool cover -func=cover.out"
 
       - name: Commit coverage badge
+        if: github.event_name == 'push'
         uses: EndBug/add-and-commit@v7
         with:
           message: "ci: update coverage"
@@ -53,9 +60,11 @@ jobs:
           author_name: "github-actions[bot]"
           author_email: "github-actions[bot]@users.noreply.github.com"
 
-      - run: ./update-usage-readme.sh
+      - if: github.event_name == 'push'
+        run: ./update-usage-readme.sh
 
       - name: Commit README update
+        if: github.event_name == 'push'
         uses: EndBug/add-and-commit@v7
         with:
           message: "ci: update binary usage in README"
