@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -151,6 +152,31 @@ func TestMainReverseQuery(t *testing.T) {
 	)
 	assert.Nil(t, err)
 	assert.Regexp(t, regexp.MustCompile(`1.1.1.1.in-addr.arpa. .* PTR one.one.one.one`), out.String())
+}
+
+func TestMainCompletion(t *testing.T) {
+	for _, shell := range []string{"bash", "zsh", "fish"} {
+		t.Run(shell, func(t *testing.T) {
+			out, err := run("--completion", shell)
+			assert.Nil(t, err)
+			script := out.String()
+			for _, want := range []string{"dnssec", "+nodnssec", "+noaa", "+nono-cookie", "AAAA", "bash zsh fish"} {
+				assert.Contains(t, script, want)
+			}
+			for _, unwanted := range []string{"+nohelp", "+aa ", "+no-cookie "} {
+				assert.NotContains(t, script, unwanted)
+			}
+
+			syntaxCheck := map[string][]string{"bash": {"-n"}, "zsh": {"-n"}, "fish": {"--no-execute"}}[shell]
+			if _, err := exec.LookPath(shell); err != nil {
+				t.Skipf("%s not installed, skipping syntax check", shell)
+			}
+			cmd := exec.Command(shell, syntaxCheck...)
+			cmd.Stdin = strings.NewReader(script)
+			output, err := cmd.CombinedOutput()
+			assert.Nil(t, err, string(output))
+		})
+	}
 }
 
 func TestMainInferredQname(t *testing.T) {
