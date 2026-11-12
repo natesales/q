@@ -217,6 +217,43 @@ func TestMainAutoReverseBracketedIPv6(t *testing.T) {
 	assert.Regexp(t, regexp.MustCompile(`PTR one\.one\.one\.one`), s)
 }
 
+func TestConfigPaths(t *testing.T) {
+	home, xdg := t.TempDir(), t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", xdg)
+	assert.Equal(t, []string{
+		filepath.Join(home, ".qrc"),
+		filepath.Join(xdg, "q", "qrc"),
+		"/etc/q/qrc",
+	}, configPaths())
+}
+
+func TestLoadConfigLookupOrder(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		homeRC   string
+		xdgRC    string
+		expected []string
+	}{
+		{name: "xdg only", xdgRC: "--short", expected: []string{"--short"}},
+		{name: "home wins over xdg", homeRC: "# comment\n--format=json", xdgRC: "--short", expected: []string{"--format=json"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, xdg := t.TempDir(), t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("XDG_CONFIG_HOME", xdg)
+			if tc.homeRC != "" {
+				assert.Nil(t, os.WriteFile(filepath.Join(home, ".qrc"), []byte(tc.homeRC), 0o644))
+			}
+			if tc.xdgRC != "" {
+				assert.Nil(t, os.MkdirAll(filepath.Join(xdg, "q"), 0o755))
+				assert.Nil(t, os.WriteFile(filepath.Join(xdg, "q", "qrc"), []byte(tc.xdgRC), 0o644))
+			}
+			assert.Equal(t, tc.expected, loadConfig())
+		})
+	}
+}
+
 func TestMainInferredQname(t *testing.T) {
 	out, err := run(
 		"--all",

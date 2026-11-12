@@ -222,20 +222,39 @@ func parseServer(s string) (string, transport.Type, error) {
 	return server, ts, nil
 }
 
-func loadConfig() []string {
-	home, err := os.UserHomeDir()
-	if err != nil {
+// configPaths returns the config file locations in lookup order
+func configPaths() []string {
+	var paths []string
+	if home, err := os.UserHomeDir(); err == nil {
+		paths = append(paths, filepath.Join(home, ".qrc"))
+	} else {
 		log.Debugf("Could not find user home directory: %s", err)
-		return nil
 	}
+	if configDir, err := os.UserConfigDir(); err == nil {
+		paths = append(paths, filepath.Join(configDir, "q", "qrc"))
+	} else {
+		log.Debugf("Could not find user config directory: %s", err)
+	}
+	return append(paths, "/etc/q/qrc")
+}
 
-	configPath := filepath.Join(home, ".qrc")
-	file, err := os.Open(configPath)
-	if os.IsNotExist(err) {
-		return nil
+// loadConfig reads default arguments from the first config file that exists
+func loadConfig() []string {
+	var file *os.File
+	var configPath string
+	for _, path := range configPaths() {
+		f, err := os.Open(path)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			log.Warnf("Could not open config file %s: %s", path, err)
+			return nil
+		}
+		file, configPath = f, path
+		break
 	}
-	if err != nil {
-		log.Warnf("Could not open config file %s: %s", configPath, err)
+	if file == nil {
 		return nil
 	}
 	defer file.Close()
