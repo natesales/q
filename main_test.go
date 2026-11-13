@@ -160,10 +160,10 @@ func TestMainCompletion(t *testing.T) {
 			out, err := run("--completion", shell)
 			assert.Nil(t, err)
 			script := out.String()
-			for _, want := range []string{"dnssec", "+nodnssec", "+noaa", "+nono-cookie", "AAAA", "bash zsh fish"} {
+			for _, want := range []string{"dnssec", "+nodnssec", "+noaa", "+nocookie", "+nono-cookie", "AAAA", "bash zsh fish"} {
 				assert.Contains(t, script, want)
 			}
-			for _, unwanted := range []string{"+nohelp", "+aa ", "+no-cookie "} {
+			for _, unwanted := range []string{"+nohelp", "+aa ", "+no-cookie ", "+cookie "} {
 				assert.NotContains(t, script, unwanted)
 			}
 

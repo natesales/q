@@ -53,16 +53,24 @@ func isSliceOption(o *flags.Option) bool {
 
 // plusFlags returns the +flag and +noflag toggles accepted by ParsePlusFlags
 func plusFlags(options []*flags.Option) []string {
-	var toggles []string
+	var boolNames []string
 	for _, o := range options {
-		if _, ok := o.Value().(bool); !ok || o.LongName == "" {
-			continue
+		if _, ok := o.Value().(bool); ok && o.LongName != "" {
+			boolNames = append(boolNames, o.LongName)
 		}
+	}
+
+	var toggles []string
+	for _, name := range boolNames {
 		// ParsePlusFlags ignores toggles of 3 characters or fewer and reads a leading "no" as negation
-		if on := "+" + o.LongName; len(on) > 3 && !strings.HasPrefix(o.LongName, "no") {
+		if on := "+" + name; len(on) > 3 && !strings.HasPrefix(name, "no") {
 			toggles = append(toggles, on)
 		}
-		toggles = append(toggles, "+no"+o.LongName)
+		toggles = append(toggles, "+no"+name)
+		// ParsePlusFlags also maps +nofoo to a no-foo flag, unless a foo flag already claims it
+		if rest, ok := strings.CutPrefix(name, "no-"); ok && !slices.Contains(boolNames, rest) {
+			toggles = append(toggles, "+no"+rest)
+		}
 	}
 	return toggles
 }
