@@ -296,6 +296,15 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		opts.ShowAll = true
 	}
 
+	if opts.Completion != "" {
+		script, err := cli.CompletionScript(opts.Completion, parser)
+		if err != nil {
+			return err
+		}
+		util.MustWritef(out, "%s", script)
+		return nil
+	}
+
 	if opts.ShowVersion {
 		util.MustWritef(out, "https://github.com/natesales/q version %s (%s %s)\n", version, commit, date)
 		return nil
