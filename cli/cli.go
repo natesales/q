@@ -16,6 +16,7 @@ type Flags struct {
 	Server           []string      `short:"s" long:"server" description:"DNS server(s)"`
 	Types            []string      `short:"t" long:"type" description:"RR type (e.g. A, AAAA, MX, etc.) or type integer"`
 	Reverse          bool          `short:"x" long:"reverse" description:"Reverse lookup"`
+	AutoReverse      bool          `long:"auto-reverse-lookup" description:"Reverse lookup when the query name is an IP address (env: Q_AUTO_REVERSE_LOOKUP)"`
 	DNSSEC           bool          `short:"d" long:"dnssec" description:"Set the DO (DNSSEC OK) bit in the OPT record"`
 	NSID             bool          `short:"n" long:"nsid" description:"Set EDNS0 NSID opt"`
 	NSIDOnly         bool          `short:"N" long:"nsid-only" description:"Set EDNS0 NSID opt and query only for the NSID"`
@@ -168,9 +169,13 @@ func SetDefaultTrueBools(opts *Flags) {
 	}
 }
 
-// SetFalseBooleans sets boolean flags to false from a given argument list and returns the remaining arguments
-func SetFalseBooleans(opts *Flags, args []string) []string {
-	// Add equal signs to separated flags (e.g. --foo bar becomes --foo=bar)
+// SetFalseBooleans joins "--flag false" into "--flag=false" and returns the
+// arguments the parser should see. Boolean assignments are kept so go-flags
+// applies them in order: a config file's bare --flag is overridden by a later
+// --flag=false on the command line. Assignments for non-boolean flags are
+// dropped, as they were before.
+func SetFalseBooleans(_ *Flags, args []string) []string {
+	// Add equal signs to separated flags (e.g. --foo false becomes --foo=false)
 	for i, arg := range args {
 		if len(arg) > 0 && arg[0] == '-' && !strings.Contains(arg, "=") && i+1 < len(args) && (args[i+1] == "true" || args[i+1] == "false") {
 			args[i] = arg + "=" + args[i+1]
@@ -184,20 +189,11 @@ func SetFalseBooleans(opts *Flags, args []string) []string {
 			flag := strings.ToLower(strings.TrimLeft(arg, "-"))
 			flag = strings.TrimSuffix(flag, "=true")
 			flag = strings.TrimSuffix(flag, "=false")
-
-			v := reflect.Indirect(reflect.ValueOf(opts))
-			vT := v.Type()
-			for i := 0; i < v.NumField(); i++ {
-				if vT.Field(i).Type == reflect.TypeOf(true) && (vT.Field(i).Tag.Get("long") == flag || vT.Field(i).Tag.Get("short") == flag) {
-					boolState := strings.HasSuffix(arg, "=true")
-					// log.Debugf("Setting %s to %t", arg, boolState)
-					reflect.ValueOf(opts).Elem().Field(i).SetBool(boolState)
-					break
-				}
+			if !isBool(flag) {
+				continue
 			}
-		} else {
-			remainingArgs = append(remainingArgs, arg)
 		}
+		remainingArgs = append(remainingArgs, arg)
 	}
 
 	// log.Debugf("remaining args: %v", remainingArgs)
@@ -235,13 +231,18 @@ func ParseRRTypes(t []string) (map[uint16]bool, error) {
 	return rrTypes, nil
 }
 
-// isBool checks if a flag by a given name is a boolean flag of Flags
+// isBool reports whether name is the short or long tag of a boolean flag.
+// A non-boolean can share a tag with a boolean: short t is the RR type and
+// long t is the TC bit. A non-boolean match does not decide the result.
 func isBool(name string) bool {
 	v := reflect.ValueOf(Flags{})
 	vT := v.Type()
 	for i := 0; i < v.NumField(); i++ {
-		if vT.Field(i).Tag.Get("short") == name || vT.Field(i).Tag.Get("long") == name {
-			return vT.Field(i).Type == reflect.TypeOf(true)
+		if vT.Field(i).Tag.Get("short") != name && vT.Field(i).Tag.Get("long") != name {
+			continue
+		}
+		if vT.Field(i).Type == reflect.TypeOf(true) {
+			return true
 		}
 	}
 	return false
@@ -277,7 +278,7 @@ func AddEqualSigns(args []string) []string {
 						newArgs = append(newArgs, arg)
 						continue
 					}
-					
+
 					// If the next argument is a value (not a flag), combine them
 					if len(nextArg) == 0 || nextArg[0] != '-' {
 						newArgs = append(newArgs, arg+"="+nextArg)
