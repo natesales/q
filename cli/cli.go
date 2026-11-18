@@ -118,6 +118,9 @@ type Flags struct {
 	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose log messages"`
 	Trace       bool   `long:"trace" description:"Show trace log messages"`
 	ShowVersion bool   `short:"V" long:"version" description:"Show version and exit"`
+
+	//lint:ignore SA5008 go-flags accepts multiple choice values in the struct tag
+	Completion string `long:"completion" description:"Print shell completion script and exit" choice:"bash" choice:"zsh" choice:"fish"`
 }
 
 // ParsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
